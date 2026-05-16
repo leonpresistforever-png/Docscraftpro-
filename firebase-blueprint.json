@@ -1,0 +1,106 @@
+{
+  "entities": {
+    "Document": {
+      "title": "Document",
+      "description": "User created document",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "isPinned": { "type": "boolean" },
+        "isArchived": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "timestamp" },
+        "updatedAt": { "type": "string", "format": "timestamp" }
+      },
+      "required": ["ownerId", "title", "content"]
+    },
+    "DocumentHistory": {
+      "title": "DocumentHistory",
+      "description": "Snapshot of previous versions of the document",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "version": { "type": "number" },
+        "createdAt": { "type": "string", "format": "timestamp" }
+      },
+      "required": ["title", "content"]
+    },
+    "NexusChat": {
+      "title": "NexusChat",
+      "description": "Logs for chat interactions with Nexus AI",
+      "type": "object",
+      "properties": {
+        "role": { "type": "string" },
+        "content": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "duration": { "type": "number" },
+        "docId": { "type": "string" }
+      },
+      "required": ["role", "content", "timestamp"]
+    },
+    "User": {
+      "title": "User",
+      "description": "User profile with credits",
+      "type": "object",
+      "properties": {
+        "credits": { "type": "number" },
+        "subscription": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "timestamp" }
+      },
+      "required": ["credits"]
+    },
+    "ChatSession": {
+      "title": "ChatSession",
+      "description": "Conversation history session for AI Sheets or Nexus",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "appType": { "type": "string" },
+        "messages": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "timestamp" },
+        "updatedAt": { "type": "string", "format": "timestamp" }
+      },
+      "required": ["title", "appType", "messages", "ownerId"]
+    },
+    "InputHistory": {
+      "title": "InputHistory",
+      "description": "User input prompt history",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "prompt": { "type": "string" },
+        "timestamp": { "type": "string", "format": "timestamp" }
+      },
+      "required": ["userId", "prompt"]
+    }
+  },
+  "firestore": {
+    "/inputHistory/{historyId}": {
+      "schema": { "$ref": "InputHistory" },
+      "description": "Input history for a user"
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "User" },
+      "description": "User profiles"
+    },
+    "/documents/{documentId}": {
+      "schema": { "$ref": "Document" },
+      "description": "Top-level collection holding all documents"
+    },
+    "/documents/{documentId}/history/{historyId}": {
+      "schema": { "$ref": "DocumentHistory" },
+      "description": "Sub-collection of document containing historical versions"
+    },
+    "/nexus_chats/{chatId}": {
+      "schema": { "$ref": "NexusChat" },
+      "description": "Top-level collection for nexus global conversations"
+    },
+    "/chat_sessions/{sessionId}": {
+      "schema": { "$ref": "ChatSession" },
+      "description": "Conversation history sessions"
+    }
+  }
+}

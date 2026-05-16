@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <rect width="192" height="192" fill="#0a0a0a"/>
+  <!-- Gold accent border -->
+  <rect x="8" y="8" width="176" height="176" rx="32" stroke="#D4AF37" stroke-width="6" fill="none"/>
+  <!-- Folder shape -->
+  <path d="M48 64 L72 32 L144 32 Q156 32 156 44 L156 128 Q156 140 144 140 L48 140 Q36 140 36 128 L36 76 Q36 64 48 64 Z" fill="#1a1a1a" stroke="#D4AF37" stroke-width="4" stroke-linejoin="round"/>
+  <!-- Network dots -->
+  <circle cx="64" cy="80" r="4" fill="#8a2be2"/>
+  <circle cx="100" cy="64" r="6" fill="#8a2be2"/>
+  <circle cx="120" cy="100" r="4" fill="#00ffff"/>
+  <circle cx="72" cy="116" r="4" fill="#00ffff"/>
+  <path d="M64 80 L100 64 L120 100 L72 116 Z" stroke="#8a2be2" stroke-width="2" fill="none" opacity="0.6"/>
+  <!-- Golden arrow -->
+  <path d="M40 152 Q80 152 100 110 L84 110 L120 70 L140 120 L124 120 Q100 168 40 168 Z" fill="#D4AF37"/>
+</svg>

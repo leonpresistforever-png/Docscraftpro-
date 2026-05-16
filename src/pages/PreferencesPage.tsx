@@ -188,6 +188,60 @@ export function PreferencesPage() {
                 </motion.div>
               )}
 
+              {/* Account Tab */}
+              {activeTab === 'account' && (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-2xl border border-dc-border p-8 shadow-sm space-y-8">
+                  <div>
+                    <h2 className="text-lg font-bold mb-4">Account Details</h2>
+                    <div className="flex items-center gap-4 mb-6">
+                      <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
+                        <User className="w-8 h-8" />
+                      </div>
+                      <div>
+                        <p className="font-bold">{user?.email}</p>
+                        <p className="text-sm text-gray-500">Free Tier Account</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-6 border-t border-gray-100">
+                    <h2 className="text-lg font-bold mb-2 text-red-600">Danger Zone</h2>
+                    <p className="text-sm text-gray-500 mb-6">Irreversible and destructive actions.</p>
+                    
+                    <div className="space-y-4">
+                      <button 
+                        className="flex items-center gap-3 w-full p-4 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition-colors text-left"
+                        onClick={() => {
+                          if (window.confirm('Are you sure you want to delete all permanent sessions and local data? This cannot be undone.')) {
+                            localStorage.clear();
+                            sessionStorage.clear();
+                            window.location.reload();
+                          }
+                        }}
+                      >
+                        <Shield className="w-5 h-5 flex-shrink-0" />
+                        <div>
+                          <p className="font-bold text-sm">Delete Permanent Session</p>
+                          <p className="text-xs text-red-500 opacity-80">Clears all local storage, preferences, and permanent sessions on this device.</p>
+                        </div>
+                      </button>
+                      <button 
+                        className="flex items-center gap-3 w-full p-4 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition-colors text-left"
+                        onClick={() => {
+                          alert('Please contact support to completely delete your account from servers.');
+                        }}
+                      >
+                        <User className="w-5 h-5 flex-shrink-0" />
+                        <div>
+                          <p className="font-bold text-sm">Delete Account</p>
+                          <p className="text-xs text-red-500 opacity-80">Permanently delete your account and cloud data.</p>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
               {/* Data Tab */}
               {activeTab === 'data' && (
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-2xl border border-dc-border p-8 shadow-sm space-y-8">

@@ -39,6 +39,7 @@ import { TipPage } from './pages/TipPage';
 import { ContactPage } from './pages/ContactPage';
 import { SupportFormPage } from './pages/SupportFormPage';
 import { AnimatePresence, motion } from 'motion/react';
+import { AssistLoopScript } from './components/AssistLoopScript';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -114,6 +115,7 @@ export default function App() {
         <Router>
           <AnimatedRoutes />
           <AdModal />
+          <AssistLoopScript />
         </Router>
       </AuthProvider>
     </ThemeProvider>

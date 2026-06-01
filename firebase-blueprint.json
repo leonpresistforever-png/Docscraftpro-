@@ -10,6 +10,8 @@
         "ownerId": { "type": "string" },
         "isPinned": { "type": "boolean" },
         "isArchived": { "type": "boolean" },
+        "isStarred": { "type": "boolean" },
+        "isShared": { "type": "boolean" },
         "createdAt": { "type": "string", "format": "timestamp" },
         "updatedAt": { "type": "string", "format": "timestamp" }
       },
@@ -75,9 +77,37 @@
         "timestamp": { "type": "string", "format": "timestamp" }
       },
       "required": ["userId", "prompt"]
+    },
+    "DocAttachment": {
+      "title": "DocAttachment",
+      "description": "Uploaded doc attachment containing filename, type and base64 data",
+      "type": "object",
+      "properties": {
+        "filename": { "type": "string" },
+        "contentType": { "type": "string" },
+        "data": { "type": "string" },
+        "createdAt": { "type": "string", "format": "timestamp" }
+      },
+      "required": ["filename", "contentType", "data"]
+    },
+    "SupportTicket": {
+      "title": "SupportTicket",
+      "description": "User submitted support ticket",
+      "type": "object",
+      "properties": {
+        "username": { "type": "string" },
+        "email": { "type": "string" },
+        "issue": { "type": "string" },
+        "createdAt": { "type": "string", "format": "timestamp" }
+      },
+      "required": ["username", "email", "issue"]
     }
   },
   "firestore": {
+    "/support_tickets/{ticketId}": {
+      "schema": { "$ref": "SupportTicket" },
+      "description": "User submitted support tickets"
+    },
     "/inputHistory/{historyId}": {
       "schema": { "$ref": "InputHistory" },
       "description": "Input history for a user"
@@ -101,6 +131,10 @@
     "/chat_sessions/{sessionId}": {
       "schema": { "$ref": "ChatSession" },
       "description": "Conversation history sessions"
+    },
+    "/doc_attachments/{attachmentId}": {
+      "schema": { "$ref": "DocAttachment" },
+      "description": "Media and file attachments linked in documents"
     }
   }
 }

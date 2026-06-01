@@ -10,13 +10,14 @@ import { useAuth } from '@/src/context/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { collection, query, where, onSnapshot, orderBy, updateDoc, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
-import { indexDocuments, isSemanticSearchEnabled, searchOrama } from '../../lib/useOramaSearch';
+import { isSemanticSearchEnabled, indexDocuments } from '../../lib/useOramaSearch';
 
 // --- Types ---
 interface Document {
   id: string;
   title: string;
   content: string;
+  type?: string;
   tags?: string[];
   isPinned: boolean;
   isArchived?: boolean;
@@ -43,16 +44,14 @@ export function Sidebar({ defaultCollapsed = false }: { defaultCollapsed?: boole
     
     setIsLoading(true);
     
-    // Fetch non-archived documents for standard view
+    // Fetch user documents safely by user ID only to avoid composite index requirements
     const q = query(
       collection(db, 'documents'),
-      where('ownerId', '==', user.uid),
-      where('isArchived', '==', false),
-      orderBy('updatedAt', 'desc')
+      where('ownerId', '==', user.uid)
     );
     
     const unsubscribe = onSnapshot(q, async (snapshot) => {
-      const docsData = snapshot.docs.map(docSnap => {
+      let docsData = snapshot.docs.map(docSnap => {
         const data = docSnap.data();
         return {
           id: docSnap.id,
@@ -61,9 +60,22 @@ export function Sidebar({ defaultCollapsed = false }: { defaultCollapsed?: boole
           tags: data.tags || [],
           isPinned: !!data.isPinned,
           isArchived: !!data.isArchived,
+          isStarred: !!data.isStarred,
+          isShared: !!data.isShared,
           updatedAt: data.updatedAt
         };
       });
+      
+      // Filter non-archived documents client-side
+      docsData = docsData.filter(d => !d.isArchived);
+      
+      // Sort client-side by updatedAt descending
+      docsData.sort((a, b) => {
+        const t1 = a.updatedAt?.toMillis ? a.updatedAt.toMillis() : (a.updatedAt?.seconds ? a.updatedAt.seconds * 1000 : 0);
+        const t2 = b.updatedAt?.toMillis ? b.updatedAt.toMillis() : (b.updatedAt?.seconds ? b.updatedAt.seconds * 1000 : 0);
+        return t2 - t1;
+      });
+      
       setDocuments(docsData);
       setIsLoading(false);
       
@@ -95,39 +107,32 @@ export function Sidebar({ defaultCollapsed = false }: { defaultCollapsed?: boole
   
   // 1. Search Functionality
   const handleOpenSearch = () => {
-    if (!isSemanticSearchEnabled()) {
-      alert('Local Semantic Search is disabled. Enable it from the Productivity Hub.');
-      return;
-    }
     setIsSearchModalOpen(true);
   };
 
   useEffect(() => {
-    let active = true;
-    const fetchSearch = async () => {
-      if (!searchQuery.trim()) {
-        setSearchResults([]);
-        return;
-      }
-      setIsSearching(true);
-      try {
-        const results = await searchOrama(searchQuery);
-        if (active) {
-          setSearchResults(results);
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        if (active) setIsSearching(false);
-      }
-    };
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
     
-    const timeoutId = setTimeout(fetchSearch, 200);
-    return () => {
-      active = false;
-      clearTimeout(timeoutId);
-    };
-  }, [searchQuery]);
+    setIsSearching(true);
+    const q = searchQuery.toLowerCase();
+    
+    const results = documents.filter(doc => 
+      doc.title.toLowerCase().includes(q) || 
+      (doc.content && doc.content.toLowerCase().includes(q))
+    ).map(doc => ({
+      id: doc.id,
+      title: doc.title,
+      type: doc.type,
+      snippet: doc.content?.substring(0, 100) || '',
+      score: 1
+    }));
+    
+    setSearchResults(results);
+    setIsSearching(false);
+  }, [searchQuery, documents]);
 
   // 2. User Profile Functionality
   const handleProfileClick = () => {
@@ -145,6 +150,8 @@ export function Sidebar({ defaultCollapsed = false }: { defaultCollapsed?: boole
         ownerId: user.uid,
         isPinned: false,
         isArchived: false,
+        isStarred: false,
+        isShared: false,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });

@@ -32,18 +32,26 @@ export function Dashboard() {
     if (!user) return;
     const q = query(
       collection(db, 'documents'),
-      where('ownerId', '==', user.uid),
-      orderBy('updatedAt', 'desc')
+      where('ownerId', '==', user.uid)
     );
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const docsData = snapshot.docs.map(d => ({
-        id: d.id,
-        ...d.data(),
-        content: d.data().content ? decryptData(d.data().content) : '',
-        date: d.data().updatedAt ? (typeof d.data().updatedAt.toDate === 'function' ? d.data().updatedAt.toDate() : new Date(d.data().updatedAt)) : new Date()
-      }));
+      let docsData = snapshot.docs.map(d => {
+        const data = d.data();
+        return {
+          id: d.id,
+          ...data,
+          content: data.content ? decryptData(data.content) : '',
+          date: data.updatedAt ? (typeof data.updatedAt.toDate === 'function' ? data.updatedAt.toDate() : new Date(data.updatedAt)) : new Date()
+        };
+      });
+      
+      // Sort client-side by date descending
+      docsData.sort((a, b) => b.date.getTime() - a.date.getTime());
+      
       setDocuments(docsData);
+    }, (error) => {
+      console.error("Dashboard failed to listen to documents:", error);
     });
 
     return () => unsubscribe();
@@ -122,6 +130,10 @@ export function Dashboard() {
               title: file.name.replace('.pdf', ''),
               content: encryptData(text),
               ownerId: user?.uid,
+              isPinned: false,
+              isArchived: false,
+              isStarred: false,
+              isShared: false,
               createdAt: serverTimestamp(),
               updatedAt: serverTimestamp()
            });
@@ -269,19 +281,6 @@ export function Dashboard() {
               ))}
             </div>
           </section>
-
-          {/* AdSense Placeholder Area */}
-          {!isPremium && (
-             <div className="mt-16 bg-gray-50 border border-gray-200 rounded-xl overflow-hidden flex flex-col items-center justify-center py-6 min-h-[120px] mb-8">
-                <span className="text-sm font-bold text-gray-400 tracking-widest uppercase mb-1">Advertisement</span>
-                <span className="text-xs text-gray-400 mb-3">Support DocCraft by disabling your ad blocker or upgrading</span>
-                {/* Real AdSense tag would go here, e.g. <ins className="adsbygoogle" ... /> */}
-                <div className="w-[728px] max-w-full h-[90px] bg-gray-200/50 flex items-center justify-center text-gray-300 border border-dashed border-gray-300 rounded text-sm group relative">
-                   Ad Unit Display Here
-                   <a href="/preferences" className="absolute top-2 right-2 text-[10px] bg-white px-2 py-1 rounded shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:text-dc-gold">Remove Ads</a>
-                </div>
-             </div>
-          )}
         </div>
       </main>
 

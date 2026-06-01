@@ -29,7 +29,7 @@ export function PreferencesPage() {
       if (!user) return;
       setIsExporting(true);
       try {
-        const q = query(collection(db, 'documents'), where('userId', '==', user.uid));
+        const q = query(collection(db, 'documents'), where('ownerId', '==', user.uid));
         const snapshot = await getDocs(q);
         const zip = new JSZip();
         
@@ -54,7 +54,7 @@ export function PreferencesPage() {
       if (!user) return;
       setIsExporting(true);
       try {
-        const q = query(collection(db, 'documents'), where('userId', '==', user.uid));
+        const q = query(collection(db, 'documents'), where('ownerId', '==', user.uid));
         const snapshot = await getDocs(q);
         const allData = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
 
@@ -71,7 +71,7 @@ export function PreferencesPage() {
       if (!user) return;
       setIsExporting(true);
       try {
-        const q = query(collection(db, 'documents'), where('userId', '==', user.uid));
+        const q = query(collection(db, 'documents'), where('ownerId', '==', user.uid));
         const snapshot = await getDocs(q);
         const doc = new jsPDF();
         let yOffset = 20;

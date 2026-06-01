@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from "express";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
@@ -15,6 +16,64 @@ async function startServer() {
   const PORT = 3000;
 
   app.use(express.json());
+
+  // Load Firebase Config to interact with Firestore REST API
+  let firebaseConfig: any = null;
+  try {
+    const raw = fs.readFileSync(path.join(process.cwd(), 'firebase-applet-config.json'), 'utf-8');
+    firebaseConfig = JSON.parse(raw);
+  } catch (e) {
+    console.warn("Could not read firebase-applet-config.json in server.ts:", e);
+  }
+
+  app.get("/api/attachments/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      if (!firebaseConfig) {
+        throw new Error("Firebase configuration not found on server.");
+      }
+      const projectId = firebaseConfig.projectId;
+      const dbId = firebaseConfig.firestoreDatabaseId || "(default)";
+      
+      // Query Firestore REST API
+      const rootUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/${dbId}/documents/doc_attachments/${id}`;
+      const docResponse = await fetch(rootUrl);
+      
+      if (!docResponse.ok) {
+         return res.status(docResponse.status).send(`Failed to retrieve attachment from database: ${docResponse.statusText}`);
+      }
+      
+      const docData: any = await docResponse.json();
+      const fields = docData.fields;
+      if (!fields || !fields.data || !fields.data.stringValue) {
+         return res.status(404).send("Document Attachment data could not be parsed.");
+      }
+      
+      const base64Str = fields.data.stringValue;
+      const filename = fields.filename?.stringValue || "attachment";
+      
+      const commaIndex = base64Str.indexOf(',');
+      let contentType = "application/octet-stream";
+      let dataPayload = base64Str;
+      
+      if (commaIndex !== -1) {
+         const meta = base64Str.substring(0, commaIndex);
+         const match = meta.match(/data:([^;]+);base64/);
+         if (match) {
+            contentType = match[1];
+         }
+         dataPayload = base64Str.substring(commaIndex + 1);
+      }
+      
+      const buffer = Buffer.from(dataPayload, 'base64');
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
+      res.send(buffer);
+    } catch (err: any) {
+      console.error("[Attachment Serv] error:", err);
+      res.status(500).send(`Server error: ${err.message}`);
+    }
+  });
 
   app.post("/api/support", async (req, res) => {
     try {
@@ -236,7 +295,7 @@ async function startServer() {
 
   app.post("/api/ai/generate", async (req, res) => {
     try {
-      const { prompt, customApiKey, isComplex } = req.body;
+      const { prompt, customApiKey, isComplex, customModel } = req.body;
       const systemKey = process.env.GEMINI_API_KEY || process.env.GROQ_API_KEY || process.env.OPENROUTER_API_KEY;
       const apiKey = customApiKey || systemKey;
 
@@ -251,7 +310,7 @@ async function startServer() {
               method: "POST",
               headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
               body: JSON.stringify({
-                  model: "llama-3.3-70b-versatile",
+                  model: customModel || "llama-3.3-70b-versatile",
                   messages: [{ role: "user", content: prompt }]
               })
           });
@@ -262,7 +321,7 @@ async function startServer() {
               method: "POST",
               headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
               body: JSON.stringify({
-                  model: isComplex ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash",
+                  model: customModel || "qwen/qwen-2.5-72b-instruct",
                   messages: [{ role: "user", content: prompt }]
               })
           });
@@ -273,7 +332,7 @@ async function startServer() {
               method: "POST",
               headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
               body: JSON.stringify({
-                  model: "Meta-Llama-3.3-70B-Instruct",
+                  model: customModel || "Meta-Llama-3.3-70B-Instruct",
                   messages: [{ role: "user", content: prompt }]
               })
           });
@@ -283,7 +342,7 @@ async function startServer() {
           // Gemini
           const ai = new GoogleGenAI({ apiKey: apiKey });
           const result = await ai.models.generateContent({
-              model: isComplex ? 'gemini-2.5-pro' : 'gemini-2.5-flash',
+              model: customModel || (isComplex ? 'gemini-3.1-pro-preview' : 'gemini-3.5-flash'),
               contents: prompt
           });
           responseText = result.text || "";
@@ -298,7 +357,7 @@ async function startServer() {
 
   app.post("/api/ai/process-transcript", async (req, res) => {
     try {
-      const { text, customApiKey } = req.body;
+      const { text, customApiKey, customModel } = req.body;
       const systemKey = process.env.GEMINI_API_KEY || process.env.GROQ_API_KEY || process.env.OPENROUTER_API_KEY || process.env.SAMBANOVA_API_KEY;
       const apiKey = customApiKey || systemKey;
 
@@ -320,7 +379,7 @@ Please do the following:
 
       if (apiKey.startsWith("gsk_")) {
           // Groq
-          console.log("[AI] Using Groq (llama-3.3-70b-versatile)");
+          console.log("[AI] Using Groq (" + (customModel || "llama-3.3-70b-versatile") + ")");
           const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
               method: "POST",
               headers: {
@@ -328,7 +387,7 @@ Please do the following:
                   "Content-Type": "application/json"
               },
               body: JSON.stringify({
-                  model: "llama-3.3-70b-versatile",
+                  model: customModel || "llama-3.3-70b-versatile",
                   messages: [
                       { role: "system", content: systemInstruction },
                       { role: "user", content: "Transcript:\n" + text }
@@ -339,7 +398,7 @@ Please do the following:
           correctedText = data.choices[0]?.message?.content || "";
       } else if (apiKey.startsWith("sk-or-")) {
           // OpenRouter
-          console.log("[AI] Using OpenRouter (google/gemini-2.5-flash)");
+          console.log("[AI] Using OpenRouter (" + (customModel || "qwen/qwen-2.5-72b-instruct") + ")");
           const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
               method: "POST",
               headers: {
@@ -347,7 +406,7 @@ Please do the following:
                   "Content-Type": "application/json"
               },
               body: JSON.stringify({
-                  model: "google/gemini-2.5-flash",
+                  model: customModel || "qwen/qwen-2.5-72b-instruct",
                   messages: [
                       { role: "system", content: systemInstruction },
                       { role: "user", content: "Transcript:\n" + text }
@@ -366,7 +425,7 @@ Please do the following:
                   "Content-Type": "application/json"
               },
               body: JSON.stringify({
-                  model: "Meta-Llama-3.3-70B-Instruct",
+                  model: customModel || "Meta-Llama-3.3-70B-Instruct",
                   messages: [
                       { role: "system", content: systemInstruction },
                       { role: "user", content: "Transcript:\n" + text }
@@ -380,7 +439,7 @@ Please do the following:
           console.log("[AI] Using Gemini Default");
           const ai = new GoogleGenAI({ apiKey: apiKey });
           const result = await ai.models.generateContent({
-              model: 'gemini-2.5-flash',
+              model: customModel || 'gemini-3.5-flash',
               contents: text,
               config: {
                   systemInstruction: systemInstruction
@@ -468,7 +527,7 @@ Requirements:
           console.log("[AI Enhance] Using Gemini Default");
           const ai = new GoogleGenAI({ apiKey: apiKey });
           const result = await ai.models.generateContent({
-              model: 'gemini-2.5-flash',
+              model: 'gemini-3.5-flash',
               contents: text,
               config: { systemInstruction: systemInstruction }
           });

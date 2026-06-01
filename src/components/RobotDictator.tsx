@@ -1,42 +1,43 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Editor } from '@tiptap/react';
-import { Mic, Loader2, StopCircle, AlertCircle, Settings } from 'lucide-react';
+import { Mic, Loader2, StopCircle, AlertCircle, Settings, X, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { encryptData, decryptData } from '../lib/encryption';
 
 interface RobotDictatorProps {
   editor: Editor | null;
+  onOpenVoiceDoc?: () => void;
+  localEngine?: any;
+  useLocalModel?: boolean;
 }
 
 type RobotStatus = 'idle' | 'initializing' | 'recording' | 'processing' | 'error';
 
-export function RobotDictator({ editor }: RobotDictatorProps) {
+export function RobotDictator({ editor, onOpenVoiceDoc, localEngine, useLocalModel }: RobotDictatorProps) {
   const [status, setStatus] = useState<RobotStatus>('idle');
   const [liveTranscript, setLiveTranscript] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [showSettings, setShowSettings] = useState(false);
-  const [speechKey, setSpeechKey] = useState("");
   const [reasoningKey, setReasoningKey] = useState("");
+  const [customModel, setCustomModel] = useState("qwen-2.5-1.5b-instruct");
   
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<BlobPart[]>([]);
-  const streamRef = useRef<MediaStream | null>(null);
+  const recognitionRef = useRef<any>(null);
+  const stopCallbackRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
-    const storedSpeech = localStorage.getItem('dictator_speech_key');
-    if (storedSpeech) {
-      try { setSpeechKey(decryptData(storedSpeech)); } catch (e) { setSpeechKey(storedSpeech); }
-    }
     const storedReason = localStorage.getItem('dictator_reason_key');
     if (storedReason) {
       try { setReasoningKey(decryptData(storedReason)); } catch (e) { setReasoningKey(storedReason); }
     }
+    const storedModel = localStorage.getItem('dictator_custom_model');
+    if (storedModel) {
+      setCustomModel(storedModel);
+    }
   }, []);
 
-  const handleSpeechKeyChange = (val: string) => {
-    setSpeechKey(val);
-    if (val) localStorage.setItem('dictator_speech_key', encryptData(val));
-    else localStorage.removeItem('dictator_speech_key');
+  const handleCustomModelChange = (val: string) => {
+    setCustomModel(val || "qwen-2.5-1.5b-instruct");
+    localStorage.setItem('dictator_custom_model', val);
   };
 
   const handleReasoningKeyChange = (val: string) => {
@@ -53,122 +54,123 @@ export function RobotDictator({ editor }: RobotDictatorProps) {
         return;
       }
       
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+      if (!SpeechRecognition) {
+         setErrorMessage("Web Speech API is not supported in this browser. Please use Chrome or Edge.");
+         setStatus('error');
+         return;
+      }
+
       setStatus('initializing');
       setErrorMessage("");
       
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        setErrorMessage("Microphone access is not supported or blocked by browser settings.");
-        setStatus('error');
-        return;
-      }
-      let stream: MediaStream;
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      } catch (err: any) {
-        setErrorMessage(err.message === 'Permission denied' ? "Microphone access denied. Please allow in browser." : "Error accessing microphone.");
-        setStatus('error');
-        return;
-      }
-      streamRef.current = stream;
-
-      audioChunksRef.current = [];
-      const mediaRecorder = new MediaRecorder(stream);
+      const recon = new SpeechRecognition();
+      recon.continuous = true;
+      recon.interimResults = true;
+      recon.lang = 'en-US';
       
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          audioChunksRef.current.push(e.data);
+      let finalCaptured = "";
+      
+      recon.onstart = () => {
+        setStatus('recording');
+        setLiveTranscript("Listening... (Speak now)");
+      };
+      
+      recon.onerror = (e: any) => {
+        console.error("Native Speech Recognition Error", e);
+        setStatus('error');
+        if (e.error === 'not-allowed') {
+          setErrorMessage("Microphone permission denied inside the preview pane’s iframe. Click 'Open in New Tab' ↗️ in the top right to enable microphone!");
+        } else {
+          setErrorMessage(`Speech recognition error: ${e.error}`);
         }
       };
-
-      mediaRecorder.onstop = async () => {
-        try {
-          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-          if (audioBlob.size === 0) {
-             setStatus('idle');
-             setLiveTranscript("");
-             return;
-          }
-          
-          setLiveTranscript("Uploading dictation...");
-          
-          const headers: Record<string, string> = { 'Content-Type': 'application/octet-stream' };
-          if (speechKey) headers['x-custom-assembly-key'] = speechKey;
-
-          const uploadRes = await fetch('/api/assembly/transcribe', {
-            method: 'POST',
-            headers,
-            body: audioBlob
-          });
-          
-          if (!uploadRes.ok) {
-            const errText = await uploadRes.text();
-            throw new Error(`Failed to upload: ${errText}`);
-          }
-          
-          const { transcriptId } = await uploadRes.json();
-          if (!transcriptId) {
-             throw new Error("No transcript ID returned from server.");
-          }
-
-          setLiveTranscript("Transcribing audio...");
-          
-          let transcriptText = "";
-          while (true) {
-             const pollHeaders: Record<string, string> = {};
-             if (speechKey) pollHeaders['x-custom-assembly-key'] = speechKey;
-             
-             const pollRes = await fetch(`/api/assembly/poll/${transcriptId}`, { headers: pollHeaders });
-             const pollData = await pollRes.json();
-             
-             if (!pollRes.ok) {
-                 throw new Error(pollData.error || "Failed to poll transcription status.");
-             }
-             
-             if (pollData.status === 'completed') {
-                transcriptText = pollData.text;
-                break;
-             } else if (pollData.status === 'error') {
-                throw new Error("Transcription failed: " + pollData.error);
-             }
-             // Wait before polling again
-             await new Promise(r => setTimeout(r, 2000));
-          }
-          
-          if (!transcriptText || transcriptText.trim() === '') {
-             setStatus('idle');
-             setLiveTranscript("");
-             return;
-          }
-          
-          setLiveTranscript("Polishing and arranging facts...");
-          
-          // Pass it to Gemini
-          const aiRes = await fetch('/api/ai/process-transcript', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: transcriptText, customApiKey: reasoningKey })
-          });
-          
-          const aiData = await aiRes.json();
-          if (aiData.correctedText) {
-            editor?.chain().focus('end').insertContent(aiData.correctedText).run();
+      
+      recon.onend = () => {
+        // finished
+      };
+      
+      recon.onresult = (evt: any) => {
+        let interim = "";
+        for (let i = evt.resultIndex; i < evt.results.length; ++i) {
+          if (evt.results[i].isFinal) {
+            finalCaptured += evt.results[i][0].transcript + " ";
           } else {
-            editor?.chain().focus('end').insertContent(transcriptText).run();
+            interim += evt.results[i][0].transcript;
           }
-          
-          setStatus('idle');
-          setLiveTranscript("");
-        } catch (err: any) {
-          setErrorMessage(err.message || "Failed to process audio");
-          setStatus('error');
         }
+        setLiveTranscript((finalCaptured + interim).trim() || "Listening...");
       };
+      
+      recognitionRef.current = recon;
+      recon.start();
+      
+      stopCallbackRef.current = async () => {
+         try {
+           recon.stop();
+         } catch(e) {}
+         
+         const transcriptText = finalCaptured.trim();
+         if (!transcriptText) {
+            setStatus('idle');
+            setLiveTranscript("");
+            return;
+         }
+         
+         setStatus('processing');
+         
+         // 1. If Local WebLLM Qwen 1.5B model is available, use it directly for 100% free offline execution!
+         if (useLocalModel && localEngine) {
+            setLiveTranscript("Polishing transcript offline with Qwen...");
+            try {
+               const response = await localEngine.chat.completions.create({
+                 messages: [
+                   { 
+                     role: 'user', 
+                     content: `As a professional editor assistance tool, refine and format this raw transcribed text beautifully with coherent structure, paragraphs, bullet points, and key points highlighted in bold. Respond strictly with raw structured HTML (no Markdown code block format wraps like \`\`\`html):\n\n"${transcriptText}"` 
+                   }
+                 ],
+                 max_tokens: 1500
+               });
+               const refined = response.choices[0]?.message?.content || transcriptText;
+               editor?.chain().focus('end').insertContent(refined).run();
+               setStatus('idle');
+               setLiveTranscript("");
+               return;
+            } catch (err: any) {
+               console.error("Local polishing failed, resorting to backup server processor:", err);
+            }
+         }
 
-      mediaRecorder.start();
-      mediaRecorderRef.current = mediaRecorder;
-
-      setStatus('recording');
-      setLiveTranscript("Listening... (Speak now)");
+         // 2. Fall back to cloud API / Server processor
+         setLiveTranscript("Polishing text with AI Document Brain...");
+         try {
+            const aiRes = await fetch('/api/ai/process-transcript', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                text: transcriptText, 
+                customApiKey: reasoningKey,
+                customModel: customModel
+              })
+            });
+            
+            const aiData = await aiRes.json();
+            if (aiData.correctedText) {
+              editor?.chain().focus('end').insertContent(aiData.correctedText).run();
+            } else {
+              editor?.chain().focus('end').insertContent(transcriptText).run();
+            }
+            setStatus('idle');
+            setLiveTranscript("");
+         } catch(e: any) {
+            console.warn("AI processing error, pasting raw transcript directly:", e);
+            editor?.chain().focus('end').insertContent(transcriptText).run();
+            setStatus('idle');
+            setLiveTranscript("");
+         }
+      };
 
     } catch (e: any) {
       console.error(e);
@@ -178,16 +180,13 @@ export function RobotDictator({ editor }: RobotDictatorProps) {
   };
 
   const stopRecording = async () => {
-    setStatus('processing');
-    setLiveTranscript("Uploading audio...");
-
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop();
+    if (stopCallbackRef.current) {
+      await stopCallbackRef.current();
+      stopCallbackRef.current = null;
+      return;
     }
-    
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(t => t.stop());
-    }
+    setStatus('idle');
+    setLiveTranscript("");
   };
   
   const handleClick = async (e: React.MouseEvent) => {
@@ -201,9 +200,9 @@ export function RobotDictator({ editor }: RobotDictatorProps) {
          return;
       }
       if (status === 'idle') {
-         await startRecording();
+          await startRecording();
       } else if (status === 'recording' || status === 'initializing') {
-         await stopRecording();
+          await stopRecording();
       }
     } catch (err: any) {
       console.error("Click handler error:", err);
@@ -219,8 +218,8 @@ export function RobotDictator({ editor }: RobotDictatorProps) {
     <div className="fixed bottom-8 right-8 z-[999] flex flex-col items-center gap-3">
       {/* Live transcript bubble */}
       {(status !== 'idle' && status !== 'error' && liveTranscript) && (
-        <div className="bg-white/90 backdrop-blur border border-dc-gold/30 shadow-xl rounded-2xl p-4 w-64 animate-in fade-in slide-in-from-bottom flex flex-col gap-2">
-           <div className="flex items-center gap-2 mb-1 text-dc-gold">
+        <div className="bg-white/90 backdrop-blur border border-indigo-200/50 shadow-xl rounded-2xl p-4 w-64 animate-in fade-in slide-in-from-bottom flex flex-col gap-2">
+           <div className="flex items-center gap-2 mb-1 text-indigo-600">
              {isProcessing ? <Loader2 className="w-4 h-4 animate-spin"/> : <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />}
              <span className="text-[10px] uppercase font-bold tracking-wider">
                 {isProcessing ? 'AI Formatting...' : status === 'initializing' ? 'Connecting...' : 'Live Dictation'}
@@ -248,39 +247,86 @@ export function RobotDictator({ editor }: RobotDictatorProps) {
 
       {/* Robot Head */}
       <div className="relative">
+        {/* Launch Voice Doc Creator directly next to the gear settings button */}
+        <button 
+           onClick={(e) => { e.stopPropagation(); onOpenVoiceDoc?.(); }}
+           className="absolute -top-10 -left-10 z-50 p-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-full shadow-md hover:scale-110 active:scale-95 transition-all flex items-center justify-center border border-white focus:outline-none cursor-pointer"
+           title="Launch Voice Document Creator (Research & Write)"
+        >
+           <Sparkles className="w-4 h-4 text-white animate-pulse" />
+        </button>
+
         <button 
            onClick={(e) => { e.stopPropagation(); setShowSettings(!showSettings); }}
-           className="absolute -top-10 right-0 z-50 p-2 bg-white/80 backdrop-blur border border-gray-200 rounded-full shadow-sm hover:bg-gray-50 transition-colors"
+           className="absolute -top-10 right-0 z-50 p-2 bg-white/80 backdrop-blur border border-gray-200 rounded-full shadow-sm hover:bg-gray-50 transition-colors focus:outline-none cursor-pointer"
         >
            <Settings className="w-4 h-4 text-gray-500" />
         </button>
 
         {showSettings && (
            <div className="absolute bottom-[110%] right-[-10px] w-72 bg-white shadow-2xl border border-gray-100 rounded-xl p-4 z-[9999] animate-in fade-in slide-in-from-bottom flex flex-col gap-3">
-              <div className="text-xs font-bold text-gray-800 uppercase tracking-wider mb-1">Robot API Settings</div>
+              {/* "Cut" (Close) Button */}
+              <button 
+                 onClick={() => setShowSettings(false)}
+                 className="absolute top-3.5 right-3.5 p-1 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors focus:outline-none cursor-pointer"
+                 title="Cut Settings"
+              >
+                 <X className="w-4 h-4" />
+              </button>
+
+              <div className="text-xs font-bold text-gray-800 uppercase tracking-wider mb-1 pr-6 flex items-center gap-1.5 border-b border-gray-100 pb-1.5">
+                 <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span>
+                 Robot API Settings (BYOK)
+              </div>
+
               <div className="space-y-1">
-                 <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">Speech-to-Text API Key</label>
+                 <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">Speech-to-Text Engine</label>
                  <input 
-                    type="password"
-                    placeholder="AssemblyAI Key (Optional)"
-                    value={speechKey}
-                    onChange={(e) => handleSpeechKeyChange(e.target.value)}
+                    type="text"
+                    placeholder="Local Browser Web Speech (Always Free & Offline)"
+                    value="Web Speech API (Free & Offline Active)"
+                    readOnly={true}
+                    disabled={true}
                     autoComplete="off"
-                    className="w-full text-xs border border-gray-200 rounded p-1.5 focus:border-blue-400 outline-none bg-gray-50/50"
+                    className="w-full text-xs border border-gray-200 rounded p-1.5 focus:border-blue-400 outline-none bg-gray-50/50 text-gray-500 font-medium"
                  />
               </div>
+
               <div className="space-y-1">
                  <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">AI Reasoning API Key</label>
                  <input 
                     type="password"
-                    placeholder="Gemini Key (Optional)"
+                    placeholder="custom OpenAI, Groq, OpenRouter or Gemini Key (Optional)"
                     value={reasoningKey}
                     onChange={(e) => handleReasoningKeyChange(e.target.value)}
                     autoComplete="off"
                     className="w-full text-xs border border-gray-200 rounded p-1.5 focus:border-blue-400 outline-none bg-gray-50/50"
                  />
-                 <p className="text-[9px] text-gray-400 mt-1 leading-tight">Provide keys here to run fully locally, bypassing default endpoints.</p>
               </div>
+
+              <div className="space-y-1">
+                 <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">AI Engine/Model (e.g. qwen-2.5-72b)</label>
+                 <input 
+                    type="text"
+                    placeholder="qwen-2.5-72b or any custom model"
+                    value={customModel}
+                    onChange={(e) => handleCustomModelChange(e.target.value)}
+                    autoComplete="off"
+                    className="w-full text-xs border border-gray-200 rounded p-1.5 focus:border-blue-400 outline-none bg-gray-50/50"
+                 />
+              </div>
+
+              {/* Quick Trigger Button inside drawer */}
+              <button 
+                 onClick={() => {
+                   setShowSettings(false);
+                   onOpenVoiceDoc?.();
+                 }}
+                 className="mt-1.5 w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold py-2 px-3 rounded-lg text-xs transition-colors focus:outline-none flex items-center justify-center gap-1.5 border border-indigo-200 cursor-pointer"
+              >
+                 <Mic className="w-3.5 h-3.5 text-indigo-500"/>
+                 Voice Document Creator (Expert)
+              </button>
            </div>
         )}
 

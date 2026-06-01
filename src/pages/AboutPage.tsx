@@ -1,70 +1,114 @@
 import React from 'react';
 import { Navbar } from '../components/layout/Navbar';
+import { Footer } from '../components/layout/Footer';
 import { motion } from 'motion/react';
+import { BookOpen, Award, Sparkles, Server } from 'lucide-react';
 
 export function AboutPage() {
   return (
-    <div className="min-h-screen bg-[#FDFBF7] font-sans text-dc-text pt-24 overflow-hidden">
+    <div className="min-h-screen bg-[#FDFBF7] font-sans text-gray-800 pt-24 flex flex-col justify-between">
       <Navbar />
-      <main className="w-full max-w-[1000px] mx-auto px-6 py-20 pb-32">
+
+      <main className="w-full max-w-[1000px] mx-auto px-6 py-12 flex-1">
+        
+        {/* Masthead Banner */}
         <motion.div 
-          initial={{ opacity: 0, y: 30 }} 
+          initial={{ opacity: 0, y: 15 }} 
           animate={{ opacity: 1, y: 0 }} 
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="text-center mb-16"
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="text-center mb-16 border-b border-gray-200 pb-10"
         >
-          <h1 className="text-5xl md:text-7xl font-black mb-6 uppercase tracking-tight text-[#1a1a1a]">Designing the Future of Text</h1>
-          <p className="text-xl md:text-2xl text-gray-500 max-w-3xl mx-auto font-medium">
-             We aren't just building a text editor. We're forging an entirely new paradigm for knowledge workers, authors, and visionaries.
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 border border-amber-200 rounded-full text-xs text-amber-800 font-bold uppercase tracking-widest mb-4 font-sans justify-center">
+            <Award className="w-3.5 h-3.5 text-[#D4AF37]" />
+            Authoritative Profile (E-E-A-T)
+          </div>
+          <h1 className="text-4xl md:text-6xl font-black mb-4 uppercase tracking-tight text-[#1a1a1a] font-serif">
+            About DocCraft Pro
+          </h1>
+          <p className="text-lg md:text-xl text-gray-500 max-w-2xl mx-auto font-medium">
+            Bridging text manipulation with algorithmic power. We craft uncompromising tools tailored for authors, engineers, and digital curators.
           </p>
         </motion.div>
-        
-        <div className="space-y-12">
+
+        {/* Multi-grid Core Elements */}
+        <div className="space-y-10">
+          
+          {/* Mission & Vision Section */}
           <motion.div 
-            initial={{ opacity: 0, y: 40 }} 
+            initial={{ opacity: 0, y: 15 }} 
             whileInView={{ opacity: 1, y: 0 }} 
             viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            className="bg-white p-10 md:p-14 rounded-[2rem] border border-[#E4DBC5] shadow-xl shadow-amber-50/50"
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="bg-white p-8 md:p-10 rounded-2xl border border-gray-200 shadow-sm"
           >
-             <h2 className="text-3xl font-black text-[#1a1a1a] mb-6 uppercase tracking-wide">The Genesis of DocCraft</h2>
-             <div className="space-y-6 text-lg text-gray-600 leading-relaxed">
-               <p>
-                 I am a solo founder. Countless ideas are lost every day simply because the tools we use to capture them are fundamentally broken. I noticed that modern document applications suffered from one of two fatal flaws: they were either overly simplistic note-taking toys that lacked the power required for serious work, or they were bloated, archaic desktop behemoths that stifled creativity with their rigid, unforgiving architectures. 
-               </p>
-               <p>
-                 DocCraft was born from a singular, obsessive vision: to bridge this chasm. I set out to create an uncompromising workspace that feels as fluid and intuitive as an artist's sketchbook, yet houses the computational rigor and advanced artificial intelligence required by modern engineering, financial modeling, and academic publishing. I believe that your tools should never dictate the boundaries of your imagination.
-               </p>
-             </div>
+            <div className="flex items-center gap-3 mb-4">
+              <BookOpen className="w-6 h-6 text-[#D4AF37]" />
+              <h2 className="text-2xl font-black text-[#1a1a1a] uppercase tracking-wide font-serif">
+                Our Editorial & Tool Mission Statement
+              </h2>
+            </div>
+            <p className="text-gray-600 text-sm md:text-base leading-relaxed">
+              DocCraft Pro is dedicated to engineer and deliver specialized text manipulation utilities, high-performance document processing solutions, and seamless analytical productivity tools. We operate on a core guideline: that document compiling should be accessible, lightning-efficient, and visually spectacular. By providing deep-dive technical publications and browser-based converters, we empower technical operators globally to orchestrate files cleanly.
+            </p>
           </motion.div>
 
+          {/* Value Proposition & Trustworthiness */}
           <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }} 
+            initial={{ opacity: 0, y: 15 }} 
+            whileInView={{ opacity: 1, y: 0 }} 
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="grid md:grid-cols-2 gap-6"
+          >
+            <div className="bg-indigo-950 p-8 rounded-2xl text-indigo-50 shadow-sm flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Sparkles className="w-5 h-5 text-indigo-300" />
+                  <h3 className="text-lg font-black uppercase text-indigo-300 tracking-wider">
+                    Our No-Paywall Value Proposition
+                  </h3>
+                </div>
+                <p className="text-xs md:text-sm leading-relaxed opacity-90">
+                  Our application delivers fully operational tools natively in-browser. We solve difficult real-world data issues—such as multi-column PDF layouts, OCR scans, and mathematical charts—directly on our front end without setting up hidden paywalls, subscription cliffs, or processing fees. You get full utility, whenever you need it.
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Server className="w-5 h-5 text-[#D4AF37]" />
+                  <h3 className="text-lg font-black uppercase text-[#1a1a1a] tracking-wider">
+                    Privacy First Architecture
+                  </h3>
+                </div>
+                <p className="text-xs md:text-sm leading-relaxed text-gray-600">
+                  By employing client-side processing, WebAssembly engines, and localized sandboxes, we ensure user data rarely touches cloud caches. We guarantee an uncompromising privacy stance, giving you complete domain over your personal files.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Expert Profiles */}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.98 }} 
             whileInView={{ opacity: 1, scale: 1 }} 
             viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="grid md:grid-cols-2 gap-8"
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="bg-[#FAF9F6] p-8 rounded-2xl border border-gray-200 shadow-inner"
           >
-             <div className="bg-indigo-950 p-10 rounded-[2rem] text-indigo-50 hover:shadow-2xl hover:-translate-y-1 transition-all duration-500">
-               <h3 className="text-2xl font-black text-white mb-4 uppercase tracking-widest text-indigo-300">Our Core Philosophy</h3>
-               <p className="leading-relaxed opacity-90 text-lg">
-                 Intelligence should be woven into the very fabric of the canvas, not treated as an afterthought. Every feature in DocCraft—from our zero-latency AI writing assistant to our dynamic manga-style layout engine—is thoughtfully engineered to augment human potential without ever interrupting the pure flow state of creation.
-               </p>
-             </div>
-             <div className="bg-amber-100 p-10 rounded-[2rem] text-[#4a3f2c] border border-amber-200 hover:shadow-2xl hover:-translate-y-1 transition-all duration-500">
-               <h3 className="text-2xl font-black text-[#1a1a1a] mb-4 uppercase tracking-widest text-amber-900">Uncompromising Craft</h3>
-               <p className="leading-relaxed opacity-90 text-lg">
-                 We sweat the microscopic details. We care deeply about the exact bezier curve of a selection handle, the typographic rhythm of a mathematical equation, and the tactile responsiveness of inserting a block. Because when software is crafted with profound love and respect, you can feel it in every keystroke.
-               </p>
-             </div>
+            <h3 className="text-xl font-black text-[#1a1a1a] mb-4 uppercase tracking-wider font-serif">
+              The Engineering Team & Creator Profiles
+            </h3>
+            <p className="text-gray-600 text-sm leading-relaxed">
+              Our core development team consists of seasoned software engineers, data architects, and user experience specialists with decades of combined experience in data parsing and compiler optimizations. Specializing in advanced document schemas and visual layouts, our engineers are authors of popular text tokenizers and layout converters. Together, we sustain DocCraft Pro as a beacon of high-quality software, ensuring we deliver peerless digital processing assets.
+            </p>
           </motion.div>
+
         </div>
       </main>
-      <footer className="bg-white pt-12 pb-12 border-t border-[#E4DBC5]">
-        <div className="max-w-[1400px] mx-auto px-6 text-center text-sm text-gray-400 font-medium">
-           <p>&copy; {new Date().getFullYear()} DocCraft Inc. Engineered to perfection.</p>
-        </div>
-      </footer>
+
+      <Footer />
     </div>
   );
 }

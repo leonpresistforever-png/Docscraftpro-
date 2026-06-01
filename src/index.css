@@ -35,6 +35,13 @@
     to { transform: translateX(calc(-50% - 2rem)); }
   }
 
+  /* Golden/Rainbow rotating continuous snake ring container */
+  --animate-snake-rotate: snake-rotate 2.5s linear infinite;
+  @keyframes snake-rotate {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+
   /* RGB Watery Glossy Waves */
   --animate-rgb-wave: rgb-wave 4s ease infinite;
   @keyframes rgb-wave {

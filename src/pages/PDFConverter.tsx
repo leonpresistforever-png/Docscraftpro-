@@ -28,6 +28,21 @@ export function PDFConverter() {
       // But let's actually just prompt the user that we are using Gemini.
       const prompt = `Translate the attached document content to ${targetLang}. Note: as a demo, just generate a rich professional 3 paragraph placeholder in ${targetLang} about artificial intelligence replacing documents.`;
       const res = await askGeminiProComplex(prompt);
+      if (res && (res.startsWith("Error:") || res.includes('"error":'))) {
+        let displayError = res;
+        try {
+          const rawString = res.replace(/^Error:\s*/, '').trim();
+          if (rawString.startsWith('{')) {
+            const parsed = JSON.parse(rawString);
+            if (parsed.error && parsed.error.message) {
+              displayError = parsed.error.message;
+            } else if (parsed.message) {
+              displayError = parsed.message;
+            }
+          }
+        } catch(e) {}
+        throw new Error(displayError.replace(/^Error:\s*/, ""));
+      }
       setResultText(res || "");
     } catch (e: any) {
       alert("Translation failed: " + e.message);

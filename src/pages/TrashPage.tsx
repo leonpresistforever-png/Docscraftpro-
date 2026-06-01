@@ -27,21 +27,23 @@ export function TrashPage() {
     
     setIsLoading(true);
     
+    // Query safely by ownerId only to bypass composite index constraints
     const q = query(
       collection(db, 'documents'),
-      where('ownerId', '==', user.uid),
-      where('isArchived', '==', true),
-      orderBy('updatedAt', 'desc')
+      where('ownerId', '==', user.uid)
     );
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const now = new Date();
       const fifteenDaysMs = 15 * 24 * 60 * 60 * 1000;
       
-      const docsData: Document[] = [];
+      let docsData: Document[] = [];
+      const docsToDelete: string[] = [];
       
       snapshot.docs.forEach(docSnap => {
         const data = docSnap.data();
+        if (!data.isArchived) return; // Only process archived documents
+        
         let docDate = new Date();
         if (data.updatedAt) {
            docDate = typeof data.updatedAt.toDate === 'function' ? data.updatedAt.toDate() : new Date(data.updatedAt);
@@ -58,6 +60,13 @@ export function TrashPage() {
              updatedAt: data.updatedAt
            });
         }
+      });
+      
+      // Sort client-side by updatedAt descending
+      docsData.sort((a, b) => {
+        const t1 = a.updatedAt?.toMillis ? a.updatedAt.toMillis() : (a.updatedAt?.seconds ? a.updatedAt.seconds * 1000 : 0);
+        const t2 = b.updatedAt?.toMillis ? b.updatedAt.toMillis() : (b.updatedAt?.seconds ? b.updatedAt.seconds * 1000 : 0);
+        return t2 - t1;
       });
       
       setDocuments(docsData);

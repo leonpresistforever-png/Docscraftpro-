@@ -7,7 +7,7 @@ interface PremiumContextProps {
   isPremium: boolean;
   sheetsUsage: number;
   modelsUsage: number;
-  handleAction: (actionType: 'sheets' | 'models' | 'plugins', callback: () => void) => void;
+  handleAction: (actionType: 'sheets' | 'models', callback: () => void) => void;
   showAdModal: boolean;
   setShowAdModal: (show: boolean) => void;
   adActionCallback: (() => void) | null;
@@ -131,16 +131,7 @@ export function PremiumProvider({ children }: { children: React.ReactNode }) {
     return () => clearInterval(interval);
   }, [showAdModal, adWatchTimer, adActionCallback]);
 
-  const handleAction = (actionType: 'sheets' | 'models' | 'plugins', callback: () => void) => {
-    if (actionType === 'plugins') {
-      if (!isPremium) {
-        setActionBlockedReason("Premium is required to access external Plugins.");
-      } else {
-        callback();
-      }
-      return;
-    }
-
+  const handleAction = (actionType: 'sheets' | 'models', callback: () => void) => {
     if (actionType === 'sheets') {
       saveUsage('sheets');
       callback();

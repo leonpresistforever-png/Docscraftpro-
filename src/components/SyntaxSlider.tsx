@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { X, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import 'katex/dist/katex.min.css';
-import { InlineMath } from 'react-katex';
 
 // 50+ Syntaxes
 const SYNTAXES = [
@@ -120,7 +118,6 @@ export function SyntaxSlider({ isOpen, onClose, onSelect }: { isOpen: boolean, o
                 <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">{category}</h3>
                 <div className="grid grid-cols-2 gap-2">
                   {grouped[category].map(item => {
-                    const isMath = ['Math', 'Logic', 'Greek'].includes(item.category);
                     const isUtility = ['Utility', 'Symbols'].includes(item.category);
                     
                     return (
@@ -133,11 +130,7 @@ export function SyntaxSlider({ isOpen, onClose, onSelect }: { isOpen: boolean, o
                       
                       {/* Visual Preview */}
                       <div className="flex-1 flex items-center justify-center">
-                        {isMath ? (
-                          <div className="text-xl md:text-2xl text-gray-800 pointer-events-none scale-105 group-hover:scale-110 transition-transform">
-                             <InlineMath math={item.content.replace(/\$\$/g, '')} />
-                          </div>
-                        ) : isUtility ? (
+                        {isUtility ? (
                           <div className="text-2xl md:text-3xl text-gray-800 pointer-events-none scale-105 group-hover:scale-110 transition-transform">
                              {item.content}
                           </div>

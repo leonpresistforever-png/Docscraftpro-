@@ -1,0 +1,34 @@
+# ==========================================
+# Robots.txt for DocCraft Pro
+# ==========================================
+
+User-agent: *
+
+# Friendly directives: Index standard pages & the technical guide hub
+Allow: /
+Allow: /blog
+Allow: /privacy-policy
+Allow: /terms-of-service
+Allow: /about
+Allow: /contact
+Allow: /changelog
+Allow: /features
+Allow: /integrations
+
+# Security & Anti-Spam: Disallow private/protected session and editor routes
+Disallow: /dashboard
+Disallow: /settings
+Disallow: /auth
+Disallow: /chat
+Disallow: /media
+Disallow: /trash
+Disallow: /pdf/convert
+Disallow: /doc/
+Disallow: /history/
+Disallow: /saved-archive
+Disallow: /preferences
+Disallow: /logic-mapper
+Disallow: /api/
+
+# Reference to the sitemap file
+Sitemap: https://doccraft.com/sitemap.xml

@@ -1,61 +1,37 @@
 import { Node, mergeAttributes } from '@tiptap/core';
 import { ReactNodeViewRenderer, NodeViewWrapper, NodeViewContent } from '@tiptap/react';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { LineChart, Line, BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ComposedChart, RadialBarChart, RadialBar, Legend } from 'recharts';
-import { Edit3, X, Plus, GripVertical, Trash2 } from 'lucide-react';
+import { 
+  LineChart, Line, BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell, 
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, 
+  PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ComposedChart, 
+  RadialBarChart, RadialBar, Legend 
+} from 'recharts';
+import { 
+  Edit3, X, Plus, GripVertical, Trash2, Database, Table, HelpCircle, 
+  RefreshCw, PlusCircle, LayoutDashboard, Layers, Sparkles 
+} from 'lucide-react';
 
 const defaultData = [
-  { name: 'A', value1: 400, value2: 240 },
-  { name: 'B', value1: 300, value2: 139 },
-  { name: 'C', value1: 200, value2: 980 },
-  { name: 'D', value1: 278, value2: 390 },
+  { name: 'Jan Sales', value1: 420, value2: 240 },
+  { name: 'Feb Sales', value1: 380, value2: 180 },
+  { name: 'Mar Sales', value1: 510, value2: 390 },
+  { name: 'Apr Sales', value1: 600, value2: 450 },
 ];
 
-const COLORS = ['#D4AF37', '#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4'];
+const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#EF4444', '#06B6D4', '#6366F1'];
 
 const ChartBoxComponent = ({ node, updateAttributes, deleteNode }: any) => {
-  const chartType = node.attrs.chartType;
-  const [isEditingData, setIsEditingData] = useState(false);
-  
-  const safeData = Array.isArray(node.attrs.chartData) ? node.attrs.chartData : defaultData;
-  const [tempData, setTempData] = useState(safeData);
-  const safeTempData = Array.isArray(tempData) ? tempData : defaultData;
+  const chartType = node.attrs.chartType || 'none';
   const containerRef = useRef<HTMLDivElement>(null);
-  const modalBoxRef = useRef<HTMLDivElement>(null);
   
   const [localWidth, setLocalWidth] = useState(node.attrs.width || '100%');
   const [isResizing, setIsResizing] = useState(false);
   const widthRef = useRef(node.attrs.width || '100%');
-  const [localHeight, setLocalHeight] = useState(node.attrs.height || 300);
-  const heightRef = useRef(node.attrs.height || 300);
+  const [localHeight, setLocalHeight] = useState(node.attrs.height || 340);
+  const heightRef = useRef(node.attrs.height || 340);
 
-  // Hardcore Event Blocking for the Modal
-  useEffect(() => {
-    if (!modalBoxRef.current) return;
-    const el = modalBoxRef.current;
-    
-    // Completely native DOM listener to stop Tiptap from stealing input focus
-    const stopPropagation = (e: Event) => {
-      e.stopPropagation();
-      // Only stop immediate propagation if it's not a change event we need
-      if (e.type === 'keydown' || e.type === 'mousedown') {
-        // let the input handle it, but prevent ProseMirror
-      }
-    };
-    
-    // We bind to the capture phase to intercept before ProseMirror (which binds to document/root)
-    el.addEventListener('keydown', stopPropagation, { capture: true });
-    el.addEventListener('keypress', stopPropagation, { capture: true });
-    el.addEventListener('keyup', stopPropagation, { capture: true });
-    el.addEventListener('mousedown', stopPropagation, { capture: true });
-    
-    return () => {
-      el.removeEventListener('keydown', stopPropagation, { capture: true });
-      el.removeEventListener('keypress', stopPropagation, { capture: true });
-      el.removeEventListener('keyup', stopPropagation, { capture: true });
-      el.removeEventListener('mousedown', stopPropagation, { capture: true });
-    };
-  }, [isEditingData]);
+  const safeData = Array.isArray(node.attrs.chartData) ? node.attrs.chartData : defaultData;
 
   useEffect(() => {
     setLocalWidth(node.attrs.width);
@@ -63,31 +39,43 @@ const ChartBoxComponent = ({ node, updateAttributes, deleteNode }: any) => {
   }, [node.attrs.width]);
 
   useEffect(() => {
-    setLocalHeight(node.attrs.height || 300);
-    heightRef.current = node.attrs.height || 300;
+    setLocalHeight(node.attrs.height || 340);
+    heightRef.current = node.attrs.height || 340;
   }, [node.attrs.height]);
 
-  useEffect(() => {
-    setTempData(Array.isArray(node.attrs.chartData) ? node.attrs.chartData : defaultData);
-  }, [node.attrs.chartData]);
-
-  const handleSaveData = () => {
-    const cleanData = safeTempData.map((row: any) => ({
-      ...row,
-      value1: Number(row.value1) || 0,
-      value2: Number(row.value2) || 0
-    }));
-    updateAttributes({ chartData: cleanData });
-    setIsEditingData(false);
+  const handleCellChange = (rowIndex: number, field: string, value: string) => {
+    const nextData = safeData.map((row: any, i: number) => {
+      if (i === rowIndex) {
+        return {
+          ...row,
+          [field]: field.startsWith('value') ? (Number(value) || 0) : value
+        };
+      }
+      return row;
+    });
+    updateAttributes({ chartData: nextData });
   };
 
-  const updateField = (index: number, field: string, value: string) => {
-    setTempData((prev: any) => {
-       const mapped = Array.isArray(prev) ? prev : defaultData;
-       const next = [...mapped];
-       next[index] = { ...next[index], [field]: value };
-       return next;
-    });
+  const handleAddRow = () => {
+    const nextData = [...safeData, { name: `Item ${safeData.length + 1}`, value1: 150, value2: 50 }];
+    updateAttributes({ chartData: nextData });
+  };
+
+  const handleRemoveRow = (rowIndex: number) => {
+    if (safeData.length <= 1) {
+      alert("At least one row of data is required for visualization.");
+      return;
+    }
+    const nextData = safeData.filter((_: any, i: number) => i !== rowIndex);
+    updateAttributes({ chartData: nextData });
+  };
+
+  const handleResetData = () => {
+    updateAttributes({ chartData: defaultData });
+  };
+
+  const handleClearData = () => {
+    updateAttributes({ chartData: [{ name: 'Category', value1: 0, value2: 0 }] });
   };
 
   const handleResizeStart = useCallback((e: React.MouseEvent | React.TouchEvent, direction: 'x' | 'y' | 'both') => {
@@ -101,7 +89,6 @@ const ChartBoxComponent = ({ node, updateAttributes, deleteNode }: any) => {
     const startWidth = containerRef.current.getBoundingClientRect().width;
     const startHeight = localHeight;
     
-    // Traverse up directly to ProseMirror constraint or fall back
     const editorEl = containerRef.current.closest('.ProseMirror') || containerRef.current.parentElement;
     if (!editorEl) return;
     
@@ -119,7 +106,7 @@ const ChartBoxComponent = ({ node, updateAttributes, deleteNode }: any) => {
         
         if (direction === 'x' || direction === 'both') {
             let newWidthPercent = ((startWidth + deltaX) / maxConstraint) * 100;
-            newWidthPercent = Math.max(20, Math.min(130, newWidthPercent));
+            newWidthPercent = Math.max(30, Math.min(100, newWidthPercent));
             const finalW = `${Math.round(newWidthPercent)}%`;
             setLocalWidth(finalW);
             widthRef.current = finalW;
@@ -127,7 +114,7 @@ const ChartBoxComponent = ({ node, updateAttributes, deleteNode }: any) => {
 
         if (direction === 'y' || direction === 'both') {
             let newHeight = startHeight + deltaY;
-            newHeight = Math.max(150, Math.min(1200, newHeight));
+            newHeight = Math.max(200, Math.min(1200, newHeight));
             setLocalHeight(newHeight);
             heightRef.current = newHeight;
         }
@@ -143,7 +130,6 @@ const ChartBoxComponent = ({ node, updateAttributes, deleteNode }: any) => {
         updateAttributes({ width: widthRef.current, height: heightRef.current });
     };
     
-    // Bind to window using capture to prevent Tiptap from interrupting the drag
     if (isTouch) {
         window.addEventListener('touchmove', onMove, { capture: true, passive: false });
         window.addEventListener('touchend', onEnd, true);
@@ -153,302 +139,358 @@ const ChartBoxComponent = ({ node, updateAttributes, deleteNode }: any) => {
     }
   }, [localHeight, updateAttributes]);
 
+  // Dynamic aggregates for our Professional Spreadsheet view
+  const sumVal1 = safeData.reduce((sum: number, r: any) => sum + (Number(r.value1) || 0), 0);
+  const sumVal2 = safeData.reduce((sum: number, r: any) => sum + (Number(r.value2) || 0), 0);
+  const avgVal1 = (sumVal1 / Math.max(1, safeData.length)).toFixed(1);
+  const avgVal2 = (sumVal2 / Math.max(1, safeData.length)).toFixed(1);
+
   return (
     <NodeViewWrapper 
        className={`chart-box-wrapper relative transition-all duration-75 ${isResizing ? 'z-50' : 'z-10'}`} 
-       style={{ margin: '1.5rem 0', display: 'flex', justifyContent: node.attrs.align || 'center' }}
-       contentEditable={false} // Ensure Tiptap leaves the entire wrapper alone generally
+       style={{ margin: '2rem 0', display: 'flex', justifyContent: node.attrs.align || 'center' }}
+       contentEditable={false}
     >
       <div 
         ref={containerRef}
-        className="relative"
-        style={{ width: localWidth, pointerEvents: 'auto' }} // force pointer events manually
+        className="w-full relative select-none rounded-2xl border bg-white shadow-lg transition-shadow hover:shadow-xl"
+        style={{ 
+          width: localWidth, 
+          borderColor: node.attrs.color || '#3B82F6',
+          borderWidth: '2px',
+          pointerEvents: 'auto' 
+        }}
       >
-        {/* Resize Handle East */}
+        {/* Drag vertical resize Handle East */}
         <div 
-           className={`absolute top-1/2 -translate-y-1/2 -right-4 w-8 h-16 flex items-center justify-center cursor-ew-resize z-40 group touch-none`}
+           className="absolute top-1/2 -translate-y-1/2 -right-3.5 w-7 h-14 flex items-center justify-center cursor-ew-resize z-40 group touch-none"
            onMouseDown={(e) => handleResizeStart(e, 'x')}
            onTouchStart={(e) => handleResizeStart(e, 'x')}
-           title="Drag to Resize Width"
+           title="Resize Box Width"
         >
-           <div className={`w-3 h-12 bg-white border shadow-sm rounded-full flex items-center justify-center transition-colors ${isResizing ? 'border-dc-gold text-dc-gold shadow-md scale-110' : 'border-gray-200 text-gray-400 group-hover:border-dc-gold group-hover:text-dc-gold group-hover:scale-105'}`}>
-               <GripVertical className="w-4 h-4" />
+           <div className={`w-2.5 h-10 bg-white border shadow-sm rounded-full flex items-center justify-center transition-colors ${isResizing ? 'border-indigo-500 text-indigo-500' : 'border-gray-200 text-gray-400 group-hover:border-indigo-500 group-hover:text-indigo-500'}`}>
+               <GripVertical className="w-3 h-3" />
            </div>
         </div>
 
-        {/* Resize Handle South */}
+        {/* Height Resizer Handle South */}
         <div 
-           className={`absolute -bottom-4 left-1/2 -translate-x-1/2 w-16 h-8 flex items-center justify-center cursor-ns-resize z-40 group touch-none`}
+           className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-14 h-6 flex items-center justify-center cursor-ns-resize z-40 group touch-none"
            onMouseDown={(e) => handleResizeStart(e, 'y')}
            onTouchStart={(e) => handleResizeStart(e, 'y')}
-           title="Drag to Resize Height"
+           title="Resize Box Height"
         >
-           <div className={`w-12 h-3 bg-white border shadow-sm rounded-full transition-colors ${isResizing ? 'border-dc-gold shadow-md scale-110' : 'border-gray-200 hover:border-dc-gold hover:scale-105'}`}>
+           <div className={`w-10 h-2 bg-white border shadow-sm rounded-full transition-colors ${isResizing ? 'border-indigo-500' : 'border-gray-200 group-hover:border-indigo-500'}`}>
            </div>
         </div>
 
-        {/* Resize Handle South-East */}
+        {/* Block Header */}
         <div 
-           className={`absolute -bottom-4 -right-4 w-8 h-8 flex items-center justify-center cursor-nwse-resize z-40 group touch-none`}
-           onMouseDown={(e) => handleResizeStart(e, 'both')}
-           onTouchStart={(e) => handleResizeStart(e, 'both')}
-           title="Drag to Resize Both"
-        >
-           <div className={`w-4 h-4 bg-white border border-gray-200 shadow-sm rounded-full transition-colors hidden group-hover:block ${isResizing ? 'border-dc-gold bg-dc-gold shadow-md scale-110 block' : 'hover:border-dc-gold hover:bg-yellow-50 hover:scale-105'}`}>
-           </div>
-        </div>
-
-        <div 
+          className="px-5 py-3.5 text-white flex items-center justify-between font-sans relative z-30"
           style={{ 
-            border: `3px solid ${node.attrs.color}`, 
-            borderRadius: '12px', 
-            /* overflow: 'hidden' removed so internal popups are not cut off */
-            backgroundColor: '#ffffff',
-            boxShadow: isResizing ? '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' : '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-            position: 'relative',
-            transition: isResizing ? 'none' : 'box-shadow 0.2s',
+            backgroundColor: node.attrs.color || '#3B82F6',
+            borderTopLeftRadius: '14px',
+            borderTopRightRadius: '14px'
           }}
         >
-          <div 
-            style={{ 
-              backgroundColor: node.attrs.color, 
-              color: '#ffffff', 
-              padding: '12px 16px', 
-              fontWeight: '900', 
-              fontSize: '1.25rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingRight: '24px', // make room for resizer
-              borderTopLeftRadius: '8px', /* To keep corners round since overflow hidden is gone */
-              borderTopRightRadius: '8px'
-            }}
-          >
-            <div className="flex items-center gap-2 w-full">
-              <div data-drag-handle className="cursor-grab hover:bg-black/10 p-1 rounded transition-colors text-white/50 hover:text-white" title="Drag to move box">
-                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" /></svg>
-              </div>
-              <input 
-                value={node.attrs.title}
-                onChange={e => updateAttributes({ title: e.target.value })}
-                onKeyDown={e => e.stopPropagation()}
-                onKeyDownCapture={e => e.stopPropagation()}
-                onMouseDown={e => e.stopPropagation()}
-                onMouseDownCapture={e => e.stopPropagation()}
-                style={{ 
-                  background: 'transparent', 
-                  border: 'none', 
-                  color: 'inherit', 
-                  fontWeight: 'inherit', 
-                  fontSize: 'inherit', 
-                  width: '100%', 
-                  outline: 'none' 
-                }}
-                placeholder="Heading..."
-              />
-              <button 
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  deleteNode();
-                }}
-                className="p-1 rounded text-white/50 hover:text-red-300 hover:bg-black/10 transition-colors ml-2"
-                title="Delete Chart"
-              >
-                 <Trash2 className="w-5 h-5" />
-              </button>
+          <div className="flex items-center gap-2.5 flex-1 min-w-0">
+            <div data-drag-handle className="cursor-grab hover:bg-black/10 p-1 rounded-md transition-colors text-white/60 hover:text-white shrink-0" title="Drag to move block">
+               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 8h16M4 16h16" /></svg>
             </div>
             
-            <div className="flex gap-2 items-center shrink-0">
-              {chartType !== 'none' && (
-                <button 
-                  onClick={() => setIsEditingData(!isEditingData)}
-                  className={`text-xs px-2 py-1 rounded flex items-center gap-1 font-bold ${isEditingData ? 'bg-white text-black' : 'bg-black/20 hover:bg-black/30 text-white'} transition-colors`}
-                >
-                  <Edit3 className="w-3 h-3" /> Edit Data
-                </button>
-              )}
-              <input 
-                type="color" 
-                value={node.attrs.color} 
-                onChange={e => updateAttributes({ color: e.target.value })}
-                className="w-6 h-6 p-0 border-0 rounded cursor-pointer shrink-0"
-                title="Change Box Color"
-              />
-            </div>
+            <input 
+              value={node.attrs.title}
+              onChange={e => updateAttributes({ title: e.target.value })}
+              onKeyDown={e => e.stopPropagation()}
+              onKeyDownCapture={e => e.stopPropagation()}
+              onMouseDown={e => e.stopPropagation()}
+              onMouseDownCapture={e => e.stopPropagation()}
+              className="bg-transparent border-0 text-white font-bold text-base outline-none w-full placeholder:text-white/50 py-0.5 focus:border-b focus:border-white/40 font-sans tracking-tight"
+              placeholder="Enter visual title..."
+            />
           </div>
-          <div style={{ padding: '16px', position: 'relative' }}>
-            {chartType !== 'none' && isEditingData && (
-               <div 
-                 ref={modalBoxRef}
-                 className="absolute inset-0 z-10 bg-white/95 backdrop-blur-sm p-4 overflow-y-auto" 
-               >
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-bold text-sm flex items-center gap-2"><Edit3 className="w-4 h-4 text-dc-gold" /> Customize Data</h3>
-                    <div className="flex gap-2">
-                       <button onClick={() => setIsEditingData(false)} className="px-3 py-1.5 text-xs font-bold text-gray-500 hover:bg-gray-100 rounded">Cancel</button>
-                       <button onClick={handleSaveData} className="px-3 py-1.5 text-xs font-bold bg-dc-gold text-white shadow-sm rounded hover:bg-yellow-600">Save Data</button>
+          
+          <div className="flex gap-2.5 items-center shrink-0 ml-4">
+            <select
+              value={chartType}
+              onChange={(e) => updateAttributes({ chartType: e.target.value })}
+              className="text-xs font-bold uppercase py-1 px-2.5 bg-white/20 hover:bg-white/30 text-white rounded-lg outline-none border border-white/20 transition-colors cursor-pointer"
+            >
+              <option value="bar" className="text-gray-900 bg-white">Bar Chart</option>
+              <option value="line" className="text-gray-900 bg-white">Line Chart</option>
+              <option value="area" className="text-gray-900 bg-white">Area Chart</option>
+              <option value="pie" className="text-gray-900 bg-white">Pie Chart</option>
+              <option value="radar" className="text-gray-900 bg-white">Radar Chart</option>
+              <option value="composed" className="text-gray-900 bg-white">Composed</option>
+              <option value="radial" className="text-gray-900 bg-white">Radial Chart</option>
+              <option value="kpi" className="text-gray-900 bg-white">KPI Cards</option>
+            </select>
+            
+            <input 
+              type="color" 
+              value={node.attrs.color || '#3B82F6'} 
+              onChange={e => updateAttributes({ color: e.target.value })}
+              className="w-6 h-6 p-0 border-0 rounded-md cursor-pointer shrink-0 bg-transparent"
+              title="Change Theme Accent Color"
+            />
+            
+            <button 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                deleteNode();
+              }}
+              className="p-1 rounded-md text-white/50 hover:text-red-200 hover:bg-white/10 transition-colors"
+              title="Delete Visual Block"
+            >
+               <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Dashboard Frame Grid */}
+        <div className="p-6 font-sans">
+          {chartType === 'none' ? (
+            <div className="py-10 text-center flex flex-col items-center justify-center text-gray-400 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+               <Database className="w-8 h-8 text-gray-300 mb-2" />
+               <p className="text-sm font-semibold">Empty Metric Node</p>
+               <p className="text-xs text-gray-400 mt-1">Select a visualization type from the syntax folder to render data.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+               
+               {/* Viz Column - Chart display */}
+               <div className="lg:col-span-7 flex flex-col justify-between" style={{ height: localHeight }}>
+                 <div className="flex items-center justify-between mb-3 shrink-0">
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1">
+                      <LayoutDashboard className="w-3.5 h-3.5" style={{ color: node.attrs.color }} />
+                      Interactive Chart Preview
+                    </span>
+                 </div>
+                 
+                 <div className="w-full flex-1 min-h-0 bg-slate-50/30 rounded-2xl p-4 border border-slate-100 flex items-center justify-center">
+                   <ResponsiveContainer width="100%" height="100%">
+                      {chartType === 'line' ? (
+                        <LineChart data={safeData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+                          <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748B' }} stroke="#E2E8F0" />
+                          <YAxis tick={{ fontSize: 11, fill: '#64748B' }} stroke="#E2E8F0" />
+                          <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #E2E8F0', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }} />
+                          <Legend wrapperStyle={{ fontSize: 11, marginTop: 10 }} />
+                          <Line type="monotone" name="Value A" dataKey="value1" stroke={node.attrs.color || '#3B82F6'} strokeWidth={3.5} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} isAnimationActive={false} />
+                          <Line type="monotone" name="Value B" dataKey="value2" stroke="#94A3B8" strokeWidth={2.5} strokeDasharray="3 3" dot={{ r: 3 }} isAnimationActive={false} />
+                        </LineChart>
+                      ) : chartType === 'bar' ? (
+                        <BarChart data={safeData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+                          <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748B' }} stroke="#E2E8F0" />
+                          <YAxis tick={{ fontSize: 11, fill: '#64748B' }} stroke="#E2E8F0" />
+                          <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #E2E8F0', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }} />
+                          <Legend wrapperStyle={{ fontSize: 11, marginTop: 10 }} />
+                          <Bar name="Value A" dataKey="value1" fill={node.attrs.color || '#3B82F6'} radius={[5, 5, 0, 0]} barSize={26} isAnimationActive={false} />
+                          <Bar name="Value B" dataKey="value2" fill="#CBD5E1" radius={[3, 3, 0, 0]} barSize={16} isAnimationActive={false} />
+                        </BarChart>
+                      ) : chartType === 'area' ? (
+                        <AreaChart data={safeData}>
+                          <defs>
+                            <linearGradient id="colorVal1" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor={node.attrs.color || '#3B82F6'} stopOpacity={0.4}/>
+                              <stop offset="95%" stopColor={node.attrs.color || '#3B82F6'} stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+                          <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748B' }} stroke="#E2E8F0" />
+                          <YAxis tick={{ fontSize: 11, fill: '#64748B' }} stroke="#E2E8F0" />
+                          <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #E2E8F0', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }} />
+                          <Area type="monotone" name="Value A" dataKey="value1" stroke={node.attrs.color || '#3B82F6'} strokeWidth={3} fillOpacity={1} fill="url(#colorVal1)" isAnimationActive={false} />
+                        </AreaChart>
+                      ) : chartType === 'pie' ? (
+                        <PieChart>
+                          <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #E2E8F0' }} />
+                          <Legend wrapperStyle={{ fontSize: 11 }} />
+                          <Pie data={safeData} dataKey="value1" nameKey="name" cx="50%" cy="50%" outerRadius="80%" innerRadius="40%" label={{ fontSize: 10, fill: '#475569' }} isAnimationActive={false}>
+                             {safeData.map((_: any, index: number) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                             ))}
+                          </Pie>
+                        </PieChart>
+                      ) : chartType === 'radar' ? (
+                        <RadarChart cx="50%" cy="50%" outerRadius="75%" data={safeData}>
+                          <PolarGrid stroke="#E2E8F0" />
+                          <PolarAngleAxis dataKey="name" tick={{ fill: '#64748B', fontSize: 10 }} />
+                          <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={{ fill: '#94A3B8', fontSize: 9 }} />
+                          <Radar name="Value A" dataKey="value1" stroke={node.attrs.color || '#3B82F6'} fill={node.attrs.color || '#3B82F6'} fillOpacity={0.35} strokeWidth={2.5} isAnimationActive={false} />
+                          <Tooltip />
+                        </RadarChart>
+                      ) : chartType === 'composed' ? (
+                        <ComposedChart data={safeData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+                          <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#64748B' }} stroke="#E2E8F0" />
+                          <YAxis tick={{ fontSize: 10, fill: '#64748B' }} stroke="#E2E8F0" />
+                          <Tooltip />
+                          <Legend wrapperStyle={{ fontSize: 11 }} />
+                          <Bar name="Value A" dataKey="value1" barSize={26} fill={node.attrs.color || '#3B82F6'} radius={[4, 4, 0, 0]} isAnimationActive={false} />
+                          <Line type="monotone" name="Value B" dataKey="value2" stroke="#475569" strokeWidth={3} dot={{ r: 4 }} isAnimationActive={false} />
+                        </ComposedChart>
+                      ) : chartType === 'radial' ? (
+                        <RadialBarChart cx="50%" cy="50%" innerRadius="20%" outerRadius="90%" barSize={14} data={safeData}>
+                          <RadialBar
+                            label={{ position: 'insideStart', fill: '#ffffff', fontWeight: 'bold', fontSize: 9 }}
+                            background={{ fill: '#F1F5F9' }}
+                            dataKey="value1"
+                            fill={node.attrs.color || '#3B82F6'}
+                            isAnimationActive={false}
+                          />
+                          <Legend iconSize={10} layout="vertical" verticalAlign="middle" wrapperStyle={{ right: 0, fontSize: 10 }} />
+                          <Tooltip />
+                        </RadialBarChart>
+                      ) : chartType === 'kpi' ? (
+                        <div className="grid grid-cols-2 gap-4 w-full h-full p-2 items-center justify-center overflow-y-auto">
+                          {safeData.slice(0, 4).map((item: any, i: number) => (
+                            <div key={i} className="bg-slate-50 border border-slate-100 rounded-2xl p-5 flex flex-col justify-center items-center text-center shadow-sm h-full w-full">
+                              <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1.5 truncate max-w-full">{item.name}</div>
+                              <div className="text-3xl font-black tracking-tight" style={{ color: node.attrs.color || '#3B82F6' }}>{item.value1}</div>
+                              {item.value2 !== undefined && item.value2 !== '' && item.value2 !== 0 && item.value2 !== "0" && (
+                                <div className="text-[10px] text-slate-500 bg-white shadow-xs px-2 py-0.5 rounded-full border border-slate-100 mt-2 font-mono">Offset: {item.value2}</div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-slate-400 text-xs">Unsupported Visualization Scheme</div>
+                      )}
+                   </ResponsiveContainer>
+                 </div>
+               </div>
+
+               {/* Professional Excel-Like Data Sheet Column */}
+               <div className="lg:col-span-5 flex flex-col bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden" style={{ height: localHeight }}>
+                 
+                 {/* Spreadsheet Toolbar Control */}
+                 <div className="px-4 py-3 bg-slate-50/80 border-b border-slate-200/80 flex items-center justify-between shrink-0">
+                    <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5 font-sans">
+                      <Table className="w-4 h-4 text-emerald-500" />
+                      Live Data Editor Grid
+                    </span>
+                    
+                    <div className="flex gap-1.5">
+                      <button 
+                        onClick={handleResetData}
+                        className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 rounded transition-colors"
+                        title="Reset Sheet to Sample Data"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5" />
+                      </button>
+                      <button 
+                        onClick={handleClearData}
+                        className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                        title="Clear Table Rows"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
                     </div>
-                  </div>
-                  <div className="border border-gray-200 rounded-lg overflow-hidden flex flex-col">
-                    {safeTempData.map((row: any, i: number) => (
-                      <div key={i} className="flex border-b border-gray-100 last:border-0 bg-white items-center p-1 gap-1">
-                        <div className="w-8 text-center text-xs text-gray-400 font-bold">{i+1}</div>
-                        <input 
-                          type="text"
-                          className="flex-1 min-w-0 p-2 text-xs border border-transparent hover:border-gray-200 focus:border-dc-gold outline-none rounded bg-gray-50 focus:bg-white" 
-                          value={row.name} 
-                          onChange={(e) => updateField(i, 'name', e.target.value)} 
-                          placeholder="Label" 
-                        />
-                        <input 
-                          type="text"
-                          inputMode="numeric"
-                          className="flex-1 min-w-0 p-2 text-xs border border-transparent hover:border-gray-200 focus:border-dc-gold outline-none rounded bg-gray-50 focus:bg-white font-mono" 
-                          value={row.value1} 
-                          onChange={(e) => updateField(i, 'value1', e.target.value)} 
-                          placeholder="Primary Value" 
-                        />
-                        <input 
-                          type="text"
-                          inputMode="numeric"
-                          className="flex-1 min-w-0 p-2 text-xs border border-transparent hover:border-gray-200 focus:border-dc-gold outline-none rounded bg-gray-50 focus:bg-white font-mono" 
-                          value={row.value2} 
-                          onChange={(e) => updateField(i, 'value2', e.target.value)} 
-                          placeholder="Secondary (Opt)" 
-                        />
-                        <button 
-                          onClick={() => setTempData((prev: any) => prev.filter((_:any, idx:number) => idx !== i))}
-                          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded mx-1"
-                          title="Remove row"
-                        >
-                           <X className="w-4 h-4" />
-                        </button>
+                 </div>
+
+                 {/* Spreadsheet Header labels */}
+                 <div className="grid grid-cols-12 bg-slate-150 border-b border-slate-250 text-[10px] font-bold uppercase tracking-wide text-slate-500 px-3 py-2 text-left shrink-0 bg-slate-100">
+                    <div className="col-span-1 text-center">#</div>
+                    <div className="col-span-4 pl-1">Category Label</div>
+                    <div className="col-span-3 text-right pr-2">Primary (A)</div>
+                    <div className="col-span-3 text-right pr-2">Sec (B)</div>
+                    <div className="col-span-1"></div>
+                 </div>
+
+                 {/* Interactive Grid Values */}
+                 <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
+                    {safeData.map((row: any, i: number) => (
+                      <div key={i} className="grid grid-cols-12 items-center px-3 py-1.5 hover:bg-slate-50/60 transition-colors bg-white">
+                         
+                         {/* Row ID label */}
+                         <div className="col-span-1 text-center font-mono text-[10px] text-slate-400 font-bold">
+                            {i + 1}
+                         </div>
+
+                         {/* category name column */}
+                         <div className="col-span-4 px-1">
+                            <input 
+                              type="text"
+                              value={row.name}
+                              onChange={(e) => handleCellChange(i, 'name', e.target.value)}
+                              onKeyDown={e => e.stopPropagation()}
+                              onMouseDown={e => e.stopPropagation()}
+                              className="w-full text-xs p-1 border border-transparent rounded bg-transparent hover:bg-slate-100/70 focus:bg-white focus:border-slate-350 outline-none font-medium text-slate-800 focus:shadow-xs focus:ring-1 focus:ring-indigo-300 font-sans"
+                              placeholder="Row label"
+                            />
+                         </div>
+
+                         {/* Value 1 Column */}
+                         <div className="col-span-3 pr-2">
+                            <input 
+                              type="number"
+                              value={row.value1}
+                              onChange={(e) => handleCellChange(i, 'value1', e.target.value)}
+                              onKeyDown={e => e.stopPropagation()}
+                              onMouseDown={e => e.stopPropagation()}
+                              className="w-full text-xs p-1 text-right border border-transparent rounded bg-transparent hover:bg-slate-100/70 focus:bg-white focus:border-slate-350 outline-none font-mono text-slate-900 font-semibold focus:ring-1 focus:ring-indigo-300"
+                              placeholder="0"
+                            />
+                         </div>
+
+                         {/* Value 2 Column */}
+                         <div className="col-span-3 pr-2">
+                            <input 
+                              type="number"
+                              value={row.value2}
+                              onChange={(e) => handleCellChange(i, 'value2', e.target.value)}
+                              onKeyDown={e => e.stopPropagation()}
+                              onMouseDown={e => e.stopPropagation()}
+                              className="w-full text-xs p-1 text-right border border-transparent rounded bg-transparent hover:bg-slate-100/70 focus:bg-white focus:border-slate-350 outline-none font-mono text-slate-500 focus:ring-1 focus:ring-indigo-300"
+                              placeholder="0"
+                            />
+                          </div>
+
+                         {/* Delete Row Column */}
+                         <div className="col-span-1 text-center">
+                            <button 
+                              onClick={() => handleRemoveRow(i)}
+                              className="p-1 text-slate-350 hover:text-red-500 hover:bg-red-50 rounded transition-all shrink-0"
+                              title="Delete Row"
+                            >
+                               <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                         </div>
+
                       </div>
                     ))}
+                    
+                    {/* Append row sheet trigger */}
                     <button 
-                       onClick={() => setTempData([...safeTempData, { name: 'Item', value1: 0, value2: 0 }])}
-                       className="p-3 text-xs font-bold text-dc-gold bg-yellow-50/50 hover:bg-yellow-50 flex items-center justify-center gap-2"
+                       onClick={handleAddRow}
+                       className="w-full py-2.5 text-xs font-bold border-t border-dashed border-slate-205 flex items-center justify-center gap-1.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-50 transition-colors"
                     >
-                       <Plus className="w-4 h-4" /> Add Row
+                       <PlusCircle className="w-4 h-4 text-indigo-500" />
+                       Add New Row Entry
                     </button>
-                  </div>
-               </div>
-            )}
+                 </div>
 
-            {chartType !== 'none' && (
-              <div contentEditable={false} style={{ width: '100%', height: localHeight, marginBottom: '1rem', opacity: isEditingData ? 0.3 : 1, transition: 'opacity 0.2s', pointerEvents: isEditingData ? 'none' : 'auto' }}>
-                <ResponsiveContainer width="100%" height="100%">
-                   {chartType === 'line' ? (
-                     <LineChart data={safeData}>
-                       <CartesianGrid strokeDasharray="3 3" />
-                       <XAxis dataKey="name" />
-                       <YAxis />
-                       <Tooltip />
-                       <Line type="monotone" dataKey="value1" stroke={node.attrs.color} strokeWidth={3} />
-                       <Line type="monotone" dataKey="value2" stroke="#9CA3AF" strokeWidth={2} />
-                     </LineChart>
-                   ) : chartType === 'bar' ? (
-                     <BarChart data={safeData}>
-                       <CartesianGrid strokeDasharray="3 3" />
-                       <XAxis dataKey="name" />
-                       <YAxis />
-                       <Tooltip />
-                       <Bar dataKey="value1" fill={node.attrs.color} radius={[4, 4, 0, 0]} />
-                       <Bar dataKey="value2" fill="#E5E7EB" radius={[4, 4, 0, 0]} />
-                     </BarChart>
-                   ) : chartType === 'area' ? (
-                     <AreaChart data={safeData}>
-                       <CartesianGrid strokeDasharray="3 3" />
-                       <XAxis dataKey="name" />
-                       <YAxis />
-                       <Tooltip />
-                       <Area type="monotone" dataKey="value1" stroke={node.attrs.color} fill={node.attrs.color} fillOpacity={0.3} />
-                     </AreaChart>
-                   ) : chartType === 'pie' ? (
-                     <PieChart>
-                       <Tooltip />
-                       <Pie data={safeData} dataKey="value1" nameKey="name" cx="50%" cy="50%" outerRadius={100} label>
-                          {safeData.map((_:any, index:number) => (
-                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                       </Pie>
-                     </PieChart>
-                   ) : chartType === 'radar' ? (
-                     <RadarChart cx="50%" cy="50%" outerRadius="80%" data={safeData}>
-                       <PolarGrid stroke="#e5e7eb" />
-                       <PolarAngleAxis dataKey="name" tick={{ fill: '#6b7280', fontSize: 12 }} />
-                       <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={{ fill: '#9ca3af' }} />
-                       <Radar name="Primary" dataKey="value1" stroke={node.attrs.color} fill={node.attrs.color} fillOpacity={0.5} strokeWidth={2} />
-                       <Tooltip />
-                     </RadarChart>
-                   ) : chartType === 'composed' ? (
-                     <ComposedChart data={safeData}>
-                       <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                       <XAxis dataKey="name" axisLine={false} tickLine={false} />
-                       <YAxis axisLine={false} tickLine={false} />
-                       <Tooltip />
-                       <Legend />
-                       <Bar dataKey="value1" barSize={32} fill={node.attrs.color} radius={[4, 4, 0, 0]} />
-                       <Line type="monotone" dataKey="value2" stroke="#4B5563" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                     </ComposedChart>
-                   ) : chartType === 'radial' ? (
-                     <RadialBarChart cx="50%" cy="50%" innerRadius="25%" outerRadius="90%" barSize={16} data={safeData}>
-                       <RadialBar
-                         label={{ position: 'insideStart', fill: '#ffffff', fontWeight: 'bold' }}
-                         background={{ fill: '#f3f4f6' }}
-                         dataKey="value1"
-                         fill={node.attrs.color}
-                       />
-                       <Legend iconSize={12} layout="vertical" verticalAlign="middle" wrapperStyle={{ right: 0 }} />
-                       <Tooltip />
-                     </RadialBarChart>
-                   ) : chartType === 'table' ? (
-                     <div className="w-full h-full overflow-auto bg-white rounded-xl border border-gray-200">
-                        <table className="w-full text-left border-collapse min-w-[400px]">
-                           <thead>
-                              <tr style={{ backgroundColor: `${node.attrs.color}10` }}>
-                                <th className="p-4 border-b border-gray-200 text-xs font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Category Label</th>
-                                <th className="p-4 border-b border-gray-200 text-xs font-bold uppercase tracking-wider text-gray-500 text-right whitespace-nowrap">Primary Metric</th>
-                                <th className="p-4 border-b border-gray-200 text-xs font-bold uppercase tracking-wider text-gray-500 text-right whitespace-nowrap">Secondary Indicator</th>
-                              </tr>
-                           </thead>
-                           <tbody className="text-gray-800 text-sm">
-                              {safeData.map((item: any, i:number) => (
-                                 <tr key={i} className="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
-                                    <td className="p-4 font-semibold text-gray-800 flex items-center gap-3">
-                                       <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: node.attrs.color, opacity: 1 - (i * 0.15) }}></div>
-                                       {item.name}
-                                    </td>
-                                    <td className="p-4 font-mono font-medium text-right text-base text-gray-900">{item.value1}</td>
-                                    <td className="p-4 font-mono text-right text-gray-500">
-                                       {item.value2 ? (
-                                         <span className="bg-white border border-gray-200 px-2 py-1 rounded-md text-xs font-bold">{item.value2}</span>
-                                       ) : '-'}
-                                    </td>
-                                 </tr>
-                              ))}
-                           </tbody>
-                        </table>
-                     </div>
-                   ) : chartType === 'kpi' ? (
-                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 p-4 items-center justify-center h-full w-full overflow-y-auto">
-                       {safeData.map((item: any, i: number) => (
-                         <div key={i} className="bg-gray-50 border border-gray-100 rounded-xl p-4 flex flex-col justify-center items-center text-center shadow-sm h-full w-full">
-                           <div className="text-xs lg:text-sm text-gray-500 font-bold mb-2 uppercase tracking-wide">{item.name}</div>
-                           <div className="text-2xl lg:text-4xl font-black mb-1 truncate w-full" style={{ color: node.attrs.color }}>{item.value1}</div>
-                           {item.value2 !== undefined && item.value2 !== '' && item.value2 !== 0 && item.value2 !== "0" && (
-                             <div className="text-[10px] lg:text-xs text-gray-400 bg-white px-2 py-1 rounded-full border border-gray-200 mt-2">{item.value2}</div>
-                           )}
-                         </div>
-                       ))}
-                     </div>
-                   ) : <div />}
-                </ResponsiveContainer>
-              </div>
-            )}
-            <NodeViewContent className="chart-box-content" />
-          </div>
+                 {/* Professional Sheet Footer Aggregates */}
+                 <div className="px-3 py-2 whitespace-nowrap bg-slate-50 border-t border-slate-200/80 font-mono text-[10px] font-bold text-slate-500 flex justify-between tracking-wide shrink-0 font-mono">
+                    <span className="uppercase text-slate-400">Aggregates:</span>
+                    <div className="flex gap-4">
+                      <span>Σ A: <strong className="text-slate-700">{sumVal1}</strong> (μ: {avgVal1})</span>
+                      {chartType !== 'area' && chartType !== 'pie' && chartType !== 'radar' && (
+                        <span>Σ B: <strong className="text-slate-600">{sumVal2}</strong> (μ: {avgVal2})</span>
+                      )}
+                    </div>
+                 </div>
+
+               </div>
+
+            </div>
+          )}
+          
+          {/* NodeViewContent required for Tiptap structure nested elements */}
+          <NodeViewContent className="chart-box-content mt-4" style={{ display: 'none' }} />
         </div>
       </div>
     </NodeViewWrapper>
@@ -465,12 +507,12 @@ export const ChartBox = Node.create({
     return {
       color: { default: '#3B82F6' },
       width: { default: '100%' },
-      height: { default: 300 },
-      title: { default: 'Box Heading' },
+      height: { default: 340 },
+      title: { default: 'Executive Metric Report' },
       align: { default: 'center' },
-      chartType: { default: 'none' }, // 'none', 'line', 'bar', 'area', 'pie', 'kpi'
+      chartType: { default: 'bar' }, 
       chartData: {  
-        default: null,
+        default: defaultData,
         parseHTML: element => {
           const dataAttr = element.getAttribute('data-chart-data');
           if (dataAttr) {

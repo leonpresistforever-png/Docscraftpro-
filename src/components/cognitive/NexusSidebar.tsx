@@ -1,7 +1,18 @@
 import React, { useState, useRef } from 'react';
 import { Activity, Cpu, Network, Zap, Hexagon, Database, Radio, Menu, X, Upload, Settings2, Code, User, Command, Trash2, Brain, Layers, Sparkles } from 'lucide-react';
 import { NexusLogo } from '../ui/NexusLogo';
-import { CustomTool, NexusTier } from '../../pages/NexusAiPage';
+
+export interface CustomTool {
+  id: string;
+  name: string;
+  description: string;
+  endpoint: string;
+  method: string;
+  headers: string;
+  schema: string;
+}
+
+export type NexusTier = 'flash' | 'reasoning' | 'complex' | 'pro';
 
 interface NexusSidebarProps {
   profilePic?: string | null;
@@ -152,7 +163,7 @@ export function NexusSidebar({ profilePic, setProfilePic, instructions, setInstr
             <div className="space-y-3">
               {[
                  { id: 'flash', label: 'Nexus Flash', desc: 'Basic rapid execution.', icon: <Zap className="w-4 h-4"/> },
-                 { id: 'reasoning', label: 'Nexus Reasoning', desc: 'Analysis and suggestions.', icon: <Layers className="w-4 h-4"/> },
+                 { id: 'reasoning', label: 'Nexus Reasoning', desc: 'Deep analytical synthesis.', icon: <Layers className="w-4 h-4"/> },
                  { id: 'complex', label: 'Nexus Complex Thinking', desc: 'Multi-agent orchestration.', icon: <Network className="w-4 h-4"/> },
                  { id: 'pro', label: 'Nexus Pro', desc: 'Maximum computational power.', icon: <Cpu className="w-4 h-4"/> }
               ].map(m => (

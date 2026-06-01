@@ -1,66 +1,110 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Navbar } from '../components/layout/Navbar';
-import { Link } from 'react-router-dom';
+import { Footer } from '../components/layout/Footer';
+import { SupportFormPage } from './SupportFormPage';
+import { Mail, Clock, ShieldCheck, MapPin } from 'lucide-react';
+import { motion } from 'motion/react';
 
 export function ContactPage() {
-  useEffect(() => {
-    // Initialize the AssistLoop widget when the page loads
-    const scriptId = 'assistloop-script-dedicated';
-    if (!document.getElementById(scriptId)) {
-      const script = document.createElement('script');
-      script.id = scriptId;
-      script.src = 'https://assistloop.ai/assistloop-widget.js';
-      script.async = true;
-      script.onload = () => {
-        if ((window as any).AssistLoopWidget && (window as any).AssistLoopWidget.init) {
-          (window as any).AssistLoopWidget.init({
-            agentId: import.meta.env.VITE_ASSISTLOOP_AGENT_ID || 'dummy-agent-id',
-          });
-          // Auto-open on this dedicated page
-          setTimeout(() => {
-            if ((window as any).AssistLoopWidget.open) {
-              (window as any).AssistLoopWidget.open();
-            }
-          }, 500);
-        }
-      };
-      document.body.appendChild(script);
-    } else {
-      if ((window as any).AssistLoopWidget && (window as any).AssistLoopWidget.open) {
-        (window as any).AssistLoopWidget.open();
-      }
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
     }
-    
-    return () => {
-      // Optional cleanup if navigating away, though might want to keep it
-    };
-  }, []);
+  };
+
+  const item: any = {
+    hidden: { opacity: 0, y: 15 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
+  };
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] font-sans text-[#2D2D2D] selection:bg-[#D4AF37] selection:text-white flex flex-col">
+    <div className="min-h-screen bg-[#FDFBF7] font-sans text-gray-800 pt-24 flex flex-col justify-between selection:bg-[#D4AF37] selection:text-white">
       <Navbar />
-      <div className="flex-1 flex flex-col items-center justify-center p-8 text-center max-w-3xl mx-auto">
-        <h1 className="text-4xl md:text-5xl font-serif font-bold tracking-tight mb-6">
-          Support Center
-        </h1>
-        <p className="text-xl text-gray-600 mb-12">
-          We're here to help! Our dedicated Assistant should pop up shortly to assist you. 
-          If you don't see it, you can click the chat icon in the corner.
-        </p>
 
-        <div className="bg-white p-8 rounded-2xl shadow-sm border border-[#EAE6DF] max-w-xl w-full">
-          <h2 className="text-2xl font-semibold mb-4">Still not satisfied?</h2>
-          <p className="text-gray-600 mb-6">
-            If our AI agent wasn't able to fully resolve your issue, you can escalate it directly to our human support team.
-          </p>
-          <Link 
-            to="/support-form" 
-            className="inline-flex items-center justify-center bg-gray-900 text-white px-6 py-3 rounded-xl font-medium hover:bg-gray-800 transition-colors"
-          >
-            Fill a Support Form
-          </Link>
-        </div>
-      </div>
+      <main className="w-full max-w-[1100px] mx-auto px-6 py-12 flex-1">
+        <motion.div initial="hidden" animate="show" variants={container} className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          
+          {/* Left Column: Direct contact info & Commitments */}
+          <div className="lg:col-span-5 space-y-8">
+            <motion.div variants={item}>
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 border border-amber-200 rounded-full text-xs text-amber-800 font-bold uppercase tracking-widest mb-3">
+                <Clock className="w-3.5 h-3.5 text-[#D4AF37]" />
+                Support Matrix
+              </div>
+              <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tight text-[#1a1a1a] font-serif mb-4">
+                Contact Us
+              </h1>
+              <p className="text-gray-500 text-sm md:text-base leading-relaxed">
+                Whether you encounter a rendering bug, need help compiling a complex structure, or want to discuss enterprise features, our dedicated human support desk is standing by.
+              </p>
+            </motion.div>
+
+            {/* Direct Cards */}
+            <div className="space-y-4">
+              <motion.div variants={item} className="flex gap-4 p-5 bg-white border border-gray-200 rounded-xl shadow-sm">
+                <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center shrink-0 border border-amber-200">
+                  <Mail className="w-5 h-5 text-[#D4AF37]" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-gray-900">Direct Support Email</h4>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-sm text-gray-700 font-semibold">docscraftpro@gmail.com</span>
+                    <span className="text-gray-300 text-xs">|</span>
+                    <a href="mailto:docscraftpro@gmail.com?subject=DocCraft Support Inquiry" className="text-sm text-indigo-600 font-black hover:underline">
+                      mail here
+                    </a>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">Fallback channel for file attachments or legal inquiries.</p>
+                </div>
+              </motion.div>
+
+              <motion.div variants={item} className="flex gap-4 p-5 bg-white border border-gray-200 rounded-xl shadow-sm">
+                <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center shrink-0 border border-amber-200">
+                  <Clock className="w-5 h-5 text-[#D4AF37]" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-gray-900">Response Window</h4>
+                  <span className="inline-block text-xs font-bold text-gray-700 bg-gray-100 px-2 py-0.5 rounded mt-0.5">
+                    Within 24 to 48 business hours
+                  </span>
+                  <p className="text-xs text-gray-400 mt-1">Our average response speed for standard tickets is less than 6 hours.</p>
+                </div>
+              </motion.div>
+
+              <motion.div variants={item} className="flex gap-4 p-5 bg-white border border-gray-200 rounded-xl shadow-sm">
+                <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center shrink-0 border border-amber-200">
+                  <ShieldCheck className="w-5 h-5 text-[#D4AF37]" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-gray-900">Security & Integrity</h4>
+                  <p className="text-xs text-gray-500 leading-relaxed mt-1">
+                    All support requests are routed privately over SSL channels. We never request passwords or private API key tokens.
+                  </p>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+
+          {/* Right Column: Dynamic Form Block */}
+          <div className="lg:col-span-7">
+            <motion.div variants={item} className="bg-white p-6 md:p-8 rounded-2xl border border-gray-200 shadow-sm w-full">
+              <h3 className="text-lg font-black uppercase text-[#1a1a1a] mb-4 font-sans tracking-wide">
+                Submit an Issue Ticket
+              </h3>
+              <p className="text-xs text-gray-500 mb-6 leading-relaxed">
+                Please complete the registry fields below. This connects cleanly to our background event framework for instant validation routing.
+              </p>
+              
+              <SupportFormPage isEmbedded={true} />
+            </motion.div>
+          </div>
+
+        </motion.div>
+      </main>
+
+      <Footer />
     </div>
   );
 }

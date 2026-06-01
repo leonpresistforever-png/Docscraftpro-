@@ -42,27 +42,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const savedDemo = localStorage.getItem('demoLogin');
     if (savedDemo) {
-      setUser(JSON.parse(savedDemo));
-      setLoading(false);
-      
-      // Load demo data from localStorage
-      const demoData = localStorage.getItem('demoUserData');
-      if (demoData) {
-        setUserData(JSON.parse(demoData));
-      } else {
-        setUserData({ credits: 20, subscription: 'Starter' });
+      try {
+        setUser(JSON.parse(savedDemo));
+        setLoading(false);
+        
+        // Load demo data from localStorage
+        const demoData = localStorage.getItem('demoUserData');
+        if (demoData) {
+          setUserData(JSON.parse(demoData));
+        } else {
+          setUserData({ credits: 20, subscription: 'Starter' });
+        }
+        return;
+      } catch (err) {
+        console.error("Failed to parse local demo state", err);
+        localStorage.removeItem('demoLogin');
       }
-      return;
     }
 
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
-        // Initialize user document if not exists
-        const userRef = doc(db, 'users', currentUser.uid);
-        const docSnap = await getDoc(userRef);
-        if (!docSnap.exists()) {
-          await setDoc(userRef, { credits: 20, subscription: 'Starter', updatedAt: new Date().toISOString() });
+        // Initialize user document if not exists with try-catch
+        try {
+          const userRef = doc(db, 'users', currentUser.uid);
+          const docSnap = await getDoc(userRef);
+          if (!docSnap.exists()) {
+            await setDoc(userRef, { credits: 20, subscription: 'Starter', updatedAt: new Date().toISOString() });
+          }
+        } catch (dbError) {
+          console.error("Firestore user init failed inside AuthStateChanged:", dbError);
         }
       } else {
         setUserData(null);
@@ -76,15 +85,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user) return;
     if (user.uid === 'demo-123') return;
     
-    // Listen to user data
+    // Listen to user data with error handling
     const unsubscribe = onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data() as UserData;
         if (user.email === 'leonpresistforever@gmail.com' && !data.givenTestCredits) {
-          updateDoc(doc(db, 'users', user.uid), { credits: 60, subscription: 'Pro', givenTestCredits: true });
+          updateDoc(doc(db, 'users', user.uid), { credits: 60, subscription: 'Pro', givenTestCredits: true }).catch((err) => {
+            console.error("Failed to update test credits", err);
+          });
         }
         setUserData(data);
       }
+    }, (error) => {
+      console.warn("Firestore subscription failed for users collection:", error);
     });
     return unsubscribe;
   }, [user]);
@@ -136,9 +149,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signInWithGoogle = async () => {
-
     const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
+    provider.addScope('https://www.googleapis.com/auth/gmail.send');
+    provider.addScope('https://www.googleapis.com/auth/documents');
+    provider.addScope('https://www.googleapis.com/auth/presentations');
+    provider.addScope('https://www.googleapis.com/auth/forms.body');
+    provider.addScope('https://www.googleapis.com/auth/drive.file');
+    provider.addScope('https://www.googleapis.com/auth/userinfo.email');
+    provider.addScope('https://www.googleapis.com/auth/userinfo.profile');
+
+    const result = await signInWithPopup(auth, provider);
+    const credential = GoogleAuthProvider.credentialFromResult(result);
+    if (credential?.accessToken) {
+      sessionStorage.setItem('google_access_token', credential.accessToken);
+      try {
+        const docsMod = await import('../utils/googleDocs');
+        docsMod.setDocsToken(credential.accessToken);
+        const slidesMod = await import('../utils/googleSlides');
+        slidesMod.setSlidesToken(credential.accessToken);
+        const formsMod = await import('../utils/googleForms');
+        formsMod.setFormsToken(credential.accessToken);
+      } catch (err) {
+        console.warn('Silent token caching failed on load modules:', err);
+      }
+    }
   };
 
   const signInWithEmail = async (email: string, password: string) => {

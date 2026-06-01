@@ -123,11 +123,18 @@ export function AiSheetsPage() {
     try {
       const q = query(
         collection(db, 'documents'),
-        where('ownerId', '==', user?.uid),
-        orderBy('updatedAt', 'desc')
+        where('ownerId', '==', user?.uid)
       );
       const snapshot = await getDocs(q);
-      const docsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const docsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+      
+      // Sort client-side by updatedAt descending
+      docsData.sort((a, b) => {
+        const t1 = a.updatedAt?.toMillis ? a.updatedAt.toMillis() : (a.updatedAt?.seconds ? a.updatedAt.seconds * 1000 : 0);
+        const t2 = b.updatedAt?.toMillis ? b.updatedAt.toMillis() : (b.updatedAt?.seconds ? b.updatedAt.seconds * 1000 : 0);
+        return t2 - t1;
+      });
+      
       setAvailableDocs(docsData);
     } catch (err) {
       console.error("Error fetching docs", err);

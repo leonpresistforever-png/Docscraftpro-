@@ -1,8 +1,10 @@
 {
-  "name": "Remix: Generated",
-  "description": "",
+  "name": "DocCraft Pro",
+  "description": "Establish a professional document engineering workspace. Process visual sheets, clinical OCR, web clipping, cryptographic signatures, and conceptual logic mappings with total control.",
   "requestFramePermissions": [
     "microphone"
   ],
-  "majorCapabilities": []
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

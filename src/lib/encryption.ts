@@ -1,6 +1,6 @@
 import CryptoJS from 'crypto-js';
 
-const ENCRYPTION_KEY = process.env.VITE_ENCRYPTION_KEY || 'default-secret-key-12345';
+const ENCRYPTION_KEY = (typeof process !== 'undefined' && process.env ? process.env.VITE_ENCRYPTION_KEY : undefined) || import.meta.env.VITE_ENCRYPTION_KEY || 'default-secret-key-12345';
 
 export const encryptData = (text: string): string => {
   if (!text) return '';

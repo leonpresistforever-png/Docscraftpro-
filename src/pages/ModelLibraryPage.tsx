@@ -170,8 +170,7 @@ export function ModelLibraryPage() {
     if (user?.uid) {
       const q = query(
         collection(db, 'inputHistory'),
-        where('userId', '==', user.uid),
-        orderBy('timestamp', 'desc')
+        where('userId', '==', user.uid)
       );
       const unsubscribe = onSnapshot(q, (snapshot) => {
         const historyData = snapshot.docs.map(doc => ({
@@ -179,7 +178,17 @@ export function ModelLibraryPage() {
           prompt: doc.data().prompt,
           timestamp: doc.data().timestamp
         }));
+        
+        // Sort client-side by timestamp descending
+        historyData.sort((a, b) => {
+          const t1 = a.timestamp?.toMillis ? a.timestamp.toMillis() : (a.timestamp?.seconds ? a.timestamp.seconds * 1000 : (a.timestamp || 0));
+          const t2 = b.timestamp?.toMillis ? b.timestamp.toMillis() : (b.timestamp?.seconds ? b.timestamp.seconds * 1000 : (b.timestamp || 0));
+          return t2 - t1;
+        });
+        
         setInputHistory(historyData);
+      }, (error) => {
+        console.warn("ModelLibrary failed to listen to inputHistory:", error);
       });
       return () => unsubscribe();
     }
@@ -367,16 +376,33 @@ export function ModelLibraryPage() {
         },
         {
           id: 'gemma-2-2b-it-q4f16_1-MLC',
-          name: 'Gemma 2 (2B)',
+          name: 'Gemma 2 (2B) IT - Smooth Low-Lat',
           provider: 'Google',
           size: '1.5 GB',
-          description: 'A variant of Gemma ready for deployment. Requires decent network for initial caching.',
+          description: 'Standard quantized variant of Gemma ready for responsive deployment. Fast responses.',
           skills: [
             { name: 'Summarize Docs', icon: <BookOpen className="w-3 h-3" /> }, 
             { name: 'AI Chat', icon: <MessageSquare className="w-3 h-3" /> },
             { name: 'Prompt Lab', icon: <LayoutTemplate className="w-3 h-3" /> }
           ],
           supported: memory >= 4,
+          recommended: true,
+          type: 'local',
+          status: 'not_installed',
+          progress: 0
+        },
+        {
+          id: 'gemma-2-2b-it-q8f16_1-MLC',
+          name: 'Gemma 2 (2B) IT - High Quality',
+          provider: 'Google',
+          size: '2.8 GB',
+          description: 'High precision 8-bit quantization for enhanced analytical fidelity. Balanced speed and intelligence.',
+          skills: [
+            { name: 'Summarize Docs', icon: <BookOpen className="w-3 h-3" /> }, 
+            { name: 'AI Chat', icon: <MessageSquare className="w-3 h-3" /> },
+            { name: 'Prompt Lab', icon: <LayoutTemplate className="w-3 h-3" /> }
+          ],
+          supported: memory >= 6,
           recommended: false,
           type: 'local',
           status: 'not_installed',
@@ -384,7 +410,7 @@ export function ModelLibraryPage() {
         },
         {
           id: 'gemma-2-9b-it-q4f16_1-MLC',
-          name: 'Gemma 2 (9B) - HEAVY',
+          name: 'Gemma 2 (9B) IT - Deep Reasoning',
           provider: 'Google',
           size: '5.9 GB',
           description: 'A highly capable flagship Gemma variant. Takes a long time to load. Requires optimal hardware.',
@@ -394,6 +420,23 @@ export function ModelLibraryPage() {
             { name: 'Problem Solving', icon: <Database className="w-3 h-3" /> }
           ],
           supported: memory >= 12,
+          recommended: false,
+          type: 'local',
+          status: 'not_installed',
+          progress: 0
+        },
+        {
+          id: 'gemma-2-9b-it-q8f16_1-MLC',
+          name: 'Gemma 2 (9B) IT - High Precision',
+          provider: 'Google',
+          size: '11.2 GB',
+          description: 'High-Fidelity 8-bit flagship variant for deep logical structures. Demands intensive GPU caches.',
+          skills: [
+            { name: 'Summarize Docs', icon: <BookOpen className="w-3 h-3" /> }, 
+            { name: 'AI Chat', icon: <MessageSquare className="w-3 h-3" /> },
+            { name: 'Complex Coding', icon: <Database className="w-3 h-3" /> }
+          ],
+          supported: memory >= 16,
           recommended: false,
           type: 'local',
           status: 'not_installed',

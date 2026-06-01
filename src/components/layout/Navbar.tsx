@@ -47,11 +47,24 @@ export function Navbar() {
       <div className="hidden md:flex items-center gap-8 font-sans font-medium text-sm text-dc-text relative z-50">
         <div className="group relative cursor-pointer py-2">
           <div className="flex items-center gap-1 hover:text-dc-gold transition-colors">
-            Features <ChevronDown className="w-4 h-4 opacity-70 group-hover:rotate-180 transition-transform" />
+            Technical Guides <ChevronDown className="w-4 h-4 opacity-70 group-hover:rotate-180 transition-transform" />
           </div>
-          <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-[#EAE6DF] shadow-xl rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 py-2">
-            <Link to="/features" className="block px-4 py-2 hover:bg-gray-50 text-gray-700 hover:text-indigo-600 transition-colors">All Features</Link>
-            <Link to="/integrations" className="block px-4 py-2 hover:bg-gray-50 text-gray-700 hover:text-indigo-600 transition-colors">Integrations</Link>
+          <div className="absolute top-full left-0 mt-2 w-72 bg-white border border-[#EAE6DF] shadow-xl rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 py-2">
+            <Link to="/blog" className="block px-4 py-2 hover:bg-gray-50 text-gray-800 hover:text-indigo-600 transition-colors font-bold text-xs uppercase tracking-wider border-b border-gray-100 pb-2 mb-1">
+              All Technical Blueprints
+            </Link>
+            <Link to="/blog?category=Core%20Technology%20%26%20File%20Parsers" className="block px-4 py-2 hover:bg-gray-50 text-gray-600 hover:text-indigo-600 transition-colors text-xs">
+              01. Core Tech & File Parsers
+            </Link>
+            <Link to="/blog?category=Data%20Structuring%20%26%20API%20Implementations" className="block px-4 py-2 hover:bg-gray-50 text-gray-600 hover:text-indigo-600 transition-colors text-xs">
+              02. Data Structuring & APIs
+            </Link>
+            <Link to="/blog?category=User%20Interface%2C%20Data%20Visualization%20%26%20Formatting" className="block px-4 py-2 hover:bg-gray-50 text-gray-600 hover:text-indigo-600 transition-colors text-xs">
+              03. UI, Charts & Spreadsheets
+            </Link>
+            <Link to="/blog?category=Web%20Architecture%20%26%20Production%20Optimization" className="block px-4 py-2 hover:bg-gray-50 text-gray-600 hover:text-indigo-600 transition-colors text-xs">
+              04. Web Performance & Security
+            </Link>
           </div>
         </div>
         
@@ -61,12 +74,12 @@ export function Navbar() {
         
         <div className="group relative cursor-pointer py-2">
           <div className="flex items-center gap-1 hover:text-dc-gold transition-colors">
-            Resources <ChevronDown className="w-4 h-4 opacity-70 group-hover:rotate-180 transition-transform" />
+            Compliance <ChevronDown className="w-4 h-4 opacity-70 group-hover:rotate-180 transition-transform" />
           </div>
           <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-[#EAE6DF] shadow-xl rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 py-2">
-            <Link to="/blog" className="block px-4 py-2 hover:bg-gray-50 text-gray-700 hover:text-indigo-600 transition-colors">Blog</Link>
+            <Link to="/privacy-policy" className="block px-4 py-2 hover:bg-gray-50 text-gray-700 hover:text-indigo-600 transition-colors">Privacy Policy</Link>
+            <Link to="/terms-of-service" className="block px-4 py-2 hover:bg-gray-50 text-gray-700 hover:text-indigo-600 transition-colors">Terms of Service</Link>
             <Link to="/changelog" className="block px-4 py-2 hover:bg-gray-50 text-gray-700 hover:text-indigo-600 transition-colors">Changelog</Link>
-            <Link to="/privacy-policy" className="block px-4 py-2 hover:bg-gray-50 text-gray-700 hover:text-indigo-600 transition-colors">Policies & Terms</Link>
           </div>
         </div>
       </div>

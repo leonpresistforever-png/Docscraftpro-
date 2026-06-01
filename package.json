@@ -75,15 +75,24 @@
     "@azure/core-auth": "latest",
     "dotenv": "latest",
     "stripe": "latest",
-    "cors": "latest"
+    "cors": "latest",
+    "@google/model-viewer": "latest",
+    "mammoth": "latest",
+    "html2pdf.js": "latest",
+    "@tailwindcss/typography": "latest"
   },
   "devDependencies": {
     "typescript": "latest",
     "tsx": "latest",
     "vite": "latest",
-    "tailwindcss": "^3.4.0",
+    "tailwindcss": "^4.0.0",
+    "@tailwindcss/vite": "^4.0.0",
+    "@vitejs/plugin-react": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
-    "@types/express": "latest"
+    "@types/express": "latest",
+    "@types/three": "latest",
+    "@types/crypto-js": "latest",
+    "@types/file-saver": "latest"
   }
 }

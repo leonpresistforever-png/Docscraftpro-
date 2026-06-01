@@ -16,7 +16,7 @@ export function SignPDFPage() {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pdfCanvasRef = useRef<HTMLCanvasElement>(null);
-  const sigCanvasRef = useRef<SignatureCanvas>(null);
+  const sigCanvasRef = useRef<any>(null);
   const dragRef = useRef<HTMLDivElement>(null);
 
   const [pdfFile, setPdfFile] = useState<File | null>(null);

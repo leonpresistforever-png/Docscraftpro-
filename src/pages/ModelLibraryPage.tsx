@@ -518,7 +518,7 @@ export function ModelLibraryPage() {
         worker = new Worker(new URL('../lib/web-llm-worker.ts', import.meta.url), { type: 'module' });
         
         engine = await CreateWebWorkerMLCEngine(worker, modelId, {
-          initProgressCallback: (progress) => {
+          initProgressCallback: (progress: any) => {
             setModels(prev => prev.map(m => {
               if (m.id === modelId && m.status === 'downloading') {
                 return { ...m, progress: Math.floor(progress.progress * 100) };
@@ -574,7 +574,7 @@ export function ModelLibraryPage() {
       workerRef.current = worker;
       
       const engine = await CreateWebWorkerMLCEngine(worker, modelId, {
-        initProgressCallback: (progress) => {
+        initProgressCallback: (progress: any) => {
           console.log(progress);
           setEngineLoadingText(progress.text);
         }

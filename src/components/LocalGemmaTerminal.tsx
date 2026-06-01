@@ -4,7 +4,7 @@ import { Terminal, Play, Loader2, CheckCircle2, Cpu, AlertTriangle, Sparkles, Da
 import { motion, AnimatePresence } from 'motion/react';
 
 interface LocalGemmaTerminalProps {
-  onEngineReady: (engine: MLCEngineInterface | null) => void;
+  onEngineReady: (engine: any) => void;
   isActive: boolean;
 }
 
@@ -26,12 +26,12 @@ const AVAILABLE_MODELS = [
 ];
 
 export function LocalGemmaTerminal({ onEngineReady, isActive }: LocalGemmaTerminalProps) {
-  const [initProgress, setInitProgress] = useState<InitProgressReport | null>(null);
+  const [initProgress, setInitProgress] = useState<any>(null);
   const [engineState, setEngineState] = useState<'idle' | 'initializing' | 'ready' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [logs, setLogs] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const engineRef = useRef<MLCEngineInterface | null>(null);
+  const engineRef = useRef<any>(null);
   const workerRef = useRef<Worker | null>(null);
 
   const [selectedModelId, setSelectedModelId] = useState<string>('gemma-2-2b-it-q4f16_1-MLC');
@@ -98,7 +98,7 @@ export function LocalGemmaTerminal({ onEngineReady, isActive }: LocalGemmaTermin
         worker,
         selectedModelId,
         { 
-          initProgressCallback: (progress) => {
+          initProgressCallback: (progress: any) => {
             setInitProgress(progress);
             if (progress.text) {
                setLogs(prev => {

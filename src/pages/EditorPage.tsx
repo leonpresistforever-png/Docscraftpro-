@@ -55,7 +55,6 @@ import {
 } from 'lucide-react';
 import { askGeminiFlash, askGeminiProComplex } from '../lib/gemini';
 import { LocalGemmaTerminal } from '../components/LocalGemmaTerminal';
-import { MLCEngineInterface } from '@mlc-ai/web-llm';
 import { marked } from 'marked';
 import { HexColorPicker } from 'react-colorful';
 
@@ -253,7 +252,7 @@ export function EditorPage() {
   const [showThemeDropdown, setShowThemeDropdown] = useState(false);
   const [docThemeKey, setDocThemeKey] = useState(() => localStorage.getItem('doc_theme_key') || 'white');
   const [useLocalModel, setUseLocalModel] = useState(true);
-  const [localEngine, setLocalEngine] = useState<MLCEngineInterface | null>(null);
+  const [localEngine, setLocalEngine] = useState<any>(null);
   const [showNotepad, setShowNotepad] = useState(false);
 
   // Margin & Ruler State

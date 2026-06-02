@@ -120,6 +120,90 @@ export function PrivacyPolicyPage() {
               </p>
             </motion.section>
 
+            <motion.section variants={item} className="bg-white p-7 md:p-8 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#D4AF37] to-indigo-500"></div>
+              <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <span className="text-dc-gold font-serif text-lg">05.</span> Google Integration & Limited Use Compliance
+              </h2>
+              <p className="text-sm mb-3">
+                Our application integrates optional features that access Google Workspace APIs (including Google Docs, Google Slides, Google Forms, and related Drive resources) to provide automated document compilation, backup, and sync capabilities.
+              </p>
+              <div className="pl-4 border-l-4 border-indigo-500 bg-indigo-50/40 p-4 rounded-r-xl space-y-2 text-xs mb-4">
+                <p className="font-bold text-indigo-950 uppercase tracking-wider text-[10px]">Google API Services Disclosure</p>
+                <p className="text-gray-700 leading-relaxed font-medium">
+                  <strong>DocCraft Pro’s use and transfer of information received from Google APIs to any other app will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener noreferrer" className="underline text-indigo-700 hover:text-indigo-900 font-bold">Google API Services User Data Policy</a>, including the Limited Use requirements.</strong>
+                </p>
+              </div>
+              <div className="mt-4 space-y-4 text-sm text-gray-600">
+                <p>
+                  <strong>1. Scope of Data Accessed & Google OAuth Scopes:</strong> When you connect your Google Workspace account, our application requests explicit permission through the standard Google OAuth interface for the following scopes:
+                </p>
+                <ul className="list-disc pl-6 space-y-2 text-xs">
+                  <li><strong>.../auth/documents:</strong> Allows us to write, structure, customize, and edit document files directly inside your Google Docs.</li>
+                  <li><strong>.../auth/presentations:</strong> Allows us to assemble slides and present visual layouts directly inside your Google Slides.</li>
+                  <li><strong>.../auth/forms.body:</strong> Allows us to inspect and modify form schemas inside Google Forms.</li>
+                  <li><strong>.../auth/drive.file:</strong> Permits uploading, creating, and modifying files that you select or create using DocCraft Pro.</li>
+                  <li><strong>.../auth/userinfo.email & .../auth/userinfo.profile:</strong> To verify your email address and profile identity securely to authorize account creation.</li>
+                </ul>
+                <p>
+                  <strong>2. Purpose of Access:</strong> We access your Workspace assets exclusively to compile, write, or export your locally designed and edited document drafts directly into your personal Google account. All operations are user-directed; we never read, modify, or scan documents unless you explicitly request a transfer action on that specific document.
+                </p>
+                <p>
+                  <strong>3. Data Storage & Sharing:</strong> We do not store, cache, upload, or transmit any user documents or data retrieved from Google APIs to any external servers or third-party entities. All API requests are processed inside your browser instance, passing parameters securely and directly between our client application and Google's official API servers.
+                </p>
+                <p>
+                  <strong>4. Third-Party Sharing and Human-In-the-Loop Policies:</strong> No information accessed via Google API scopes is ever rented, sold, or shared with third parties, advertising systems, or used for machine learning or AI model training under any circumstances. We do not permit any human employees, contractors, or developers to read or view user data retrieved via Google API scopes unless required for security investigations, compliance audits, or if you explicitly provide troubleshooting files to our support team.
+                </p>
+              </div>
+            </motion.section>
+
+            <motion.section variants={item} className="bg-white p-7 md:p-8 rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-200 to-emerald-500"></div>
+              <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <span className="text-dc-gold font-serif text-lg">06.</span> Global Compliance & Data Privacy Rights
+              </h2>
+              <p className="text-sm mb-3">
+                We respect your rights under the <strong>General Data Protection Regulation (GDPR)</strong>, the <strong>California Consumer Privacy Act (CCPA/CPRA)</strong>, and other global privacy laws:
+              </p>
+              <div className="space-y-3 text-sm text-gray-600">
+                <p>
+                  <strong>1. Right to be Forgotten (Deletion):</strong> You can permanently delete your user profile and all accompanying document records at any time. Erasing your files permanently wipes them from our production Firestore databases and cleans up all active local caching nodes.
+                </p>
+                <p>
+                  <strong>2. Right to Portability:</strong> You can export any document draft into multiple formats (PDF, Markdown, JSON, DOCX) directly from our editor screen. We do not run restrictive or proprietary locks; your work remains yours to download.
+                </p>
+                <p>
+                  <strong>3. Right to Object and Restrict Processing:</strong> You are in complete control of which secondary tools (such as optional AI summary models or Google OAuth connectors) process your drafts. You can toggle permission connections off instantly via your settings page.
+                </p>
+                <p>
+                  <strong>4. No Sale or Sharing of Personal Data:</strong> We explicitly verify that we do not sell your personal details, email list metrics, or document context to any third parties, broker agencies, or advertising providers.
+                </p>
+              </div>
+            </motion.section>
+
+            <motion.section variants={item} className="bg-white p-7 md:p-8 rounded-2xl border border-gray-200 shadow-sm">
+              <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <span className="text-dc-gold font-serif text-lg">07.</span> Terms of Service & Legal Status
+              </h2>
+              <div className="space-y-4 text-sm text-gray-600">
+                <p>
+                  <strong>1. Acceptance of Terms:</strong> By registering an account or executing documents on DocCraft Pro, you agree to be bound by these standard Terms of Service and all applicable local, national, and international laws.
+                </p>
+                <p>
+                  <strong>2. Intellectual Property:</strong> You retain complete and unconditional intellectual property ownership over all content, drafts, files, logic maps, or notes you compile inside the editor. We exert absolutely zero ownership rights over user-created documents.
+                </p>
+                <p>
+                  <strong>3. Authorized Use:</strong> You agree not to utilize DocCraft Pro to design, compile, or transmit any malicious materials, spyware, unlawful file formats, or spam documents.
+                </p>
+                <p>
+                  <strong>4. Disclaimer of Warranty:</strong> DocCraft Pro is provided on an "AS IS" and "AS AVAILABLE" basis without warranties of any kind, whether express or implied. We do not guarantee uninterrupted server runtimes or error-free rendering parameters.
+                </p>
+                <p>
+                  <strong>5. Contact Support:</strong> For legal disputes, compliance audits, or data deletion queries, please submit a support ticket in the support console or email our team directly at <span className="font-mono text-gray-900 font-semibold">{import.meta.env.VITE_SUPPORT_EMAIL || 'leonpresistforever@gmail.com'}</span>.
+                </p>
+              </div>
+            </motion.section>
+
           </div>
         </motion.div>
       </main>

@@ -171,8 +171,14 @@ const DOCUMENT_THEMES: Record<string, {
 
 export function EditorPage() {
   const { id } = useParams();
+  const idRef = useRef(id);
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  useEffect(() => {
+    idRef.current = id;
+  }, [id]);
+
   const lowlight = createLowlight(all);
 
   const [docTitle, setDocTitle] = useState('Untitled Document');
@@ -251,7 +257,7 @@ export function EditorPage() {
   const [showAutocompleteApiKeySetting, setShowAutocompleteApiKeySetting] = useState(false);
   const [showThemeDropdown, setShowThemeDropdown] = useState(false);
   const [docThemeKey, setDocThemeKey] = useState(() => localStorage.getItem('doc_theme_key') || 'white');
-  const [useLocalModel, setUseLocalModel] = useState(true);
+  const [useLocalModel, setUseLocalModel] = useState(false);
   const [localEngine, setLocalEngine] = useState<any>(null);
   const [showNotepad, setShowNotepad] = useState(false);
 
@@ -926,6 +932,8 @@ Requirements:
   };
 
   const isInitialMount = useRef(true);
+  const isIncomingLoadRef = useRef(false);
+  const lastLoadedIdRef = useRef<string | null>(null);
   
   // Custom Popover States
   const [showSyntaxSlider, setShowSyntaxSlider] = useState(false);
@@ -1049,7 +1057,9 @@ Requirements:
     ],
     content: '',
     onUpdate: ({ editor }) => {
-      if (!id || id === 'new') return;
+      if (isIncomingLoadRef.current) return;
+      const currentId = idRef.current;
+      if (!currentId || currentId === 'new') return;
       
       // Advanced Editor Features Logic
       const { state } = editor;
@@ -1072,7 +1082,9 @@ Requirements:
       
       saveTimeoutRef.current = setTimeout(async () => {
         try {
-          await updateDoc(doc(db, 'documents', id), {
+          const activeId = idRef.current;
+          if (!activeId || activeId === 'new') return;
+          await updateDoc(doc(db, 'documents', activeId), {
             content: encryptData(editor.getHTML()),
             updatedAt: serverTimestamp()
           });
@@ -1136,10 +1148,11 @@ Requirements:
   });
 
   const handleDocSave = async () => {
-    if (!id || !editor || id === 'new') return;
+    const activeId = idRef.current;
+    if (!activeId || !editor || activeId === 'new') return;
     setSyncStatus('Saving...');
     try {
-      await updateDoc(doc(db, 'documents', id), {
+      await updateDoc(doc(db, 'documents', activeId), {
         content: encryptData(editor.getHTML()),
         updatedAt: serverTimestamp()
       });
@@ -1186,7 +1199,9 @@ Requirements:
           setIsStarred(data.isStarred || false);
           setIsShared(data.isShared || false);
           if (editor && !editor.isDestroyed) {
+             isIncomingLoadRef.current = true;
              editor.commands.setContent(decryptData(data.content || ''));
+             isIncomingLoadRef.current = false;
              
              // Check for pending custom element from Studio AFTER content is loaded
               const pendingElement = localStorage.getItem('pending_studio_element');
@@ -1270,9 +1285,14 @@ Requirements:
       }
     }
     
-    if (editor && isInitialMount.current) {
-        loadOrCreateDoc();
+    if (editor && (isInitialMount.current || id !== lastLoadedIdRef.current)) {
+        if (saveTimeoutRef.current) {
+          clearTimeout(saveTimeoutRef.current);
+        }
+        setSyncStatus('All changes saved');
         isInitialMount.current = false;
+        lastLoadedIdRef.current = id || null;
+        loadOrCreateDoc();
     }
   }, [id, user, navigate, editor]);
 

@@ -12,6 +12,54 @@ import {
 import { doc, onSnapshot, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 
+export enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+export interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+    isAnonymous?: boolean | null;
+    tenantId?: string | null;
+    providerInfo?: {
+      providerId?: string | null;
+      email?: string | null;
+    }[];
+  };
+}
+
+export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+      tenantId: auth.currentUser?.tenantId,
+      providerInfo: auth.currentUser?.providerData?.map(provider => ({
+        providerId: provider.providerId,
+        email: provider.email,
+      })) || []
+    },
+    operationType,
+    path
+  };
+  const errStr = JSON.stringify(errInfo);
+  console.error('Firestore Error: ', errStr);
+  throw new Error(errStr);
+}
+
 interface UserData {
   credits: number;
   subscription?: string;
@@ -61,22 +109,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
-      if (currentUser) {
-        // Initialize user document if not exists with try-catch
-        try {
-          const userRef = doc(db, 'users', currentUser.uid);
-          const docSnap = await getDoc(userRef);
-          if (!docSnap.exists()) {
-            await setDoc(userRef, { credits: 20, subscription: 'Starter', updatedAt: new Date().toISOString() });
+      try {
+        setUser(currentUser);
+        if (currentUser) {
+          // Initialize user document if not exists with try-catch
+          try {
+            const userRef = doc(db, 'users', currentUser.uid);
+            const docSnap = await getDoc(userRef);
+            if (!docSnap.exists()) {
+              await setDoc(userRef, { credits: 20, subscription: 'Starter', updatedAt: new Date().toISOString() });
+            }
+          } catch (dbError: any) {
+            console.error("Firestore user init failed inside AuthStateChanged:", dbError);
+            if (dbError?.code === 'permission-denied' || dbError?.message?.includes('permission')) {
+              try {
+                handleFirestoreError(dbError, OperationType.GET, 'users');
+              } catch (err) {
+                console.error("Muffled permission error to guarantee loading completes:", err);
+              }
+            }
           }
-        } catch (dbError) {
-          console.error("Firestore user init failed inside AuthStateChanged:", dbError);
+        } else {
+          setUserData(null);
         }
-      } else {
-        setUserData(null);
+      } catch (err) {
+        console.error("General error in onAuthStateChanged:", err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     });
     return unsubscribe;
   }, []);

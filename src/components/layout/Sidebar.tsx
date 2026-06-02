@@ -249,7 +249,22 @@ export function Sidebar({ defaultCollapsed = false }: { defaultCollapsed?: boole
                 {docItem.isPinned ? "Unpin" : "Pin to top"}
               </button>
               <button 
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setActiveMenuDocId(null); }}
+                onClick={async (e) => { 
+                  e.preventDefault(); 
+                  e.stopPropagation(); 
+                  setActiveMenuDocId(null); 
+                  const newTitle = prompt("Rename Document", docItem.title);
+                  if (newTitle && newTitle.trim() && newTitle.trim() !== docItem.title) {
+                    try {
+                      await updateDoc(doc(db, 'documents', docItem.id), {
+                        title: newTitle.trim(),
+                        updatedAt: serverTimestamp()
+                      });
+                    } catch (err) {
+                      console.error("Failed to rename document", err);
+                    }
+                  }
+                }}
                 className="flex items-center gap-2 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100 text-left"
               >
                 <Edit2 size={12} className="text-gray-400" />

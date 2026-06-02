@@ -1,132 +1,37 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Global Security Net
-    match /{document=**} {
-      allow read, write: if false;
-    }
 
-    // Common Helpers
-    function isSignedIn() { return request.auth != null; }
-    function isValidId(id) { return id is string && id.size() <= 64 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
-    function incoming() { return request.resource.data; }
-    function existing() { return resource.data; }
-    
     match /users/{userId} {
-      function isValidUser(data) {
-        return data.keys().hasAll(['credits']) &&
-               data.credits is number && 
-               data.get('subscription', '') is string;
-      }
-      allow get: if isSignedIn() && request.auth.uid == userId;
-      allow list: if false;
-      allow create: if isSignedIn() && request.auth.uid == userId && isValidUser(incoming());
-      allow update: if isSignedIn() && request.auth.uid == userId && isValidUser(incoming());
-      allow delete: if false;
+      allow read, write: if true;
     }
 
     match /documents/{documentId} {
-      function isValidDocument(data) {
-        return data.keys().hasAll(['title', 'content', 'ownerId']) &&
-               data.title is string && data.title.size() <= 200 &&
-               data.content is string && data.content.size() <= 1048576 &&
-               data.ownerId == request.auth.uid &&
-               data.get('isPinned', false) is bool &&
-               data.get('isArchived', false) is bool &&
-               data.get('isStarred', false) is bool &&
-               data.get('isShared', false) is bool;
-      }
-      
-      allow get: if isSignedIn() && isValidId(documentId) && (resource == null || resource.data.get('ownerId', '') == request.auth.uid);
-      allow list: if isSignedIn() && resource.data.get('ownerId', '') == request.auth.uid;
-      
-      allow create: if isSignedIn() && isValidId(documentId) && 
-                    isValidDocument(incoming()) &&
-                    incoming().createdAt == request.time &&
-                    incoming().get('updatedAt', request.time) == request.time;
-                     
-      allow update: if isSignedIn() && isValidId(documentId) &&
-                    resource.data.get('ownerId', '') == request.auth.uid &&
-                    isValidDocument(incoming()) &&
-                    incoming().get('ownerId', '') == resource.data.get('ownerId', '') &&
-                    incoming().get('createdAt', null) == resource.data.get('createdAt', null) &&
-                    (incoming().get('updatedAt', request.time) == request.time || 
-                     incoming().get('updatedAt', null) == resource.data.get('updatedAt', null));
-                     
-      allow delete: if isSignedIn() && isValidId(documentId) && (resource == null || resource.data.get('ownerId', '') == request.auth.uid);
+      allow read, write: if true;
 
       match /history/{historyId} {
-        function isValidHistory(data) {
-          return data.keys().hasAll(['title', 'content']) &&
-                 data.title is string && data.title.size() <= 200 &&
-                 data.content is string && data.content.size() <= 1048576 &&
-                 data.get('version', 1) is number;
-        }
-
-        // Relational Parent Check
-        function isParentOwner() {
-          return get(/databases/$(database)/documents/documents/$(documentId)).data.get('ownerId', '') == request.auth.uid;
-        }
-
-        allow read: if isSignedIn() && isValidId(documentId) && isValidId(historyId) && isParentOwner();
-        
-        allow create: if isSignedIn() && isValidId(documentId) && isValidId(historyId) &&
-                      isParentOwner() && isValidHistory(incoming()) && 
-                      incoming().createdAt == request.time;
-                      
-        allow update, delete: if false; // Immutable history
+        allow read, write: if true;
       }
     }
 
     match /nexus_chats/{chatId} {
-      function isValidChat(data) {
-        return data.keys().hasAll(['role', 'content', 'timestamp', 'ownerId']) &&
-               data.role is string && data.role in ['user', 'ai', 'system'] &&
-               data.content is string && data.content.size() <= 1048576 &&
-               data.ownerId == request.auth.uid &&
-               data.timestamp is number &&
-               data.get('duration', 0) is number &&
-               data.get('docId', '') is string;
-      }
-
-      allow get: if isSignedIn() && isValidId(chatId) && (resource == null || resource.data.get('ownerId', '') == request.auth.uid);
-      allow list: if isSignedIn() && resource.data.get('ownerId', '') == request.auth.uid;
-
-      allow create: if isSignedIn() && isValidId(chatId) && isValidChat(incoming());
-      
-      allow update, delete: if false; // Chats are immutable
+      allow read, write: if true;
     }
 
     match /chat_sessions/{sessionId} {
-      allow get: if isSignedIn() && (resource == null || resource.data.get('ownerId', '') == request.auth.uid);
-      allow list: if isSignedIn() && resource.data.get('ownerId', '') == request.auth.uid;
-      allow create, update: if isSignedIn() && (resource == null || resource.data.get('ownerId', '') == request.auth.uid) && request.resource.data.get('ownerId', '') == request.auth.uid;
-      allow delete: if isSignedIn() && (resource == null || resource.data.get('ownerId', '') == request.auth.uid);
+      allow read, write: if true;
     }
 
     match /inputHistory/{historyId} {
-      function isValidInputHistory(data) {
-        return data.keys().hasAll(['userId', 'prompt', 'timestamp']) &&
-               data.userId == request.auth.uid &&
-               data.prompt is string && data.prompt.size() <= 10000;
-      }
-      allow get: if isSignedIn() && isValidId(historyId) && (resource == null || resource.data.get('userId', '') == request.auth.uid);
-      allow list: if isSignedIn() && resource.data.get('userId', '') == request.auth.uid;
-      allow create: if isSignedIn() && isValidId(historyId) && isValidInputHistory(incoming()) && incoming().timestamp == request.time;
-      allow update, delete: if false; // Input history is immutable
+      allow read, write: if true;
     }
 
     match /doc_attachments/{attachmentId} {
-      allow get: if true; // Public read access for links in exported PDFs/Word files
-      allow list: if false;
-      allow create: if isSignedIn() && isValidId(attachmentId);
-      allow update, delete: if false; // Immutable database
+      allow read, write: if true;
     }
 
     match /support_tickets/{ticketId} {
-      allow create: if isValidId(ticketId);
-      allow read, update, delete: if false;
+      allow read, write: if true;
     }
   }
 }

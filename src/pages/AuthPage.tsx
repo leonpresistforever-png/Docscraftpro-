@@ -5,6 +5,8 @@ import { motion } from 'motion/react';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { VisualCaptcha } from '../components/VisualCaptcha';
 
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '0x4AAAAAADITOkdYnpXv2YLs';
+
 export function AuthPage() {
   const { user, signInWithGoogle, signInWithEmail, signUpWithEmail, signInAsDemo } = useAuth();
   const navigate = useNavigate();
@@ -36,7 +38,7 @@ export function AuthPage() {
     e.preventDefault();
     if (!signInEmail || !signInPassword) return;
     
-    const cfVerified = !!captchaToken;
+    const cfVerified = TURNSTILE_SITE_KEY ? !!captchaToken : true;
     const cvVerified = isCustomCaptchaVerified;
     if (!cfVerified && !cvVerified) {
       setError('Please verify the Captcha to proceed.');
@@ -65,7 +67,7 @@ export function AuthPage() {
       return;
     }
     
-    const cfVerified = !!captchaToken;
+    const cfVerified = TURNSTILE_SITE_KEY ? !!captchaToken : true;
     const cvVerified = isCustomCaptchaVerified;
     if (!cfVerified && !cvVerified) {
       setError('Please verify the Captcha to proceed.');
@@ -88,7 +90,7 @@ export function AuthPage() {
   };
 
   const handleGoogleAuth = async () => {
-    const cfVerified = !!captchaToken;
+    const cfVerified = TURNSTILE_SITE_KEY ? !!captchaToken : true;
     const cvVerified = isCustomCaptchaVerified;
     if (!cfVerified && !cvVerified) {
       setError('Please verify the Captcha to log in with Google.');
@@ -188,17 +190,19 @@ export function AuthPage() {
                 {/* Captcha Verification */}
                 <VisualCaptcha onVerify={setIsCustomCaptchaVerified} theme="light" />
 
-                <div className="flex justify-center my-0.5">
-                  <Turnstile 
-                    siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY || ''} 
-                    onSuccess={(token) => {
-                      setCaptchaToken(token);
-                      setError('');
-                    }}
-                    onError={() => setError('Captcha verification failed.')}
-                    onExpire={() => setCaptchaToken(null)}
-                  />
-                </div>
+                {TURNSTILE_SITE_KEY && (
+                  <div className="flex justify-center my-0.5">
+                    <Turnstile 
+                      siteKey={TURNSTILE_SITE_KEY} 
+                      onSuccess={(token) => {
+                        setCaptchaToken(token);
+                        setError('');
+                      }}
+                      onError={() => setError('Captcha verification failed.')}
+                      onExpire={() => setCaptchaToken(null)}
+                    />
+                  </div>
+                )}
                 
                 <button 
                   type="submit"
@@ -307,18 +311,20 @@ export function AuthPage() {
                 {/* Captcha Verification */}
                 <VisualCaptcha onVerify={setIsCustomCaptchaVerified} theme="dark" />
 
-                <div className="flex justify-center my-0.5">
-                  <Turnstile 
-                    siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY || ''} 
-                    onSuccess={(token) => {
-                      setCaptchaToken(token);
-                      setError('');
-                    }}
-                    onError={() => setError('Captcha verification failed.')}
-                    onExpire={() => setCaptchaToken(null)}
-                    options={{ theme: 'dark' }}
-                  />
-                </div>
+                {TURNSTILE_SITE_KEY && (
+                  <div className="flex justify-center my-0.5">
+                    <Turnstile 
+                      siteKey={TURNSTILE_SITE_KEY} 
+                      onSuccess={(token) => {
+                        setCaptchaToken(token);
+                        setError('');
+                      }}
+                      onError={() => setError('Captcha verification failed.')}
+                      onExpire={() => setCaptchaToken(null)}
+                      options={{ theme: 'dark' }}
+                    />
+                  </div>
+                )}
                 
                 <button 
                   type="submit"

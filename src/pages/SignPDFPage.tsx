@@ -9,8 +9,8 @@ import { PDFDocument } from 'pdf-lib';
 import SignatureCanvas from 'react-signature-canvas';
 import Draggable from 'react-draggable';
 
-// Configure PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js`;
+// Configure PDF.js worker dynamically to match the imported package version
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
 
 export function SignPDFPage() {
   const navigate = useNavigate();

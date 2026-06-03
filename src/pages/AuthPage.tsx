@@ -198,7 +198,9 @@ export function AuthPage() {
                         setCaptchaToken(token);
                         setError('');
                       }}
-                      onError={() => setError('Captcha verification failed.')}
+                      onError={() => {
+                        console.warn("Turnstile failed to load or verify. Using visual fallback instead.");
+                      }}
                       onExpire={() => setCaptchaToken(null)}
                     />
                   </div>

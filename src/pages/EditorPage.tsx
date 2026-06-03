@@ -1518,7 +1518,7 @@ Requirements:
       
       const downloadUrl = `${window.location.origin}/api/attachments/${attachmentId}`;
       const displayText = attachedFileText.trim() || attachedFile?.name || 'Attached File';
-      const attachmentHtml = `<a href="${downloadUrl}" download="${attachedFile?.name || 'file'}" class="text-blue-600 underline font-medium bg-blue-50 px-2 py-1 rounded inline-flex items-center gap-1">📎 ${displayText}</a>&nbsp;`;
+      const attachmentHtml = `<a href="${downloadUrl}" download="${attachedFile?.name || 'file'}">📎 ${displayText}</a> `;
       editor.chain().focus().insertContent(attachmentHtml).run();
       
       setShowFileModal(false);
@@ -1530,7 +1530,7 @@ Requirements:
       console.error("Failed to upload attachment:", err);
       // Fallback to local Base64 embedded URL if Firestore fails
       const displayText = attachedFileText.trim() || attachedFile?.name || 'Attached File';
-      const attachmentHtml = `<a href="${attachedFileBase64}" download="${attachedFile?.name || 'file'}" class="text-blue-600 underline font-medium bg-blue-50 px-2 py-1 rounded inline-flex items-center gap-1">📎 ${displayText}</a>&nbsp;`;
+      const attachmentHtml = `<a href="${attachedFileBase64}" download="${attachedFile?.name || 'file'}">📎 ${displayText}</a> `;
       editor.chain().focus().insertContent(attachmentHtml).run();
       setShowFileModal(false);
       setAttachedFile(null);
@@ -1557,7 +1557,7 @@ Requirements:
       
       const popupUrl = `popup-photo:${attachmentId}`;
       const displayText = attachedPhotoText.trim() || attachedPhotoFile?.name || 'View Photo';
-      const attachmentHtml = `<a href="${popupUrl}" class="text-pink-600 hover:text-pink-700 underline font-semibold cursor-pointer inline-flex items-center gap-1">🖼️ ${displayText}</a>&nbsp;`;
+      const attachmentHtml = `<a href="${popupUrl}">🖼️ ${displayText}</a> `;
       editor.chain().focus().insertContent(attachmentHtml).run();
       
       setShowPhotoModal(false);
@@ -1569,7 +1569,7 @@ Requirements:
       console.error("Failed to upload photo attachment:", err);
       const fallbackUrl = `popup-photo:${attachedPhotoBase64}`;
       const displayText = attachedPhotoText.trim() || attachedPhotoFile?.name || 'View Photo';
-      const attachmentHtml = `<a href="${fallbackUrl}" class="text-pink-600 hover:text-pink-700 underline font-semibold cursor-pointer inline-flex items-center gap-1">🖼️ ${displayText}</a>&nbsp;`;
+      const attachmentHtml = `<a href="${fallbackUrl}">🖼️ ${displayText}</a> `;
       editor.chain().focus().insertContent(attachmentHtml).run();
       
       setShowPhotoModal(false);
@@ -1657,6 +1657,29 @@ Requirements:
 
   const handleDownloadFromViewer = () => {
     if (!popupMediaUrl) return;
+
+    // For PDFs or images, open natively in a new tab/window so the device renders it perfectly
+    if (popupMediaType === 'pdf' || popupMediaType === 'image') {
+      try {
+        let openUrl = popupMediaUrl;
+        if (popupMediaUrl.startsWith('data:')) {
+          const parts = popupMediaUrl.split(',');
+          const byteString = atob(parts[1]);
+          const mimeString = parts[0].split(':')[1].split(';')[0];
+          const ab = new ArrayBuffer(byteString.length);
+          const ia = new Uint8Array(ab);
+          for (let i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
+          }
+          const blob = new Blob([ab], { type: mimeString });
+          openUrl = URL.createObjectURL(blob);
+        }
+        window.open(openUrl, '_blank');
+      } catch (err) {
+        console.error("Could not open native browser viewer:", err);
+      }
+    }
+
     const link = document.createElement('a');
     link.href = popupMediaUrl;
     link.download = popupMediaTitle || 'downloaded-file';
@@ -1691,8 +1714,11 @@ Requirements:
     } else if (format === 'pdf') {
        setSaving(true);
        try {
-           const html2pdfModule = await import('html2pdf.js');
-           const html2pdf = html2pdfModule.default ? html2pdfModule.default : html2pdfModule;
+           let html2pdf = (window as any).html2pdf;
+           if (!html2pdf) {
+               const html2pdfModule = await import('html2pdf.js');
+               html2pdf = html2pdfModule.default ? html2pdfModule.default : html2pdfModule;
+           }
            
            addWatermark();
            const element = document.querySelector('.ProseMirror') as HTMLElement;
@@ -1840,10 +1866,59 @@ Requirements:
               console.error("Failed aligning watermarks in PDF bundle:", errWatermark);
             }
 
+            // Post-process secure attachment / popup links to absolute URLs so they work when user views the PDF on native devices
+            try {
+               clone.querySelectorAll('a').forEach((linkEl: any) => {
+                 const href = linkEl.getAttribute('href');
+                 if (href) {
+                   if (href.startsWith('popup-photo:')) {
+                     const id = href.substring('popup-photo:'.length);
+                     if (!id.startsWith('data:')) {
+                       linkEl.setAttribute('href', `${window.location.origin}/api/attachments/${id}`);
+                     }
+                   } else if (href.startsWith('/api/attachments/')) {
+                     linkEl.setAttribute('href', `${window.location.origin}${href}`);
+                   }
+                 }
+               });
+            } catch (linkReplaceErr) {
+               console.error("Failed mapping secure links to absolute URLs in PDF:", linkReplaceErr);
+            }
+
             parent.appendChild(clone);
             document.body.appendChild(parent);
 
-            await (html2pdf as any)().from(parent).set(opt).save();
+            // Wait for all images in the cloned elements to load fully, securing complete document render
+            try {
+               const images = Array.from(parent.querySelectorAll('img'));
+               await Promise.all(images.map(img => {
+                 if (img.complete) return Promise.resolve();
+                 return new Promise(resolve => {
+                   img.onload = resolve;
+                   img.onerror = resolve;
+                 });
+               }));
+            } catch (imgLoadErr) {
+               console.error("Graceful handler for image loader pre-renderer PDF:", imgLoadErr);
+            }
+
+            const pdfWorker = (html2pdf as any)().from(parent).set(opt);
+            
+            // Try to generate a native blob and open it in a new tab safely
+            try {
+              const pdfBlob = await pdfWorker.output('blob');
+              if (pdfBlob) {
+                const blobUrl = URL.createObjectURL(pdfBlob);
+                const printWin = window.open(blobUrl, '_blank');
+                if (!printWin) {
+                  console.warn("Popup blocked. Proceeding with normal download...");
+                }
+              }
+            } catch (blobErr) {
+              console.error("Could not output PDF blob natively:", blobErr);
+            }
+
+            await pdfWorker.save();
             document.body.removeChild(parent);
        } catch (err) {
            console.error("PDF Export error:", err);
@@ -2418,7 +2493,10 @@ Requirements:
                {showExportMenu && (
                  <div className="absolute top-full right-0 mt-2 w-48 bg-white border border-gray-200 shadow-xl rounded-xl py-1 z-[90]">
                    <p className="px-4 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-50">Select Format</p>
-                   <button onClick={() => { handleExport('pdf'); setShowExportMenu(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
+                   <button onClick={() => { window.print(); setShowExportMenu(false); }} className="w-full text-left px-4 py-2 text-sm text-purple-700 bg-purple-50 hover:bg-purple-100 font-bold flex items-center gap-2 border-b border-gray-100">
+                      <Printer className="w-4 h-4 text-purple-600" /> Print / System PDF (Native)
+                    </button>
+                    <button onClick={() => { handleExport('pdf'); setShowExportMenu(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
                      <Printer className="w-4 h-4" /> PDF Document
                    </button>
                    <button onClick={() => { handleExport('png'); setShowExportMenu(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">

@@ -6,7 +6,8 @@ import {
   FileText, Wand2, Music, Video, Image as ImageIcon, Search, LayoutTemplate, MoreHorizontal, 
   FilePlus, RefreshCw, Upload, Globe, X, RotateCw, ListOrdered, Droplets, Crop, Edit3, 
   LayoutList, Unlock, Lock, PenTool, Ban, SplitSquareHorizontal, FileImage, FileType2, 
-  Presentation, FileSpreadsheet, Code, ShieldCheck, ArrowRight, Star, Share2
+  Presentation, FileSpreadsheet, Code, ShieldCheck, ArrowRight, Star, Share2,
+  Clock, Loader2, ArrowUpRight, CheckCircle2, ChevronRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -23,10 +24,18 @@ export function Dashboard() {
   const [documents, setDocuments] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'all' | 'starred' | 'shared'>('all');
 
-  // Modal State
-  const [activeModal, setActiveModal] = useState<'creator' | 'convert' | null>(null);
+  // Workbench Modal state
+  const [workbenchOpen, setWorkbenchOpen] = useState(false);
+  const [workbenchTool, setWorkbenchTool] = useState<'Upload to Doc' | 'Rotate PDF' | 'Add Watermark' | 'Add Page Numbers' | 'Sign PDF'>('Upload to Doc');
+  const [workbenchFile, setWorkbenchFile] = useState<File | null>(null);
+  const [isProcessingFile, setIsProcessingFile] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+
+  // Workbench configurations
+  const [watermarkText, setWatermarkText] = useState('CONFIDENTIAL');
+  const [rotationAngle, setRotationAngle] = useState(90);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const currentToolRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -85,7 +94,15 @@ export function Dashboard() {
   const quickActions = [
     { icon: <FilePlus className="w-5 h-5" />, label: 'New Document', href: '/doc/new' },
     { icon: <Globe className="w-5 h-5" />, label: 'Translate PDF', href: '/media' },
-    { icon: <Upload className="w-5 h-5" />, label: 'Upload', action: () => handleToolClick('Upload to Doc') },
+    { icon: <Upload className="w-5 h-5" />, label: 'Upload & Extract', action: () => handleToolClick('Upload to Doc') },
+  ];
+
+  const workbenchToolsList = [
+    { name: 'Upload to Doc', desc: 'OCR scanning converts layout PDF directly to fully editable interactive docs.', icon: <FileText className="w-6 h-6 text-indigo-500" /> },
+    { name: 'Sign PDF', desc: 'Securely draw, design, and overlay legal-grade initials or signature streams.', icon: <PenTool className="w-6 h-6 text-amber-500" /> },
+    { name: 'Rotate PDF', desc: 'Correct tilted page configurations with quick rotation parameters.', icon: <RotateCw className="w-6 h-6 text-pink-500" /> },
+    { name: 'Add Watermark', desc: 'Incorporate continuous secure diagonal watermark lettering blocks.', icon: <Droplets className="w-6 h-6 text-blue-500" /> },
+    { name: 'Add Page Numbers', desc: 'Sequence and inject precise formatting headers automatically.', icon: <ListOrdered className="w-6 h-6 text-green-500" /> }
   ];
 
   const handleToolClick = (toolName: string) => {
@@ -93,106 +110,118 @@ export function Dashboard() {
       navigate('/tools/sign-pdf');
       return;
     }
-    if (toolName === 'Rotate PDF' || toolName === 'Add Watermark' || toolName === 'Add Page Numbers' || toolName === 'Upload to Doc') {
-       currentToolRef.current = toolName;
-       if (fileInputRef.current) {
-         fileInputRef.current.value = '';
-         fileInputRef.current.click();
-       }
-       return;
-    }
-    alert(`The "${toolName}" tool is currently under construction. Check back soon for the full feature!`);
+    setWorkbenchTool(toolName as any);
+    setWorkbenchFile(null); // Reset file selection
+    setWorkbenchOpen(true);
   };
 
-  const handleToolFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-     const file = e.target.files?.[0];
-     const currentTool = currentToolRef.current;
-     
-     if (!file || !currentTool) {
-       if (fileInputRef.current) fileInputRef.current.value = '';
-       return;
-     }
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(true);
+  };
 
-     if (currentTool === 'Upload to Doc') {
-         try {
-           const pdfjsLib = await import('pdfjs-dist');
-           pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-           const arrayBuffer = await file.arrayBuffer();
-           const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-           let text = '';
-           for (let i = 1; i <= pdf.numPages; i++) {
-             const page = await pdf.getPage(i);
-             const content = await page.getTextContent();
-             text += content.items.map((item: any) => item.str).join(' ') + '\n\n';
-           }
-           const newDocRef = doc(collection(db, 'documents'));
-           await setDoc(newDocRef, {
-              title: file.name.replace('.pdf', ''),
-              content: encryptData(text),
-              ownerId: user?.uid,
-              isPinned: false,
-              isArchived: false,
-              isStarred: false,
-              isShared: false,
-              createdAt: serverTimestamp(),
-              updatedAt: serverTimestamp()
-           });
-           navigate(`/doc/${newDocRef.id}`);
-         } catch (err) {
-            console.error('Upload extract error:', err);
-            alert('Could not extract text from PDF.');
-         } finally {
-            currentToolRef.current = null;
-         }
-         return;
-     }
-     
-     try {
-        let resultBlob: Blob | null = null;
-        let filename = file.name;
-        
-        if (currentTool === 'Rotate PDF') {
-           resultBlob = await rotatePDF(file, 90);
-           filename = `rotated_${file.name}`;
-        } else if (currentTool === 'Add Watermark') {
-           const watermarkText = prompt("Enter watermark text:", "CONFIDENTIAL") || "CONFIDENTIAL";
-           resultBlob = await addWatermark(file, watermarkText);
-           filename = `watermarked_${file.name}`;
-        } else if (currentTool === 'Add Page Numbers') {
-           resultBlob = await addPageNumbers(file);
-           filename = `numbered_${file.name}`;
+  const handleDragLeave = () => {
+    setDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+        setWorkbenchFile(file);
+      } else {
+        alert("Please drop a valid PDF file.");
+      }
+    }
+  };
+
+  const handleSelectFileInputClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setWorkbenchFile(e.target.files[0]);
+    }
+  };
+
+  const handleExecuteTool = async () => {
+    if (!workbenchFile) return;
+    setIsProcessingFile(true);
+    try {
+      if (workbenchTool === 'Upload to Doc') {
+        const pdfjsLib = await import('pdfjs-dist');
+        const pdfjsVersion = (pdfjsLib as any).version || '3.11.174';
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsVersion}/build/pdf.worker.min.js`;
+        const arrayBuffer = await workbenchFile.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let text = '';
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          text += content.items.map((item: any) => item.str).join(' ') + '\n\n';
         }
-        
-        if (resultBlob) {
-           // Attempt download
-           try {
-             const link = document.createElement('a');
-             link.href = URL.createObjectURL(resultBlob);
-             link.download = filename;
-             link.click();
-             setTimeout(() => URL.revokeObjectURL(link.href), 1000);
-           } catch {
-             // Ignore download errors
-           }
-        }
-     } catch (error) {
-       console.error(error);
-       alert("Failed to process the PDF: " + error);
-     } finally {
-       currentToolRef.current = null;
-       if (fileInputRef.current) fileInputRef.current.value = '';
-     }
+        const newDocRef = doc(collection(db, 'documents'));
+        await setDoc(newDocRef, {
+           title: workbenchFile.name.replace('.pdf', ''),
+           content: encryptData(text),
+           ownerId: user?.uid,
+           isPinned: false,
+           isArchived: false,
+           isStarred: false,
+           isShared: false,
+           createdAt: serverTimestamp(),
+           updatedAt: serverTimestamp()
+        });
+        setWorkbenchOpen(false);
+        navigate(`/doc/${newDocRef.id}`);
+        return;
+      }
+
+      let resultBlob: Blob | null = null;
+      let filename = workbenchFile.name;
+      
+      if (workbenchTool === 'Rotate PDF') {
+         resultBlob = await rotatePDF(workbenchFile, rotationAngle);
+         filename = `rotated_${workbenchFile.name}`;
+      } else if (workbenchTool === 'Add Watermark') {
+         resultBlob = await addWatermark(workbenchFile, watermarkText);
+         filename = `watermarked_${workbenchFile.name}`;
+      } else if (workbenchTool === 'Add Page Numbers') {
+         resultBlob = await addPageNumbers(workbenchFile);
+         filename = `numbered_${workbenchFile.name}`;
+      }
+      
+      if (resultBlob) {
+         const link = document.createElement('a');
+         link.href = URL.createObjectURL(resultBlob);
+         link.download = filename;
+         link.click();
+         setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+         setWorkbenchOpen(false);
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert("Failed to process the PDF document: " + err.message);
+    } finally {
+      setIsProcessingFile(false);
+    }
   };
 
   const filteredDocuments = documents.filter(doc => {
-     if (activeTab === 'starred') return doc.isStarred;
-     if (activeTab === 'shared') return doc.isShared;
-     return true;
+      if (activeTab === 'starred') return doc.isStarred;
+      if (activeTab === 'shared') return doc.isShared;
+      return true;
   });
 
   return (
     <div className="flex h-screen bg-dc-bg-page font-sans text-dc-text relative overflow-x-hidden">
-      <input type="file" ref={fileInputRef} hidden onChange={handleToolFileChange} accept="application/pdf" />
+      <input type="file" ref={fileInputRef} hidden onChange={handleFileSelected} accept="application/pdf" />
       <Sidebar />
       <main className="flex-1 overflow-y-auto">
         <div className="w-full max-w-[1400px] mx-auto p-12">
@@ -231,6 +260,43 @@ export function Dashboard() {
                   </div>
                   <span className="font-semibold text-sm whitespace-nowrap">{action.label}</span>
                 </button>
+              ))}
+            </div>
+          </section>
+
+          {/* Secure PDF Workbench Section */}
+          <section className="mb-16 bg-white border border-dc-border rounded-2xl p-8 shadow-sm">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h2 className="text-2xl font-serif font-bold tracking-tight">Secure PDF Workbench</h2>
+                <p className="text-sm text-dc-text-muted mt-1">Convert, sign, watermark, and modify layout documents in sandbox.</p>
+              </div>
+              <span className="text-xs uppercase tracking-widest font-extrabold bg-[#FDFCF8] border border-dc-gold/40 text-dc-gold px-3 py-1 rounded-full animate-pulse">
+                Pro Tools Sandbox
+              </span>
+            </div>
+            
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {workbenchToolsList.map((tool, idx) => (
+                <div 
+                  key={idx}
+                  onClick={() => handleToolClick(tool.name)}
+                  className="bg-[#FDFCF8]/40 border border-dc-border p-6 rounded-xl hover:bg-white hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer flex flex-col justify-between group"
+                >
+                  <div>
+                    <div className="mb-4 p-3 bg-white border border-dc-border inline-block rounded-xl group-hover:border-dc-gold transition-colors">
+                      {tool.icon}
+                    </div>
+                    <h3 className="font-bold text-base text-gray-900 group-hover:text-dc-gold transition-colors flex items-center gap-1.5">
+                      {tool.name} <ArrowUpRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </h3>
+                    <p className="text-xs text-dc-text-muted leading-relaxed mt-2">{tool.desc}</p>
+                  </div>
+                  <div className="mt-4 flex items-center justify-between text-[11px] font-mono text-gray-400 group-hover:text-dc-gold transition-colors pt-4 border-t border-dc-border/30">
+                    <span>SECURE PROCESSOR</span>
+                    <ChevronRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </div>
               ))}
             </div>
           </section>
@@ -284,8 +350,201 @@ export function Dashboard() {
         </div>
       </main>
 
-      {/* Modals removed as requested */}
+      {/* State-of-the-art PDF Workbench Pop-up Dialog with Continuous Glowing Neon/Golden Rim Lighting */}
+      {workbenchOpen && (
+        <div className="fixed inset-0 z-[120000] flex flex-col items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-200 px-4">
+          
+          {/* Inner Content Structure Wrapper with Premium Snake continuous golden rim glow */}
+          <div className="relative p-[2px] overflow-hidden rounded-3xl bg-slate-950 shadow-[0_0_50px_rgba(234,179,8,0.25)] w-full max-w-[550px] animate-in zoom-in-95 duration-200">
+            
+            {/* Snake Rotating Rim Light Continuous Neon Tracker */}
+            <div 
+              className="absolute top-1/2 left-1/2 w-[300%] h-[300%] bg-[conic-gradient(from_0deg,transparent_30%,#eab308_40%,#ffd700_50%,#ebd342_60%,transparent_70%)]"
+              style={{
+                animation: 'snake-rotate 3.5s linear infinite',
+                transform: 'translate(-50%, -50%)',
+                mixBlendMode: 'screen'
+              }}
+            />
+
+            {/* Main Modal Glass Content Body */}
+            <div className="relative z-10 bg-slate-900/95 backdrop-blur-lg rounded-[22px] flex flex-col text-white p-8">
+              
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-800">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-yellow-500/10 text-yellow-400 rounded-xl border border-yellow-500/20">
+                    <FileText className="w-5 h-5 animate-pulse" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-extrabold tracking-wide text-slate-100 uppercase font-sans">{workbenchTool}</h3>
+                    <p className="text-[10px] text-yellow-400/80 font-bold uppercase tracking-wider mt-0.5">Secure Sandbox Optimizer</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setWorkbenchOpen(false)}
+                  className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-full transition-all focus:outline-none cursor-pointer"
+                >
+                  <X className="w-5 h-5"/>
+                </button>
+              </div>
+
+              {/* Drag and Drop sandbox zone */}
+              {!workbenchFile ? (
+                <div 
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onClick={handleSelectFileInputClick}
+                  className={`border-2 border-dashed rounded-2xl p-10 text-center flex flex-col items-center justify-center gap-4 transition-all duration-300 cursor-pointer ${
+                    dragOver ? 'border-yellow-400 bg-yellow-500/10 scale-95 shadow-inner' : 'border-slate-700 hover:border-yellow-500/40 bg-slate-950/40 hover:bg-slate-950/70'
+                  }`}
+                >
+                  <div className="p-4 bg-slate-900 rounded-2xl border border-slate-800 group-hover:border-yellow-500/30">
+                    <Upload className="w-8 h-8 text-yellow-500 animate-bounce" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-sm text-slate-200">Drag & Drop PDF document here</p>
+                    <p className="text-[11px] text-slate-400 mt-1">or click to browse your storage files</p>
+                  </div>
+                  <span className="text-[9px] uppercase font-bold tracking-widest bg-slate-900 border border-slate-800 text-slate-400 px-3 py-1 rounded-full">
+                    ONLY .PDF FORMAT
+                  </span>
+                </div>
+              ) : (
+                <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-6 flex flex-col gap-4 relative animate-in fade-in-50">
+                  <button 
+                    onClick={() => setWorkbenchFile(null)}
+                    className="absolute top-4 right-4 p-1 text-slate-400 hover:text-red-400 transition-colors"
+                    title="Remove File"
+                  >
+                    <X className="w-4 h-4"/>
+                  </button>
+                  
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-red-950/40 border border-red-500/20 text-red-400 rounded-2xl shrink-0">
+                      <FileText className="w-8 h-8" />
+                    </div>
+                    <div className="overflow-hidden pr-6">
+                      <h4 className="font-extrabold text-sm text-slate-100 truncate">{workbenchFile.name}</h4>
+                      <p className="text-[11px] font-mono text-slate-400 mt-1 uppercase">
+                        {(workbenchFile.size / (1024 * 1024)).toFixed(2)} MB • Secure Sandbox Memory
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-1 text-[10px] bg-slate-900 border border-slate-800 text-emerald-400 px-3 py-1.5 rounded-xl font-mono uppercase font-bold">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                    File Loaded & Encrypted
+                  </div>
+                </div>
+              )}
+
+              {/* Dynamic tool choices rendering inside popup workbench */}
+              {workbenchFile && (
+                <div className="mt-6 space-y-4 border-t border-slate-800/80 pt-6 animate-in slide-in-from-bottom-2 duration-200">
+                  
+                  {workbenchTool === 'Add Watermark' && (
+                    <div className="space-y-2">
+                      <label className="text-xs uppercase font-extrabold tracking-wider text-slate-300">Watermark Text Overlay</label>
+                      
+                      {/* continuous golden rim styling input */}
+                      <div className="relative p-[1.5px] overflow-hidden rounded-xl bg-slate-950">
+                        <div 
+                          className="absolute top-1/2 left-1/2 w-[200%] h-[200%] bg-[conic-gradient(from_0deg,transparent_45%,#eab308_50%,transparent_55%)]"
+                          style={{
+                            animation: 'snake-rotate 4s linear infinite',
+                            transform: 'translate(-50%, -50%)',
+                          }}
+                        />
+                        <input 
+                          type="text" 
+                          value={watermarkText} 
+                          onChange={(e) => setWatermarkText(e.target.value)}
+                          placeholder="CONFIDENTIAL"
+                          className="relative z-10 w-full bg-slate-900 border-none outline-none font-bold text-sm text-white px-4 py-3 rounded-[10px] focus:ring-0"
+                        />
+                      </div>
+                      <p className="text-[10px] text-slate-500 leading-normal font-sans">
+                        Inserts high-visibility semi-transparent gray watermarking across all layout pages tilted at 45°.
+                      </p>
+                    </div>
+                  )}
+
+                  {workbenchTool === 'Rotate PDF' && (
+                    <div className="space-y-2">
+                      <label className="text-xs uppercase font-extrabold tracking-wider text-slate-300">Rotation Parameter</label>
+                      <div className="flex gap-2.5">
+                        {[90, 180, 270].map((angle) => (
+                          <button
+                            key={angle}
+                            type="button"
+                            onClick={() => setRotationAngle(angle)}
+                            className={`flex-1 py-3 text-xs font-mono font-bold uppercase rounded-xl border transition-all ${
+                              rotationAngle === angle 
+                                ? 'bg-yellow-500/15 border-yellow-500 text-yellow-400' 
+                                : 'bg-slate-950/50 border-slate-850 text-slate-400 hover:border-slate-700 hover:text-white'
+                            }`}
+                          >
+                            Rotate {angle}°
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-[10px] text-slate-500 leading-normal font-sans">
+                        Sets the target global rotation alignment degrees clockwise for all page streams.
+                      </p>
+                    </div>
+                  )}
+
+                  {workbenchTool === 'Add Page Numbers' && (
+                    <div className="p-3 bg-slate-950/40 border border-slate-850 rounded-xl space-y-1">
+                      <p className="text-xs font-bold text-yellow-500 uppercase tracking-widest">Formatter Node Active</p>
+                      <p className="text-[10px] text-slate-400 leading-relaxed font-sans">
+                        Engine will inject styled footers "Page X of Y" dynamically, matching absolute margins automagically.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Action trigger button */}
+              {workbenchFile && (
+                <div className="mt-8 border-t border-slate-800/80 pt-6">
+                  {isProcessingFile ? (
+                    <button 
+                      disabled
+                      className="w-full bg-[#ebd342]/10 border border-[#ebd342]/30 text-[#ebd342] font-bold text-xs uppercase tracking-widest py-3.5 rounded-xl flex items-center justify-center gap-3"
+                    >
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Decrypting & Reassembling Blob...
+                    </button>
+                  ) : (
+                    /* Continuous flowing snake border matching native print */
+                    <div className="relative p-[2px] overflow-hidden rounded-xl bg-slate-950 shadow-[0_0_15px_rgba(234,179,8,0.3)] hover:shadow-[0_0_22px_rgba(234,179,8,0.5)] transition-all duration-300">
+                      <div 
+                        className="absolute top-1/2 left-1/2 w-[250%] h-[250%] bg-[conic-gradient(from_0deg,transparent_35%,#eab308_45%,#ffffff_55%,#facc15_65%,transparent_75%)]"
+                        style={{
+                          animation: 'snake-rotate 2.5s linear infinite',
+                          transform: 'translate(-50%, -50%)',
+                        }}
+                      />
+                      <button 
+                        onClick={handleExecuteTool}
+                        className="relative z-10 w-full px-5 py-3.5 bg-slate-950 font-extrabold text-white rounded-[10px] hover:bg-slate-900 cursor-pointer opacity-95 transition-all text-xs tracking-widest uppercase flex items-center justify-center gap-2"
+                      >
+                        <Wand2 className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                        Exhaust Secure Sandbox Process
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
-

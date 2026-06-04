@@ -24,16 +24,15 @@ import { AutonomousAgentPage } from './pages/AutonomousAgentPage';
 import { LogicMapper } from './pages/LogicMapper';
 import SavedArchive from './pages/SavedArchive';
 import { SignPDFPage } from './pages/SignPDFPage';
-import { BlogPage } from './pages/BlogPage';
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
 import { TermsOfServicePage } from './pages/TermsOfServicePage';
+import { CompliancePage } from './pages/CompliancePage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { AboutPage } from './pages/AboutPage';
 import { IntegrationsPage } from './pages/IntegrationsPage';
 import { ChangelogPage } from './pages/ChangelogPage';
 import { FeaturesPage } from './pages/FeaturesPage';
 import { CareersPage } from './pages/CareersPage';
-import { TipPage } from './pages/TipPage';
 import { ContactPage } from './pages/ContactPage';
 import { SupportFormPage } from './pages/SupportFormPage';
 import { AnimatePresence, motion } from 'motion/react';
@@ -66,8 +65,8 @@ function AnimatedRoutes() {
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/blog" element={<BlogPage />} />
         <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+        <Route path="/compliance" element={<CompliancePage />} />
         <Route path="/terms-of-service" element={<TermsOfServicePage />} />
         <Route path="/terms" element={<TermsOfServicePage />} />
         <Route path="/cookies" element={<Navigate to="/privacy-policy" replace />} />
@@ -77,7 +76,6 @@ function AnimatedRoutes() {
         <Route path="/features" element={<FeaturesPage />} />
         <Route path="/careers" element={<CareersPage />} />
         <Route path="/auth" element={<AuthPage />} />
-        <Route path="/tip" element={<TipPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/support-form" element={<SupportFormPage />} />
         <Route path="/dashboard" element={<PageTransition><ProtectedRoute><Dashboard /></ProtectedRoute></PageTransition>} />

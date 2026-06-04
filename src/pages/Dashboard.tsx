@@ -10,6 +10,7 @@ import {
   Clock, Loader2, ArrowUpRight, CheckCircle2, ChevronRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'motion/react';
 import { useAuth } from '../context/AuthContext';
 import { usePremium } from '../context/PremiumContext';
 import { formatDistanceToNow } from 'date-fns';
@@ -223,15 +224,24 @@ export function Dashboard() {
     <div className="flex h-screen bg-dc-bg-page font-sans text-dc-text relative overflow-x-hidden">
       <input type="file" ref={fileInputRef} hidden onChange={handleFileSelected} accept="application/pdf" />
       <Sidebar />
-      <main className="flex-1 overflow-y-auto">
-        <div className="w-full max-w-[1400px] mx-auto p-12">
+      <main className="flex-1 overflow-y-auto relative bg-[#FAF9F6]">
+        
+        {/* Dynamic decorative backdrop glows */}
+        <div className="absolute top-[5%] right-[5%] w-[450px] h-[450px] rounded-full bg-[#D4AF37]/5 blur-[120px] pointer-events-none z-0 animate-pulse" style={{ animationDuration: '8s' }} />
+        <div className="absolute bottom-[20%] left-[10%] w-[500px] h-[500px] rounded-full bg-indigo-500/4 blur-[140px] pointer-events-none z-0 animate-pulse" style={{ animationDuration: '12s' }} />
+
+        <div className="w-full max-w-[1400px] mx-auto p-12 relative z-10">
           
           {/* TopBar Area */}
           <header className="flex justify-between items-center mb-12">
-            <div>
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5 }}
+            >
               <h1 className="text-4xl font-serif font-bold tracking-tight mb-2">Welcome back, {user?.displayName ? user.displayName.split(' ')[0] : 'Crafter'}</h1>
               <p className="text-lg text-dc-text-muted">Ready to craft pro-grade documents today?</p>
-            </div>
+            </motion.div>
             <div className="flex items-center gap-4">
               <div className="relative">
                 <Search className="w-5 h-5 absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -250,16 +260,20 @@ export function Dashboard() {
           <section className="mb-16">
             <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar">
               {quickActions.map((action, i) => (
-                <button 
+                <motion.button 
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1, duration: 0.4 }}
+                  whileHover={{ scale: 1.04, y: -4 }}
                   key={i}
                   onClick={() => action.href ? navigate(action.href) : (action.action && action.action())}
-                  className="flex items-center gap-3 bg-white border border-dc-border rounded-xl px-6 py-4 min-w-[200px] hover:shadow-md hover:-translate-y-1 transition-all flex-shrink-0 group"
+                  className="flex items-center gap-3 bg-white border border-dc-border rounded-xl px-6 py-4 min-w-[200px] hover:shadow-md transition-all flex-shrink-0 group cursor-pointer"
                 >
                   <div className="text-gray-500 group-hover:text-dc-gold transition-colors">
                     {action.icon}
                   </div>
                   <span className="font-semibold text-sm whitespace-nowrap">{action.label}</span>
-                </button>
+                </motion.button>
               ))}
             </div>
           </section>

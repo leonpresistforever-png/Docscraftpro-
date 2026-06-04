@@ -1,16 +1,17 @@
 import { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, User } from 'lucide-react';
+import { ChevronDown, User, Menu, X, MessageSquare } from 'lucide-react';
 import { Button } from '@/src/components/ui/Button';
 import { useAuth } from '@/src/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { ProfileMenu } from './ProfileMenu';
-import { AnimatePresence } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
 
 export function Navbar() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [showProfile, setShowProfile] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   return (
     <nav className="flex items-center justify-between px-8 py-4 bg-transparent absolute top-0 w-full z-50">
@@ -45,49 +46,26 @@ export function Navbar() {
       </Link>
       
       <div className="hidden md:flex items-center gap-8 font-sans font-medium text-sm text-dc-text relative z-50">
-        <div className="group relative cursor-pointer py-2">
-          <div className="flex items-center gap-1 hover:text-dc-gold transition-colors">
-            Technical Guides <ChevronDown className="w-4 h-4 opacity-70 group-hover:rotate-180 transition-transform" />
-          </div>
-          <div className="absolute top-full left-0 mt-2 w-72 bg-white border border-[#EAE6DF] shadow-xl rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 py-2">
-            <Link to="/blog" className="block px-4 py-2 hover:bg-gray-50 text-gray-800 hover:text-indigo-600 transition-colors font-bold text-xs uppercase tracking-wider border-b border-gray-100 pb-2 mb-1">
-              All Technical Blueprints
-            </Link>
-            <Link to="/blog?category=Core%20Technology%20%26%20File%20Parsers" className="block px-4 py-2 hover:bg-gray-50 text-gray-600 hover:text-indigo-600 transition-colors text-xs">
-              01. Core Tech & File Parsers
-            </Link>
-            <Link to="/blog?category=Data%20Structuring%20%26%20API%20Implementations" className="block px-4 py-2 hover:bg-gray-50 text-gray-600 hover:text-indigo-600 transition-colors text-xs">
-              02. Data Structuring & APIs
-            </Link>
-            <Link to="/blog?category=User%20Interface%2C%20Data%20Visualization%20%26%20Formatting" className="block px-4 py-2 hover:bg-gray-50 text-gray-600 hover:text-indigo-600 transition-colors text-xs">
-              03. UI, Charts & Spreadsheets
-            </Link>
-            <Link to="/blog?category=Web%20Architecture%20%26%20Production%20Optimization" className="block px-4 py-2 hover:bg-gray-50 text-gray-600 hover:text-indigo-600 transition-colors text-xs">
-              04. Web Performance & Security
-            </Link>
-          </div>
-        </div>
-        
-        <Link to="/tip" className="cursor-pointer font-bold text-dc-gold hover:opacity-70 flex items-center gap-1 py-2">Tip Us!</Link>
         <Link to="/contact" className="cursor-pointer hover:text-dc-gold transition-colors py-2">Contact Support</Link>
         <Link to="/about" className="cursor-pointer hover:text-dc-gold transition-colors py-2">About</Link>
         
         <div className="group relative cursor-pointer py-2">
-          <div className="flex items-center gap-1 hover:text-dc-gold transition-colors">
+          <Link to="/compliance" className="flex items-center gap-1 hover:text-dc-gold transition-colors">
             Compliance <ChevronDown className="w-4 h-4 opacity-70 group-hover:rotate-180 transition-transform" />
-          </div>
+          </Link>
           <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-[#EAE6DF] shadow-xl rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 py-2">
-            <Link to="/privacy-policy" className="block px-4 py-2 hover:bg-gray-50 text-gray-700 hover:text-indigo-600 transition-colors">Privacy Policy</Link>
-            <Link to="/terms-of-service" className="block px-4 py-2 hover:bg-gray-50 text-gray-700 hover:text-indigo-600 transition-colors">Terms of Service</Link>
-            <Link to="/changelog" className="block px-4 py-2 hover:bg-gray-50 text-gray-700 hover:text-indigo-600 transition-colors">Changelog</Link>
+            <Link to="/compliance" className="block px-4 py-2 hover:bg-gray-50 text-dc-gold hover:text-[#AA7A00] transition-colors font-bold text-xs uppercase tracking-wider">Official Compliance</Link>
+            <Link to="/privacy-policy" className="block px-4 py-2 hover:bg-gray-50 text-gray-700 hover:text-indigo-600 transition-colors text-xs">Privacy Policy</Link>
+            <Link to="/terms-of-service" className="block px-4 py-2 hover:bg-gray-50 text-gray-700 hover:text-indigo-600 transition-colors text-xs">Terms of Service</Link>
+            <Link to="/changelog" className="block px-4 py-2 hover:bg-gray-50 text-gray-700 hover:text-indigo-600 transition-colors text-xs">Changelog</Link>
           </div>
         </div>
       </div>
       
-      <div>
+      <div className="flex items-center gap-3">
         {user ? (
            <div className="flex items-center gap-4">
-             <Button onClick={() => navigate('/dashboard')} variant="outline" className="rounded-full px-6 font-medium bg-[#FAF9F6]/50 backdrop-blur-sm border-[#D0D0D0]">Dashboard</Button>
+             <Button onClick={() => navigate('/dashboard')} variant="outline" className="hidden sm:inline-flex rounded-full px-6 font-medium bg-[#FAF9F6]/50 backdrop-blur-sm border-[#D0D0D0]">Dashboard</Button>
              
              <div className="relative">
                <button 
@@ -111,7 +89,67 @@ export function Navbar() {
         ) : (
            <Button onClick={() => navigate('/auth')} variant="outline" className="rounded-full px-6 font-medium bg-[#FAF9F6]/50 backdrop-blur-sm border-[#D0D0D0]">Sign In</Button>
         )}
+
+        {/* Mobile Hamburger Toggle */}
+        <button 
+          onClick={() => setShowMobileMenu(!showMobileMenu)}
+          className="flex md:hidden w-10 h-10 items-center justify-center rounded-full bg-[#FAF9F6]/50 backdrop-blur-sm border border-[#D0D0D0] text-gray-700 hover:text-dc-gold transition-colors focus:outline-none relative z-50"
+          aria-label="Toggle Menu"
+        >
+          {showMobileMenu ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
       </div>
+
+      {/* Mobile Menu Panel */}
+      <AnimatePresence>
+        {showMobileMenu && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: 'auto' }}
+            exit={{ opacity: 0, y: -20, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className="absolute top-16 left-4 right-4 bg-white border border-[#EAE6DF] shadow-2xl rounded-2xl md:hidden overflow-hidden flex flex-col p-5 z-40 gap-4"
+          >
+            <div className="text-xs font-bold uppercase tracking-widest text-[#AA7A00] border-b border-gray-100 pb-2 mb-1">
+              DocCraft Pro Navigation
+            </div>
+            
+            {user && (
+              <Link 
+                to="/dashboard" 
+                onClick={() => setShowMobileMenu(false)}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 border border-amber-100 text-[#AA7A00] font-bold text-sm"
+              >
+                Go to Workspace Dashboard
+              </Link>
+            )}
+
+            <div className="flex flex-col gap-1 border-b border-gray-100 pb-2">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-3 mb-1">Compliance & Rules</span>
+              <Link to="/compliance" onClick={() => setShowMobileMenu(false)} className="px-3 py-1.5 text-gray-700 hover:text-[#AA7A00] hover:bg-stone-50 rounded-lg text-sm font-semibold">Standard Compliance</Link>
+              <div className="grid grid-cols-2 gap-1 px-3 py-1">
+                <Link to="/privacy-policy" onClick={() => setShowMobileMenu(false)} className="text-xs text-gray-500 hover:text-[#AA7A00]">• Privacy Policy</Link>
+                <Link to="/terms-of-service" onClick={() => setShowMobileMenu(false)} className="text-xs text-gray-500 hover:text-[#AA7A00]">• Terms of Service</Link>
+                <Link to="/changelog" onClick={() => setShowMobileMenu(false)} className="text-xs text-gray-500 hover:text-[#AA7A00] mt-1">• Changelog</Link>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2 font-semibold text-sm text-gray-700">
+              <Link to="/support-form" onClick={() => setShowMobileMenu(false)} className="px-3 py-2 hover:bg-stone-50 hover:text-[#AA7A00] rounded-lg transition-all flex items-center gap-2">
+                <MessageSquare className="w-4.5 h-4.5 text-[#D4AF37]" /> Give Feedback & Ideas
+              </Link>
+
+              <Link to="/contact" onClick={() => setShowMobileMenu(false)} className="px-3 py-2 hover:bg-stone-50 hover:text-[#AA7A00] rounded-lg">
+                Contact Support Desk
+              </Link>
+
+              <Link to="/about" onClick={() => setShowMobileMenu(false)} className="px-3 py-2 hover:bg-stone-50 hover:text-[#AA7A00] rounded-lg">
+                About Workspace
+              </Link>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   )
 }

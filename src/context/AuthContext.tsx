@@ -3,6 +3,7 @@ import {
   User, 
   signInWithPopup, 
   GoogleAuthProvider, 
+  OAuthProvider,
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   signOut,
@@ -72,6 +73,7 @@ interface AuthContextType {
   userData: UserData | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
+  signInWithApple: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (email: string, password: string, name: string) => Promise<void>;
   signInAsDemo: () => void;
@@ -235,6 +237,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const signInWithApple = async () => {
+    const provider = new OAuthProvider('apple.com');
+    await signInWithPopup(auth, provider);
+  };
+
   const signInWithEmail = async (email: string, password: string) => {
     await signInWithEmailAndPassword(auth, email, password);
   };
@@ -255,7 +262,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, userData, loading, signInWithGoogle, signInWithEmail, signUpWithEmail, signInAsDemo, logout, updateUserCredits, consumeCredits }}>
+    <AuthContext.Provider value={{ user, userData, loading, signInWithGoogle, signInWithApple, signInWithEmail, signUpWithEmail, signInAsDemo, logout, updateUserCredits, consumeCredits }}>
       {!loading && children}
     </AuthContext.Provider>
   );

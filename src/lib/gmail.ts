@@ -53,33 +53,48 @@ export async function sendGmailSupportTicket({
   username,
   userEmail,
   issue,
-  accessToken
+  accessToken,
+  type = 'general'
 }: {
   username: string;
   userEmail: string;
   issue: string;
   accessToken: string;
+  type?: 'bug' | 'feedback' | 'security' | 'general';
 }) {
   const supportEmail = 'docscraftpro@gmail.com';
   
+  // Customizing internal team subjects and templates to keep categorization distinct
+  let teamSubject = `DocCraft Support Ticket - From ${username}`;
+  let teamGreeting = `Hello Support Team,\r\n\r\nA new support ticket has been filed by a user.`;
+  
+  if (type === 'bug') {
+    teamSubject = `[BUG REPORT] DocCraft Pro - Parser / Render Issue from ${username}`;
+    teamGreeting = `Hello Engineering Squad,\r\n\r\nA technical bug or parser anomaly report was raised. Details below:`;
+  } else if (type === 'feedback') {
+    teamSubject = `[WORKSPACE FEEDBACK] Creative Idea / Suggestions from ${username}`;
+    teamGreeting = `Hello Design & Feature Squad,\r\n\r\nA user shared fresh workspace ideas and suggestions. Details below:`;
+  } else if (type === 'security') {
+    teamSubject = `[SECURITY DESK] Enterprise Compliance Inquiry from ${username}`;
+    teamGreeting = `Hello Operations & Arch Desk,\r\n\r\nAn enterprise compliance or secure data governance query has been received. Details below:`;
+  }
+
   const supportEmailContent = [
     `To: ${supportEmail}`,
-    `Subject: =?utf-8?B?${btoa(unescape(encodeURIComponent(`DocCraft Support Ticket - From ${username}`)))}?=`,
+    `Subject: =?utf-8?B?${btoa(unescape(encodeURIComponent(teamSubject)))}?=`,
     `Content-Type: text/plain; charset="UTF-8"`,
     `MIME-Version: 1.0`,
     '',
-    `Hello Support Team,`,
-    '',
-    `A new support ticket has been filed by a user. Details below:`,
+    teamGreeting,
     `------------------------------------------------------------`,
-    `Username: ${username}`,
-    `User Contact Email: ${userEmail}`,
+    `Sender Name: ${username}`,
+    `Sender Email: ${userEmail}`,
     `------------------------------------------------------------`,
-    `Issue Description:`,
+    `Inquiry Details:`,
     issue,
     '',
     `------------------------------------------------------------`,
-    `Sent securely via DocCraft Workspace Gmail Integration.`
+    `Processed internally via DocCraft Workplace Desk.`
   ].join('\r\n');
 
   const rawSupport = base64UrlEncode(supportEmailContent);
@@ -99,9 +114,32 @@ export async function sendGmailSupportTicket({
     return res.json();
   });
 
+  // Unique confirmation receipt templates for the user's Inbox
+  let confirmationSubject = `[DocCraft Pro] Support Inquiry Received`;
+  let confirmationHeader = `DocCraft Pro Support`;
+  let confirmationMessage = `<p>Thank you for reaching out. We have successfully received your support query and our team will check and look into it.</p><p>We will follow up directly at this email address within 24 to 48 hours to assist you.</p>`;
+
+  if (type === 'bug') {
+    confirmationSubject = `[DocCraft Pro] Technical Bug Report Received`;
+    confirmationHeader = `DocCraft Pro Support`;
+    confirmationMessage = `<p>Thank you for letting us know about this issue. We have successfully received your bug report and our team will check it.</p><p>We will investigate the issue and follow up directly at this email address within 24 to 48 hours.</p>`;
+  } else if (type === 'feedback') {
+    confirmationSubject = `[DocCraft Pro] Feedback Received`;
+    confirmationHeader = `DocCraft Pro Support`;
+    confirmationMessage = `<p>Thank you for sharing your thoughts with us. We have received your feedback and our team will check it as we continue to improve DocCraft Pro.</p><p>We appreciate you taking the time to write to us.</p>`;
+  } else if (type === 'security') {
+    confirmationSubject = `[DocCraft Pro] Security Inquiry Received`;
+    confirmationHeader = `DocCraft Pro Support`;
+    confirmationMessage = `<p>We have successfully received your security query. Our team will check and review your inquiry immediately.</p><p>We will follow up directly at this email address within 24 to 48 hours.</p>`;
+  } else if (type === 'general') {
+    confirmationSubject = `[DocCraft Pro] Support Inquiry Received`;
+    confirmationHeader = `DocCraft Pro Support`;
+    confirmationMessage = `<p>Thank you for reaching out. We have successfully received your support query and our team will check and look into it.</p><p>We will follow up directly at this email address within 24 to 48 hours to assist you.</p>`;
+  }
+
   const confirmationEmailContent = [
     `To: ${userEmail}`,
-    `Subject: =?utf-8?B?${btoa(unescape(encodeURIComponent(`[DocCraft Pro] Support Inquiry Received`)))}?=`,
+    `Subject: =?utf-8?B?${btoa(unescape(encodeURIComponent(confirmationSubject)))}?=`,
     `Content-Type: text/html; charset="UTF-8"`,
     `MIME-Version: 1.0`,
     '',
@@ -112,7 +150,7 @@ export async function sendGmailSupportTicket({
     `  <style>`,
     `    body { font-family: 'Inter', system-ui, sans-serif; color: #2d2d2d; line-height: 1.6; background-color: #fdfbf7; margin: 0; padding: 24px; }`,
     `    .container { max-width: 600px; margin: 0 auto; background: #ffffff; padding: 32px; border: 1px solid #eae6df; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }`,
-    `    .header { font-size: 24px; font-weight: bold; color: #1a1a1a; border-bottom: 2px solid #D4AF37; padding-bottom: 12px; margin-bottom: 24px; }`,
+    `    .header { font-size: 20px; font-weight: bold; color: #1a1a1a; border-bottom: 2px solid #D4AF37; padding-bottom: 12px; margin-bottom: 24px; }`,
     `    .greeting { font-size: 16px; font-weight: 600; margin-bottom: 12px; }`,
     `    .section { margin-bottom: 20px; }`,
     `    .ticket-details { background: #faf9f6; border-left: 4px solid #D4AF37; padding: 16px; border-radius: 6px; font-size: 14px; margin-top: 12px; white-space: pre-wrap; }`,
@@ -121,14 +159,13 @@ export async function sendGmailSupportTicket({
     `</head>`,
     `<body>`,
     `  <div class="container">`,
-    `    <div class="header">DocCraft Pro Support</div>`,
+    `    <div class="header">${confirmationHeader}</div>`,
     `    <div class="greeting">Hello ${username},</div>`,
     `    <div class="section">`,
-    `      <p>Thank you for reaching out to DocCraft Pro Support Desk. We have successfully logged your technical inquiry and our human engineering team is reviewing it immediately.</p>`,
-    `      <p>No further action is required from you at this moment. You will get a follow-up directly at this address within 24 to 48 business hours.</p>`,
+    `      ${confirmationMessage}`,
     `    </div>`,
     `    <div class="section">`,
-    `      <strong>Your Submitted Inquiry Details:</strong>`,
+    `      <strong>Your Submitted Details:</strong>`,
     `      <div class="ticket-details">${issue.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>`,
     `    </div>`,
     `    <div class="footer">`,

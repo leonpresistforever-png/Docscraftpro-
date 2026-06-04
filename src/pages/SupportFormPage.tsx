@@ -3,26 +3,45 @@ import { Navbar } from '../components/layout/Navbar';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { signInWithGmail, sendGmailSupportTicket, getCachedGmailToken } from '../lib/gmail';
+import { sendGmailSupportTicket, getCachedGmailToken } from '../lib/gmail';
+import { useSearchParams, Link } from 'react-router-dom';
 import { 
-  Mail, 
   CheckCircle2, 
   AlertCircle, 
   Loader2, 
   Send, 
   Sparkles, 
-  ShieldCheck,
-  Ticket,
-  Clock,
-  ArrowRight
+  Ticket, 
+  ArrowRight,
+  Bug,
+  Lightbulb,
+  ShieldAlert
 } from 'lucide-react';
 
-export function SupportFormPage({ isEmbedded = false }: { isEmbedded?: boolean }) {
+type QueryType = 'bug' | 'feedback' | 'security' | 'general';
+
+interface SupportFormPageProps {
+  isEmbedded?: boolean;
+  hideCategorySelector?: boolean;
+  defaultCategory?: QueryType;
+}
+
+export function SupportFormPage({ 
+  isEmbedded = false,
+  hideCategorySelector = false,
+  defaultCategory = 'general'
+}: SupportFormPageProps) {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Initialize type from query param, default to feedback/general
+  const initialType = (searchParams.get('type') as QueryType) || defaultCategory;
+
   const [formData, setFormData] = useState({
     username: '',
     email: '',
     issue: '',
+    category: initialType,
   });
 
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
@@ -31,11 +50,22 @@ export function SupportFormPage({ isEmbedded = false }: { isEmbedded?: boolean }
     id: string;
     username: string;
     email: string;
+    category: QueryType;
     issue: string;
     timestamp: string;
   } | null>(null);
 
-  // Sync state with authenticated auth user automatically
+  // Sync category with URL if type param changes
+  useEffect(() => {
+    if (!hideCategorySelector) {
+      const typeParam = searchParams.get('type') as QueryType;
+      if (typeParam && ['bug', 'feedback', 'security', 'general'].includes(typeParam)) {
+        setFormData(prev => ({ ...prev, category: typeParam }));
+      }
+    }
+  }, [searchParams, hideCategorySelector]);
+
+  // Sync username and email with authenticated state
   useEffect(() => {
     if (user) {
       setFormData(prev => ({
@@ -46,10 +76,17 @@ export function SupportFormPage({ isEmbedded = false }: { isEmbedded?: boolean }
     }
   }, [user]);
 
+  const handleCategoryChange = (cat: QueryType) => {
+    setFormData(prev => ({ ...prev, category: cat }));
+    if (!hideCategorySelector) {
+      setSearchParams({ type: cat });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.email || !formData.issue) {
-      setErrorMessage('Please provide a valid contact reply address and issue description.');
+      setErrorMessage('Please provide your reply address and write out your request.');
       return;
     }
 
@@ -57,56 +94,49 @@ export function SupportFormPage({ isEmbedded = false }: { isEmbedded?: boolean }
     setErrorMessage('');
 
     try {
-      // 1. Double Dispatch: Write to secure, durable Firestore backup with graceful fallback if rules are restricted
-      let savedToFirestore = false;
+      // 1. Double Dispatch: Write to secure, durable Firestore backup with fallback
       let docIdFallback = 'DC-LOCAL-LOG';
       try {
         const docRef = await addDoc(collection(db, 'support_tickets'), {
           username: formData.username || 'Anonymous User',
           email: formData.email,
+          category: formData.category,
           issue: formData.issue,
           createdAt: serverTimestamp(),
           userId: user ? user.uid : 'anonymous'
         });
-        savedToFirestore = true;
         docIdFallback = docRef.id;
       } catch (firestoreError) {
-        console.warn('Backup cloud storage restricted or unavailable, proceeding with primary secure dispatch channels.', firestoreError);
+        console.warn('Backup storage bypassed, proceeding with primary delivery.', firestoreError);
       }
 
-      // 2. Dispatch to server-side logging endpoint as fallback
+      // 2. Dispatch to internal server-side API proxy as fallback
       await fetch('/api/support', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           username: formData.username || 'Anonymous User',
           email: formData.email,
+          category: formData.category,
           issue: formData.issue,
           ticketDatabaseId: docIdFallback
         }),
-      }).catch(err => console.warn('Internal routing channel skipped:', err));
+      }).catch(err => console.warn('Internal server logging route skipped:', err));
 
       // 3. Gmail Integration: Dispatch email internally using Google OAuth
-      let token = sessionStorage.getItem('google_access_token') || getCachedGmailToken();
-      if (!token) {
-        try {
-          const authRes = await signInWithGmail();
-          token = authRes.accessToken;
-        } catch (authErr) {
-          console.warn('Gmail OAuth permission not provided. Proceeding with backup submission.', authErr);
-        }
-      }
-
+      // Done 100% silently in the background, NO popups or authorization requests shown to keep UX clean.
+      const token = sessionStorage.getItem('google_access_token') || getCachedGmailToken();
       if (token) {
         try {
           await sendGmailSupportTicket({
             username: formData.username || 'Anonymous User',
             userEmail: formData.email,
             issue: formData.issue,
-            accessToken: token
+            accessToken: token,
+            type: formData.category
           });
         } catch (gmailErr) {
-          console.error('Failed to dispatch secure email via Gmail API:', gmailErr);
+          console.error('Failed to dispatch secure background email:', gmailErr);
         }
       }
 
@@ -120,21 +150,22 @@ export function SupportFormPage({ isEmbedded = false }: { isEmbedded?: boolean }
         id: generatedTicketId,
         username: formData.username || 'Anonymous User',
         email: formData.email,
+        category: formData.category,
         issue: formData.issue,
         timestamp: nowFormatted
       });
 
       setStatus('success');
       
-      // Clear the text issue after successful transmission
+      // Keep email/username but clear descriptions
       setFormData(prev => ({
         ...prev,
         issue: ''
       }));
     } catch (err: any) {
-      console.error('Support ticket dispatch failed:', err);
+      console.error('Submission error:', err);
       setStatus('error');
-      setErrorMessage(err.message || 'An error occurred while dispatching support ticket to main support desk.');
+      setErrorMessage(err.message || 'An error occurred while logging your information.');
     }
   };
 
@@ -143,23 +174,107 @@ export function SupportFormPage({ isEmbedded = false }: { isEmbedded?: boolean }
     setTicketDetails(null);
   };
 
+  const getPageHeaderDetails = () => {
+    if (formData.category === 'bug') {
+      return {
+        badge: 'Bug Tracker',
+        title: 'Report a Parser or Render Bug',
+        desc: 'Encountered a layout glitch or file export anomaly? Provide the details below so our team can investigate and fix it.'
+      };
+    }
+    if (formData.category === 'security') {
+      return {
+        badge: 'Security Operations',
+        title: 'Contact Security Desk',
+        desc: 'Request dedicated compliance audits, secure questionnaires, or data privacy arrangements directly with our operational controllers.'
+      };
+    }
+    if (formData.category === 'general') {
+      return {
+        badge: 'Support Desk',
+        title: 'Contact Support Helpdesk',
+        desc: 'Have a question or need assistance with DocCraft Pro? We read and reply to every support inquiry.'
+      };
+    }
+    return {
+      badge: 'Product Feedback',
+      title: 'Share Ideas & Workspace Feedback',
+      desc: 'How can we make your markdown-editor, diagram layouts, or templates better? We read and implement every user suggestion.'
+    };
+  };
+
+  const header = getPageHeaderDetails();
+
   return (
-    <div className={isEmbedded ? "w-full" : "min-h-screen bg-[#FDFBF7] font-sans text-[#2D2D2D] selection:bg-[#D4AF37] selection:text-white flex flex-col"}>
+    <div className={isEmbedded ? "w-full" : "min-h-screen bg-[#FDFBF7] font-sans text-[#2D2D2D] selection:bg-[#D4AF37] selection:text-white flex flex-col pt-16"}>
       {!isEmbedded && <Navbar />}
       
-      <div className={isEmbedded ? "max-w-3xl mx-auto w-full" : "flex-1 flex flex-col items-center justify-center p-6 md:p-8 max-w-3xl mx-auto w-full"}>
+      <div className={isEmbedded ? "max-w-3xl mx-auto w-full p-4" : "flex-1 flex flex-col items-center justify-center p-6 md:p-8 max-w-3xl mx-auto w-full"}>
         {!isEmbedded && (
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 border border-amber-100 rounded-full text-[10px] text-amber-800 font-bold uppercase tracking-widest mb-3 select-none">
               <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
-              Support Portal
+              {header.badge}
             </div>
-            <h1 className="text-4xl md:text-5xl font-serif font-bold tracking-tight mb-3">
-              Contact Support
+            <h1 className="text-3xl md:text-4xl font-serif font-black tracking-tight mb-2 text-stone-900 leading-tight">
+              {header.title}
             </h1>
-            <p className="text-xs md:text-sm text-gray-600 max-w-md mx-auto leading-relaxed">
-              Submit your ticket directly to our engineers. We will analyze your query and follow up on your registered contact address within 24 hours.
+            <p className="text-xs md:text-sm text-stone-600 max-w-lg mx-auto leading-relaxed">
+              {header.desc}
             </p>
+          </div>
+        )}
+
+        {/* Dynamic selector cards replacing the boring select tag */}
+        {!hideCategorySelector && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full mb-6 animate-fade-in">
+            <button
+              type="button"
+              onClick={() => handleCategoryChange('feedback')}
+              className={`flex items-start gap-3 p-4 rounded-xl border text-left transition-all ${
+                formData.category === 'feedback'
+                  ? 'bg-amber-50/40 border-amber-400 ring-1 ring-amber-400'
+                  : 'bg-white border-stone-200 hover:border-stone-300'
+              }`}
+            >
+              <Lightbulb className={`w-5 h-5 shrink-0 mt-0.5 ${formData.category === 'feedback' ? 'text-amber-600' : 'text-stone-400'}`} />
+              <div>
+                <h4 className="font-bold text-xs text-stone-800">Ideas & Feedback</h4>
+                <p className="text-[10px] text-stone-500 mt-0.5">Request features or share suggestions.</p>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleCategoryChange('bug')}
+              className={`flex items-start gap-3 p-4 rounded-xl border text-left transition-all ${
+                formData.category === 'bug'
+                  ? 'bg-amber-50/40 border-amber-400 ring-1 ring-amber-400'
+                  : 'bg-white border-stone-200 hover:border-stone-300'
+              }`}
+            >
+              <Bug className={`w-5 h-5 shrink-0 mt-0.5 ${formData.category === 'bug' ? 'text-amber-600' : 'text-stone-400'}`} />
+              <div>
+                <h4 className="font-bold text-xs text-stone-800">Technical Bug</h4>
+                <p className="text-[10px] text-stone-500 mt-0.5">Report formatting or export anomalies.</p>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleCategoryChange('security')}
+              className={`flex items-start gap-3 p-4 rounded-xl border text-left transition-all ${
+                formData.category === 'security'
+                  ? 'bg-amber-50/40 border-amber-400 ring-1 ring-amber-400'
+                  : 'bg-white border-stone-200 hover:border-stone-300'
+              }`}
+            >
+              <ShieldAlert className={`w-5 h-5 shrink-0 mt-0.5 ${formData.category === 'security' ? 'text-amber-600' : 'text-stone-400'}`} />
+              <div>
+                <h4 className="font-bold text-xs text-stone-800">Security Desk</h4>
+                <p className="text-[10px] text-stone-500 mt-0.5">Request parameters or audits.</p>
+              </div>
+            </button>
           </div>
         )}
 
@@ -167,55 +282,47 @@ export function SupportFormPage({ isEmbedded = false }: { isEmbedded?: boolean }
           {status === 'success' && ticketDetails ? (
             <div className="space-y-6 animate-fade-in">
               <div className="text-center space-y-2">
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 mb-2">
-                  <CheckCircle2 className="w-6 h-6" />
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-stone-100 text-[#D4AF37] mb-1">
+                  <CheckCircle2 className="w-6 h-6 text-[#AA7A00]" />
                 </div>
-                <h3 className="text-xl font-serif font-bold text-gray-900">Support Ticket Logged</h3>
-                <p className="text-xs text-gray-500 max-w-sm mx-auto">
-                  A verification confirmation code has been processed and routed to our team.
+                <h3 className="text-xl font-serif font-bold text-gray-900">Your message has been sent</h3>
+                <p className="text-xs text-stone-500 max-w-sm mx-auto">
+                  Thank you for keeping our workspace polished. We have securely logged your values.
                 </p>
               </div>
 
-              {/* High-tier Support Ticket Official Receipt Card */}
-              <div className="border border-amber-200/50 bg-[#FDFBF7] rounded-xl p-5 relative overflow-hidden shadow-xs">
-                {/* Decorative side cutouts for actual ticket feel */}
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-3 h-6 bg-white border-r border-[#EAE6DF] rounded-r-full" />
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-6 bg-white border-l border-[#EAE6DF] rounded-l-full" />
+              {/* Clean Human Style Receipt (No robotic Priority stats) */}
+              <div className="border border-stone-200 bg-[#FAF9F6] rounded-xl p-5 relative overflow-hidden shadow-xs">
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-2 h-4 bg-white border-r border-[#EAE6DF] rounded-r-full" />
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-4 bg-white border-l border-[#EAE6DF] rounded-l-full" />
                 
-                <div className="border-b border-dashed border-stone-200 pb-4 mb-4 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Ticket className="w-4 h-4 text-amber-600" />
-                    <span className="text-[10px] font-mono uppercase tracking-widest text-amber-800 font-black">Official Receipt</span>
-                  </div>
-                  <span className="text-xs font-mono font-bold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-md">
+                <div className="border-b border-dashed border-stone-300 pb-3 mb-3 flex items-center justify-between">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-stone-500 font-bold">Inquiry Details</span>
+                  <span className="text-xs font-mono font-bold text-stone-600">
                     {ticketDetails.id}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                   <div>
-                    <span className="block text-[10px] text-gray-400 uppercase tracking-wider font-bold">Client Name</span>
-                    <span className="font-semibold text-gray-800">{ticketDetails.username}</span>
+                    <span className="block text-[10px] text-stone-400 font-bold uppercase tracking-wider">From</span>
+                    <span className="font-semibold text-stone-800">{ticketDetails.username}</span>
                   </div>
                   <div>
-                    <span className="block text-[10px] text-gray-400 uppercase tracking-wider font-bold">Reply Channel</span>
-                    <span className="font-mono text-gray-800 font-medium">{ticketDetails.email}</span>
+                    <span className="block text-[10px] text-stone-400 font-bold uppercase tracking-wider">Replied To</span>
+                    <span className="font-mono text-stone-800">{ticketDetails.email}</span>
                   </div>
                   <div>
-                    <span className="block text-[10px] text-gray-400 uppercase tracking-wider font-bold">Logged Timestamp</span>
-                    <span className="text-gray-800 font-medium">{ticketDetails.timestamp}</span>
-                  </div>
-                  <div>
-                    <span className="block text-[10px] text-gray-400 uppercase tracking-wider font-bold">Assigned Priority</span>
-                    <span className="inline-flex items-center gap-1 text-[10px] text-amber-800 bg-amber-50 border border-amber-100 rounded px-1.5 py-0.2 font-bold">
-                      ★★★★★ High Priority
+                    <span className="block text-[10px] text-stone-400 font-bold uppercase tracking-wider">Category</span>
+                    <span className="font-semibold text-stone-800 uppercase">
+                      {ticketDetails.category}
                     </span>
                   </div>
                 </div>
 
-                <div className="mt-4 pt-4 border-t border-dashed border-stone-200">
-                  <span className="block text-[10px] text-gray-400 uppercase tracking-wider font-bold mb-1">Issue Overview Summary</span>
-                  <p className="text-[11px] text-gray-600 italic bg-white/50 p-2.5 rounded border border-stone-100 leading-relaxed max-h-32 overflow-y-auto">
+                <div className="mt-4 pt-3 border-t border-dashed border-stone-300">
+                  <span className="block text-[10px] text-stone-400 font-bold uppercase tracking-wider mb-1">Details Summary</span>
+                  <p className="text-xs text-stone-600 leading-relaxed max-h-32 overflow-y-auto whitespace-pre-wrap italic">
                     {ticketDetails.issue}
                   </p>
                 </div>
@@ -223,10 +330,11 @@ export function SupportFormPage({ isEmbedded = false }: { isEmbedded?: boolean }
 
               <div className="pt-2 text-center">
                 <button
+                  type="button"
                   onClick={handleResetForm}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-700 hover:text-amber-800 transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-stone-700 hover:text-stone-800 transition-colors cursor-pointer underline decoration-stone-400 underline-offset-4"
                 >
-                  File another issue ticket <ArrowRight className="w-3.5 h-3.5" />
+                  Send another inquiry <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
@@ -242,13 +350,14 @@ export function SupportFormPage({ isEmbedded = false }: { isEmbedded?: boolean }
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="username" className="block text-xs font-extrabold uppercase tracking-widest text-stone-700 mb-1.5 font-sans">
-                    Client Name
+                    Your Name
                   </label>
                   <input
                     type="text"
                     id="username"
+                    required
                     placeholder="Enter your name..."
-                    className="w-full px-4 py-2.5 border border-stone-200 bg-stone-50/50 rounded-xl focus:bg-white focus:ring-1 focus:ring-[#D4AF37] focus:border-[#D4AF37] outline-none transition-all text-xs font-semibold text-gray-800 font-sans"
+                    className="w-full px-4 py-2.5 border border-stone-200 bg-[#FAF9F6] rounded-xl focus:bg-white focus:ring-1 focus:ring-[#D4AF37] focus:border-[#D4AF37] outline-none transition-all text-xs font-semibold text-gray-800 font-sans"
                     value={formData.username}
                     onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                   />
@@ -256,14 +365,14 @@ export function SupportFormPage({ isEmbedded = false }: { isEmbedded?: boolean }
 
                 <div>
                   <label htmlFor="email" className="block text-xs font-extrabold uppercase tracking-widest text-stone-700 mb-1.5 font-sans">
-                    Contact Reply Address
+                    Email Address
                   </label>
                   <input
                     type="email"
                     id="email"
                     required
                     placeholder="Enter support contact email..."
-                    className="w-full px-4 py-2.5 border border-stone-200 bg-stone-50/50 rounded-xl focus:bg-white focus:ring-1 focus:ring-[#D4AF37] focus:border-[#D4AF37] outline-none transition-all text-xs font-semibold text-gray-800 font-sans"
+                    className="w-full px-4 py-2.5 border border-stone-200 bg-[#FAF9F6] rounded-xl focus:bg-white focus:ring-1 focus:ring-[#D4AF37] focus:border-[#D4AF37] outline-none transition-all text-xs font-semibold text-gray-800 font-sans"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   />
@@ -272,38 +381,46 @@ export function SupportFormPage({ isEmbedded = false }: { isEmbedded?: boolean }
 
               <div>
                 <label htmlFor="issue" className="block text-xs font-extrabold uppercase tracking-widest text-stone-700 mb-1.5 font-sans">
-                  Issue Description
-                  </label>
-                  <textarea
-                    id="issue"
-                    required
-                    rows={5}
-                    placeholder="Describe your issue or technical inquiry..."
-                    className="w-full px-4 py-2.5 border border-stone-200 bg-stone-50/50 rounded-xl focus:bg-white focus:ring-1 focus:ring-[#D4AF37] focus:border-[#D4AF37] outline-none transition-all text-xs font-medium leading-relaxed text-gray-800 resize-y font-sans"
-                    value={formData.issue}
-                    onChange={(e) => setFormData({ ...formData, issue: e.target.value })}
-                  />
-                </div>
+                  Description
+                </label>
+                <textarea
+                  id="issue"
+                  required
+                  rows={6}
+                  placeholder={
+                    formData.category === 'bug' 
+                      ? "Describe the parser anomaly, formatting glitch, or visual error you encountered..." 
+                      : formData.category === 'security'
+                        ? "List your specific operational safety audits, questions, or compliance guidelines..."
+                        : formData.category === 'general'
+                          ? "Enter your question or issue description here, and we will get back to you shortly..."
+                          : "Describe features you want us to add or any changes you would like to see..."
+                  }
+                  className="w-full px-4 py-2.5 border border-stone-200 bg-[#FAF9F6] rounded-xl focus:bg-white focus:ring-1 focus:ring-[#D4AF37] focus:border-[#D4AF37] outline-none transition-all text-sm font-medium leading-relaxed text-gray-800 resize-y font-sans"
+                  value={formData.issue}
+                  onChange={(e) => setFormData({ ...formData, issue: e.target.value })}
+                />
+              </div>
 
-                <button
-                  type="submit"
-                  disabled={status === 'submitting'}
-                  className="w-full flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#b08d2b] hover:scale-[1.01] text-white px-6 py-3 rounded-xl font-bold uppercase text-xs tracking-wider transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-amber-500/10 active:scale-99 cursor-pointer font-sans"
-                >
-                  {status === 'submitting' ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin text-white" />
-                      Sending Ticket...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-3.5 h-3.5 fill-white" />
-                      Submit Ticket
-                    </>
-                  )}
-                </button>
-              </form>
-            )}
+              <button
+                type="submit"
+                disabled={status === 'submitting'}
+                className="w-full flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#b08d2b] hover:scale-[1.01] text-white px-6 py-3 rounded-xl font-bold uppercase text-xs tracking-wider transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-amber-500/10 active:scale-99 cursor-pointer font-sans"
+              >
+                {status === 'submitting' ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-3.5 h-3.5 fill-white" />
+                    Send Internally
+                  </>
+                )}
+              </button>
+            </form>
+          )}
         </div>
       </div>
     </div>

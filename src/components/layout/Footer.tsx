@@ -45,11 +45,6 @@ export function Footer() {
                   Changelog & Updates
                 </Link>
               </li>
-              <li>
-                <Link to="/tip" className="hover:text-[#D4AF37] transition-colors text-gray-400 font-medium">
-                  Support Our Development
-                </Link>
-              </li>
             </ul>
           </div>
 
@@ -57,11 +52,6 @@ export function Footer() {
           <div>
             <h4 className="font-bold text-white uppercase text-xs tracking-wider mb-5">Resources</h4>
             <ul className="space-y-3.5 text-sm">
-              <li>
-                <Link to="/blog" className="hover:text-[#D4AF37] transition-colors text-gray-400 font-medium">
-                  Technical Guides Hub
-                </Link>
-              </li>
               <li>
                 <Link to="/contact" className="hover:text-[#D4AF37] transition-colors text-gray-400 font-medium">
                   Human Help Support

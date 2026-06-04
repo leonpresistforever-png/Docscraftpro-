@@ -9,8 +9,12 @@ import { PDFDocument } from 'pdf-lib';
 import SignatureCanvas from 'react-signature-canvas';
 import Draggable from 'react-draggable';
 
-// Configure PDF.js worker dynamically to match the imported package version
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
+// Configure PDF.js worker dynamically to match the imported package version or fallback to cdnjs
+const getWorkerSrc = () => {
+  const version = pdfjsLib.version || '3.11.174';
+  return `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.js`;
+};
+pdfjsLib.GlobalWorkerOptions.workerSrc = getWorkerSrc();
 
 export function SignPDFPage() {
   const navigate = useNavigate();
@@ -18,6 +22,7 @@ export function SignPDFPage() {
   const pdfCanvasRef = useRef<HTMLCanvasElement>(null);
   const sigCanvasRef = useRef<any>(null);
   const dragRef = useRef<HTMLDivElement>(null);
+  const renderTaskRef = useRef<any>(null);
 
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [pdfBytes, setPdfBytes] = useState<Uint8Array | null>(null);
@@ -38,8 +43,6 @@ export function SignPDFPage() {
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [pdfDimensions, setPdfDimensions] = useState({ width: 0, height: 0 });
-
-  const [hasDrawn, setHasDrawn] = useState(false);
 
   // Handle PDF Upload
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -70,6 +73,12 @@ export function SignPDFPage() {
 
   const renderPage = async (pdf: pdfjsLib.PDFDocumentProxy, pageNum: number) => {
     try {
+      if (renderTaskRef.current) {
+        try {
+          renderTaskRef.current.cancel();
+        } catch (e) {}
+      }
+
       const page = await pdf.getPage(pageNum);
       const viewport = page.getViewport({ scale: pageScale });
       
@@ -82,8 +91,13 @@ export function SignPDFPage() {
       canvas.height = viewport.height;
       setPdfDimensions({ width: viewport.width, height: viewport.height });
 
-      await page.render({ canvasContext: context, viewport } as any).promise;
-    } catch (err) {
+      const renderTask = page.render({ canvasContext: context, viewport } as any);
+      renderTaskRef.current = renderTask;
+      await renderTask.promise;
+    } catch (err: any) {
+      if (err && err.name === 'RenderingCancelledException') {
+        return; // Ignore cancelled tasks in React renders
+      }
       console.error("Error rendering page:", err);
     }
   };
@@ -100,7 +114,6 @@ export function SignPDFPage() {
   const handleClearSignature = () => {
     sigCanvasRef.current?.clear();
     setSignatureDataUrl(null);
-    setHasDrawn(false);
   };
 
   const handleApplyDraw = () => {
@@ -297,13 +310,59 @@ export function SignPDFPage() {
           {/* PDF Viewer Area */}
           <div className="flex-1 min-w-0 min-h-0 bg-[#e5e7eb] overflow-auto relative flex items-start justify-center p-4 lg:p-8">
             {!pdfFile ? (
-              <div className="h-full w-full max-w-2xl border-2 border-dashed border-gray-300 rounded-2xl bg-white flex flex-col items-center justify-center p-12 text-center mt-10 hover:border-purple-400 transition-colors cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                 <div className="w-20 h-20 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center mb-6">
+              <div 
+                className="h-full w-full max-w-2xl border-2 border-dashed border-gray-300 rounded-2xl bg-white flex flex-col items-center justify-center p-12 text-center mt-10 hover:border-purple-400 transition-colors cursor-pointer" 
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                onDrop={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    const file = e.dataTransfer.files[0];
+                    if (file.type === "application/pdf") {
+                      setPdfFile(file);
+                      setIsProcessing(true);
+                      const arrayBuffer = await file.arrayBuffer();
+                      const bytes = new Uint8Array(arrayBuffer);
+                      setPdfBytes(bytes);
+                      try {
+                        const loadingTask = pdfjsLib.getDocument({ data: bytes });
+                        const pdf = await loadingTask.promise;
+                        setTotalPages(pdf.numPages);
+                        setCurrentPage(1);
+                        setPdfDocProxy(pdf);
+                      } catch (err) {
+                        console.error("Error loading PDF:", err);
+                        alert("Failed to load PDF. It might be corrupted or encrypted.");
+                        setPdfFile(null);
+                      } finally {
+                        setIsProcessing(false);
+                      }
+                    } else {
+                      alert("Please drop a valid PDF file.");
+                    }
+                  }
+                }}
+              >
+                 <div className="w-20 h-20 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center mb-6 pointer-events-none">
                     <Upload className="w-10 h-10" />
                  </div>
-                 <h3 className="text-xl font-bold text-gray-800 mb-2">Upload your PDF here</h3>
-                 <p className="text-gray-500 mb-6">Drag and drop your file, or click to browse</p>
-                 <button className="px-6 py-3 bg-white border border-gray-200 shadow-sm rounded-xl font-medium hover:bg-gray-50">Select PDF File</button>
+                 <h3 className="text-xl font-bold text-gray-800 mb-2 pointer-events-none">Upload your PDF here</h3>
+                 <p className="text-gray-500 mb-6 pointer-events-none">Drag and drop your file, or click to browse</p>
+                 <button 
+                    type="button" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      fileInputRef.current?.click();
+                    }}
+                    className="px-6 py-3 bg-white border border-gray-200 shadow-sm rounded-xl font-medium hover:bg-gray-50 pointer-events-auto"
+                 >
+                   Select PDF File
+                 </button>
                  <input type="file" ref={fileInputRef} className="hidden" accept="application/pdf" onChange={handleFileUpload} />
               </div>
             ) : (
@@ -421,15 +480,9 @@ export function SignPDFPage() {
                     <div className="flex flex-col gap-4">
                        <p className="text-sm text-gray-500 font-medium">Draw your signature here</p>
                        <div className="border border-gray-200 rounded-xl bg-[#f8fafc] h-[200px] relative flex items-center justify-center overflow-hidden">
-                          {!hasDrawn && (
-                             <div className="absolute text-gray-400 font-medium text-lg pointer-events-none z-0">
-                                Draw your signature here
-                             </div>
-                          )}
                           <SignatureCanvas 
                              ref={sigCanvasRef}
                              penColor={sigColor}
-                             onBegin={() => setHasDrawn(true)}
                              canvasProps={{ className: "w-full h-full cursor-crosshair relative z-10 touch-none" }}
                           />
                           <button onClick={handleClearSignature} className="absolute top-3 right-3 z-20 text-xs font-semibold text-gray-400 hover:text-gray-700 bg-white px-2 py-1 rounded shadow-sm border border-gray-100">Clear</button>

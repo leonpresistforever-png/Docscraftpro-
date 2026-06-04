@@ -97,7 +97,7 @@ export function ContactPage() {
                 Please complete the registry fields below. This connects cleanly to our background event framework for instant validation routing.
               </p>
               
-              <SupportFormPage isEmbedded={true} />
+              <SupportFormPage isEmbedded={true} hideCategorySelector={true} defaultCategory="general" />
             </motion.div>
           </div>
 

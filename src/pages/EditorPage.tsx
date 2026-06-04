@@ -2493,26 +2493,23 @@ Requirements:
                {showExportMenu && (
                  <div className="absolute top-full right-0 mt-2 w-48 bg-white border border-gray-200 shadow-xl rounded-xl py-1 z-[90]">
                    <p className="px-4 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-50">Select Format</p>
-                   <button onClick={() => { window.print(); setShowExportMenu(false); }} className="w-full text-left px-4 py-2 text-sm text-purple-700 bg-purple-50 hover:bg-purple-100 font-bold flex items-center gap-2 border-b border-gray-100">
-                      <Printer className="w-4 h-4 text-purple-600" /> Print / System PDF (Native)
-                    </button>
-                    <button onClick={() => { handleExport('pdf'); setShowExportMenu(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
-                     <Printer className="w-4 h-4" /> PDF Document
+                   <button onClick={() => { handleExport('pdf'); setShowExportMenu(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
+                     <Printer className="w-4 h-4 text-gray-500" /> PDF Document
                    </button>
                    <button onClick={() => { handleExport('png'); setShowExportMenu(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
-                     <ImageIcon className="w-4 h-4" /> Image (.png)
+                     <ImageIcon className="w-4 h-4 text-gray-500" /> Image (.png)
                    </button>
                    <button onClick={() => { handleExport('jpg'); setShowExportMenu(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
-                     <ImageIcon className="w-4 h-4" /> Image (.jpg)
+                     <ImageIcon className="w-4 h-4 text-gray-500" /> Image (.jpg)
                    </button>
                    <button onClick={() => { handleExport('md'); setShowExportMenu(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
-                     <FileText className="w-4 h-4" /> Markdown (.md)
+                     <FileText className="w-4 h-4 text-gray-500" /> Markdown (.md)
                    </button>
                    <button onClick={() => { handleExport('html'); setShowExportMenu(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
-                     <Code className="w-4 h-4" /> HTML (.html)
+                     <Code className="w-4 h-4 text-gray-500" /> HTML (.html)
                    </button>
                    <button onClick={() => { handleExport('txt'); setShowExportMenu(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
-                     <FileText className="w-4 h-4" /> Plain Text (.txt)
+                     <FileText className="w-4 h-4 text-gray-500" /> Plain Text (.txt)
                    </button>
                  </div>
                )}
@@ -2573,6 +2570,7 @@ Requirements:
             <div className="flex items-center gap-1 border-r border-gray-300 pr-2 mr-1 relative">
               <button 
                 title="Font Family" 
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => { setShowFontMenu(!showFontMenu); setShowSizeMenu(false); setShowColorPicker(false); setShowHighlightPicker(false); setShowAiMenu(false); }}
                 className="text-sm bg-transparent border border-transparent hover:bg-gray-200 outline-none cursor-pointer rounded px-2 py-1.5 mx-1 text-gray-700 font-medium w-28 truncate text-left"
               >
@@ -2593,7 +2591,8 @@ Requirements:
                     ].map(f => (
                        <button 
                          key={f} 
-                         onClick={() => { editor?.chain().setFontFamily(f === 'inherit' ? 'DM Sans' : f).run(); setShowFontMenu(false); }}
+                         onMouseDown={(e) => e.preventDefault()}
+                         onClick={() => { editor?.chain().focus().setFontFamily(f === 'inherit' ? 'DM Sans' : f).run(); setShowFontMenu(false); }}
                          className="px-4 py-2 text-sm text-left hover:bg-gray-100 font-medium whitespace-nowrap"
                          style={{ fontFamily: f === 'inherit' ? 'DM Sans' : f }}
                        >
@@ -2606,6 +2605,7 @@ Requirements:
               <div className="relative">
                  <button 
                    title="Font Size" 
+                   onMouseDown={(e) => e.preventDefault()}
                    onClick={() => { setShowSizeMenu(!showSizeMenu); setShowFontMenu(false); setShowColorPicker(false); setShowHighlightPicker(false); setShowAiMenu(false); }}
                    className="text-sm bg-transparent border border-transparent hover:bg-gray-200 outline-none cursor-pointer rounded px-2 py-1.5 mx-1 text-gray-700 font-medium w-12 text-center"
                  >
@@ -2613,14 +2613,15 @@ Requirements:
                  </button>
 
                  {showSizeMenu && (
-                   <div className="absolute top-10 left-1 bg-white border border-gray-200 shadow-xl rounded-xl w-16 z-[70] backdrop-blur-md bg-white/95 overflow-y-auto max-h-64 flex flex-col py-1">
-                      {['8', '10', '12', '14', '16', '18', '20', '24', '28', '32'].map(s => (
+                   <div className="absolute top-10 left-1 bg-white border border-gray-200 shadow-xl rounded-xl w-20 z-[70] backdrop-blur-md bg-white/95 overflow-y-auto max-h-64 flex flex-col py-1">
+                      {['8', '9', '10', '11', '12', '14', '16', '18', '20', '24', '28', '32', '36', '40', '48', '56', '64', '72', '84', '96', '110', '120'].map(s => (
                          <button 
                            key={s} 
-                           onClick={() => { editor?.chain().setFontSize(`${s}px`).run(); setShowSizeMenu(false); }}
+                           onMouseDown={(e) => e.preventDefault()}
+                           onClick={() => { editor?.chain().focus().setFontSize(`${s}px`).run(); setShowSizeMenu(false); }}
                            className="px-2 py-1.5 text-sm w-full text-center hover:bg-gray-100 font-medium"
                          >
-                           {s}
+                           {s} px
                          </button>
                       ))}
                    </div>
@@ -2630,6 +2631,7 @@ Requirements:
               <div className="relative">
                  <button 
                    title="Text Styles" 
+                   onMouseDown={(e) => e.preventDefault()}
                    onClick={() => { setShowHeadingMenu(!showHeadingMenu); setShowSizeMenu(false); setShowFontMenu(false); setShowColorPicker(false); setShowHighlightPicker(false); setShowAiMenu(false); }}
                    className="text-sm bg-transparent border border-transparent hover:bg-gray-200 outline-none cursor-pointer rounded px-2 py-1.5 mx-1 text-gray-700 font-medium w-28 truncate text-left"
                  >
@@ -2654,9 +2656,10 @@ Requirements:
                       ].map(h => (
                          <button 
                            key={h.label} 
+                           onMouseDown={(e) => e.preventDefault()}
                            onClick={() => { 
-                              if (h.val === 0) editor?.chain().setParagraph().run();
-                              else editor?.chain().toggleHeading({ level: h.val as any }).run();
+                              if (h.val === 0) editor?.chain().focus().setParagraph().run();
+                              else editor?.chain().focus().toggleHeading({ level: h.val as any }).run();
                               setShowHeadingMenu(false); 
                            }}
                            className={`px-4 py-2 text-left hover:bg-gray-100 ${h.class}`}

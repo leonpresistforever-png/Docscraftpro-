@@ -2,36 +2,73 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    match /users/{userId} {
-      allow read, write: if true;
+    // Global safety net: default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
     }
 
-    match /documents/{documentId} {
-      allow read, write: if true;
+    // Auth helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
 
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Users Collection: Profiles and credits only accessible/customizable by the owner
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Documents Collection: Access restricted to owner, unless owner explicitly set isShared to true
+    match /documents/{documentId} {
+      allow read: if isSignedIn() && (resource == null || resource.data.ownerId == request.auth.uid || resource.data.isShared == true);
+      allow write: if isSignedIn() && (
+        (resource == null && request.resource.data.ownerId == request.auth.uid) ||
+        (resource != null && resource.data.ownerId == request.auth.uid && (request.resource == null || request.resource.data.ownerId == request.auth.uid))
+      );
+
+      // Subcollection history: inherit permissions securely from the parent document
       match /history/{historyId} {
-        allow read, write: if true;
+        allow read: if isSignedIn() && (
+          get(/databases/$(database)/documents/documents/$(documentId)).data.ownerId == request.auth.uid || 
+          get(/databases/$(database)/documents/documents/$(documentId)).data.isShared == true
+        );
+        allow write: if isSignedIn() && get(/databases/$(database)/documents/documents/$(documentId)).data.ownerId == request.auth.uid;
       }
     }
 
-    match /nexus_chats/{chatId} {
-      allow read, write: if true;
-    }
-
+    // Chat Sessions Collection: History logs strictly owner-owned
     match /chat_sessions/{sessionId} {
-      allow read, write: if true;
+      allow read, write: if isSignedIn() && (
+        (resource == null && request.resource.data.ownerId == request.auth.uid) ||
+        (resource != null && resource.data.ownerId == request.auth.uid && (request.resource == null || request.resource.data.ownerId == request.auth.uid))
+      );
     }
 
+    // Input Prompt History Collection: History logs strictly owner-owned
     match /inputHistory/{historyId} {
-      allow read, write: if true;
+      allow read, write: if isSignedIn() && (
+        (resource == null && request.resource.data.userId == request.auth.uid) ||
+        (resource != null && resource.data.userId == request.auth.uid && (request.resource == null || request.resource.data.userId == request.auth.uid))
+      );
     }
 
+    // Document Media/File Attachments: Accessible by any signed-in user
     match /doc_attachments/{attachmentId} {
-      allow read, write: if true;
+      allow read, write: if isSignedIn();
     }
 
+    // Support Tickets Collection: Accessible for creation by anyone, but read/write/delete restricted to ensure data privacy
     match /support_tickets/{ticketId} {
-      allow read, write: if true;
+      allow create: if true;
+      allow read, update, delete: if false;
+    }
+
+    // Nexus Chat Logs: Accessible by any signed-in user
+    match /nexus_chats/{chatId} {
+      allow read, write: if isSignedIn();
     }
   }
 }

@@ -53,7 +53,7 @@ import {
   Trash2, Image as ImageIcon, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Columns, Rows, FileSpreadsheet, Layout, Brain, Puzzle, ChevronDown, Blocks, Printer, X, BarChart3, Star, Share2, Sigma,
   Maximize, FileX, Scissors, Type as TypeIcon, Globe, MoveDown, BookOpen, Clock, Network, Box, StopCircle, AlertCircle, Loader2, Paperclip, ExternalLink
 } from 'lucide-react';
-import { askGeminiFlash, askGeminiProComplex } from '../lib/gemini';
+import { askGeminiFlash, askGeminiProComplex, directLlmCall } from '../lib/gemini';
 import { LocalGemmaTerminal } from '../components/LocalGemmaTerminal';
 import { marked } from 'marked';
 import { HexColorPicker } from 'react-colorful';
@@ -1338,16 +1338,69 @@ Requirements:
     setSyncStatus('Enhancing document...');
     
     try {
-      const response = await fetch('/api/ai/enhance-text', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, customApiKey })
-      });
+      let enhancedText = "";
+      let success = false;
       
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to enhance text');
+      // Try server-side first
+      try {
+        const response = await fetch('/api/ai/enhance-text', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, customApiKey })
+        });
+        
+        if (response.ok) {
+          const contentType = response.headers.get("content-type") || "";
+          if (contentType.includes("application/json")) {
+            const data = await response.json();
+            if (data.enhancedText) {
+              enhancedText = data.enhancedText;
+              success = true;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Server-side enhance failed, trying fallback client-side BYOK direct call...", err);
+      }
       
-      editor.commands.setContent(data.enhancedText);
+      // Fallback to client-side direct REST calls if Vercel serverless or server failure
+      if (!success) {
+        if (!customApiKey) {
+          throw new Error("Server API call failed. Please configure a BYOK key in settings to handle Direct AI operations in your browser.");
+        }
+        
+        const systemInstruction = `You are a professional editor and document architect. Your task is to analyze and profoundly enhance the provided text for maximum readability, clarity, and impact.
+Requirements:
+1. Structure into beautiful appropriate headings (<h1>, <h2>, <h3>) and elegantly arrange large heading titles. Add inline CSS to make heading texts have beautiful colors.
+2. Apply inline CSS to paragraph text to create beautiful text colors.
+3. Highlight important text, key concepts, or critical information using the <mark> semantic HTML tag. Apply inline CSS to these <mark> tags to have beautiful background colors, smooth edges (border-radius: 6px), but transparent smooth highlights (e.g. rgba(..., 0.3) background).
+4. Arrange thoughts logically and create compelling bulleted or numbered lists where appropriate.
+5. Improve wording and rewrite awkward phrasing efficiently.
+6. Create an HTML table containing data from the text, if applicable.
+7. CRITICAL: Add beautiful insightful charts using Mermaid.js where appropriate if the text contains comparison data. Format mermaid code blocks inside HTML like <pre><code class="language-mermaid">...</code></pre>
+8. CRITICAL: Only output the raw, valid HTML document. Do not include markdown formatting, code blocks (other than mermaid inside HTML), or conversational filler. The output must be purely clean.`;
+
+        const resultText = await directLlmCall({
+          prompt: `Enhance the following text:\n\n${text}`,
+          systemInstruction,
+          customApiKey,
+          isComplex: true
+        });
+
+        enhancedText = resultText;
+        if (enhancedText.startsWith('```html')) {
+          enhancedText = enhancedText.substring(7);
+        } else if (enhancedText.startsWith('```')) {
+          enhancedText = enhancedText.substring(3);
+        }
+        if (enhancedText.endsWith('```')) {
+          enhancedText = enhancedText.substring(0, enhancedText.length - 3);
+        }
+        enhancedText = enhancedText.trim();
+        success = true;
+      }
+      
+      editor.commands.setContent(enhancedText);
       setSyncStatus('Enhancement complete');
     } catch (e: any) {
       alert("Enhancement Error: " + e.message);
@@ -3207,7 +3260,7 @@ Requirements:
         )}
 
         <div 
-          className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-12 flex justify-center items-start gap-8 relative print:bg-white print:p-0 print:overflow-visible transition-all duration-300"
+          className="flex-1 overflow-y-auto p-2 sm:p-4 md:p-6 lg:p-8 flex justify-center items-start gap-4 md:gap-8 relative print:bg-white print:p-0 print:overflow-visible transition-all duration-300"
           style={{ backgroundColor: DOCUMENT_THEMES[docThemeKey]?.outerBgValue || '#EFEFEF' }}
         >
           <div 
@@ -3219,7 +3272,7 @@ Requirements:
                selectedFormat === 'jpg' ? 'max-w-[1080px] aspect-[4/5] border-[2px] border-gray-300 !p-0 shadow-2xl' :
                selectedFormat === 'zip' ? 'max-w-[800px] border-[4px] border-dashed border-gray-300 bg-gray-50' :
                selectedFormat === 'html' ? 'max-w-none border-t-[32px] border-gray-800 rounded-t-xl' :
-               'max-w-[1550px] min-h-[1056px] w-[96%]',
+               'max-w-[1550px] min-h-[600px] w-[96%]',
                dragDropEditMode && 'cursor-text ring-4 ring-blue-400 ring-offset-8 rounded-lg selection:bg-blue-300'
              )}
              style={{

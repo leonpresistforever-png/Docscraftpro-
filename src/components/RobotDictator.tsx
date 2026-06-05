@@ -3,6 +3,7 @@ import { Editor } from '@tiptap/react';
 import { Mic, Loader2, StopCircle, AlertCircle, Settings, X, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { encryptData, decryptData } from '../lib/encryption';
+import { directLlmCall } from '../lib/gemini';
 
 interface RobotDictatorProps {
   editor: Editor | null;
@@ -171,30 +172,76 @@ Requirements:
          // B. Fall back to cloud API / Server processor
          setLiveTranscript("Structuring long rich document with AI Brain...");
          try {
-            const aiRes = await fetch('/api/ai/process-transcript', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ 
-                text: transcriptText, 
-                customApiKey: reasoningKey,
-                customModel: customModel
-              })
-            });
-            
-            const aiText = await aiRes.text();
-            let aiData: any;
+            let correctedText = "";
+            let success = false;
+
+            // Try server-side first
             try {
-               aiData = JSON.parse(aiText);
-            } catch (jsonErr) {
-               throw new Error(aiText || "Invalid server response.");
+               const aiRes = await fetch('/api/ai/process-transcript', {
+                 method: 'POST',
+                 headers: { 'Content-Type': 'application/json' },
+                 body: JSON.stringify({ 
+                   text: transcriptText, 
+                   customApiKey: reasoningKey,
+                   customModel: customModel
+                 })
+               });
+               
+               const contentType = aiRes.headers.get("content-type") || "";
+               if (aiRes.ok && contentType.includes("application/json")) {
+                 const aiText = await aiRes.text();
+                 const aiData = JSON.parse(aiText);
+                 if (aiData.correctedText) {
+                   correctedText = aiData.correctedText;
+                   success = true;
+                 }
+               }
+            } catch (serverErr) {
+               console.warn("Server-side transcription processing failed, testing client direct fallback...", serverErr);
             }
 
-            if (!aiRes.ok) throw new Error(aiData.error || "Failed to process transcript");
+            // Direct browser-side LLM call fallback using BYOK key (for setups with no Node backend like Vercel deployments)
+            if (!success) {
+               if (!reasoningKey) {
+                 throw new Error("Server API call failed. To run AI features directly in the browser, please provide a BYOK API key in the Robot settings!");
+               }
 
-            if (aiData.correctedText) {
-              editor?.chain().focus('end').insertContent(aiData.correctedText).run();
+               const systemInstruction = `You are an expert technical writer and AI assistant helping a user build a comprehensive document from their dictated thoughts.
+Take the provided raw voice transcript, research the core concepts, and structure it into a highly refined document.
+Please do the following:
+1. Understand the core concepts described and elaborate on them logically.
+2. Structure the output with a clear, engaging Title.
+3. Use semantic HTML tags (<h1>, <h2>, <h3>, <p>, <ul>, <li>, <strong>, <mark>) to build comprehensive sections that make the information flow seamlessly. Use <mark> to highlight key concepts.
+4. Correct any grammar mistakes and rearrange facts so they are clear and structured.
+5. Include a "Resources & Context" section at the end if there is relevant information to share (especially from the provided Context below).
+6. CRITICAL: Only output the raw, valid HTML document. Do not include markdown formatting, code blocks (such as HTML blocks), or conversational filler like "Here is the document...". The output must be purely clean HTML ready to be injected.`;
+               
+               const resultText = await directLlmCall({
+                 prompt: "Transcript:\n" + transcriptText,
+                 systemInstruction,
+                 customApiKey: reasoningKey,
+                 customModel: customModel,
+                 isComplex: true
+               });
+
+               correctedText = resultText;
+               // Standard format cleaning
+               if (correctedText.startsWith('```html')) {
+                 correctedText = correctedText.substring(7);
+               } else if (correctedText.startsWith('```')) {
+                 correctedText = correctedText.substring(3);
+               }
+               if (correctedText.endsWith('```')) {
+                 correctedText = correctedText.substring(0, correctedText.length - 3);
+               }
+               correctedText = correctedText.trim();
+               success = true;
+            }
+
+            if (correctedText) {
+               editor?.chain().focus('end').insertContent(correctedText).run();
             } else {
-              editor?.chain().focus('end').insertContent(transcriptText).run();
+               editor?.chain().focus('end').insertContent(transcriptText).run();
             }
             setStatus('idle');
             setLiveTranscript("");

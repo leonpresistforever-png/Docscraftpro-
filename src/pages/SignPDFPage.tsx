@@ -183,17 +183,23 @@ export function SignPDFPage() {
 
       let processedDataUrl = signatureDataUrl;
 
-      // Convert SVG or unknown types to PNG via canvas to avoid pdf-lib crash
-      if (!signatureDataUrl.includes('image/png') && !signatureDataUrl.includes('image/jpeg')) {
+      // Always render custom signatures through an offscreen canvas to guarantee clean, standard PNG encoding
+      // and strip any complex metadata (like progressive frames or custom ICC color profiles) that crashes PDF-Lib.
+      try {
          const img = new Image();
          img.src = signatureDataUrl;
-         await new Promise((resolve) => { img.onload = resolve; });
+         await new Promise((resolve, reject) => {
+           img.onload = resolve;
+           img.onerror = (e) => reject(new Error("Failed to load signature data URL into browser Image."));
+         });
          const canvas = document.createElement('canvas');
-         canvas.width = img.naturalWidth || sigSize.width;
-         canvas.height = img.naturalHeight || sigSize.height;
+         canvas.width = img.naturalWidth || sigSize.width || 200;
+         canvas.height = img.naturalHeight || sigSize.height || 80;
          const ctx = canvas.getContext('2d');
          ctx?.drawImage(img, 0, 0);
          processedDataUrl = canvas.toDataURL('image/png');
+      } catch (canvasErr: any) {
+         console.warn("Canvas pre-processing failed, using raw data url instead:", canvasErr);
       }
 
       // Convert data URL to buffer safely without fetch to avoid network block failures
@@ -209,7 +215,7 @@ export function SignPDFPage() {
           imageBytes[n] = bstr.charCodeAt(n);
         }
       } catch (parseBase64Error: any) {
-        throw new Error("Failed to parse signature base64 data: " + parseBase64Error.message);
+        throw new Error("Base64 parsing failed: " + parseBase64Error.message);
       }
 
       let image;
@@ -229,8 +235,8 @@ export function SignPDFPage() {
       // React-draggable gives x,y from top-left of canvas
       // PDF-Lib uses x,y from bottom-left of page
       const canvasEl = pdfCanvasRef.current;
-      const renderedWidth = canvasEl ? canvasEl.clientWidth : pdfDimensions.width;
-      const renderedHeight = canvasEl ? canvasEl.clientHeight : pdfDimensions.height;
+      const renderedWidth = (canvasEl && canvasEl.clientWidth) || pdfDimensions.width || 1;
+      const renderedHeight = (canvasEl && canvasEl.clientHeight) || pdfDimensions.height || 1;
 
       const scaleX = pdfPageWidth / renderedWidth;
       const scaleY = pdfPageHeight / renderedHeight;
@@ -251,9 +257,9 @@ export function SignPDFPage() {
 
       const modifiedPdfBytes = await pdfDoc.save();
       return modifiedPdfBytes;
-    } catch (err) {
-      console.error(err);
-      alert("Failed to embed signature.");
+    } catch (err: any) {
+      console.error("Signature embedding failed:", err);
+      alert("Failed to embed signature: " + (err?.message || String(err)));
       return null;
     } finally {
       setIsProcessing(false);

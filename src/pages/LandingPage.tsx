@@ -294,10 +294,6 @@ export function LandingPage() {
             </div>
           </div>
         </div>
-        
-        <div className="max-w-[1400px] mx-auto px-6">
-          <DevPulseDashboard />
-        </div>
       </section>
 
       {/* Section 2: Infinite Integrations Marquee */}
@@ -323,8 +319,8 @@ export function LandingPage() {
       <section className="py-32 bg-[#FDFBF7] relative z-10 border-b border-[#E4DBC5]">
         <div className="max-w-[1400px] mx-auto px-6">
           <div className="text-center mb-20">
-            <h2 className="text-4xl md:text-5xl font-black mb-6 uppercase text-[#1a1a1a]">Built for Scale.</h2>
-            <p className="text-gray-500 font-sans text-lg max-w-2xl mx-auto">Everything you need to write, manage, and scale your documentation securely. Under the hood, we use cutting-edge tech.</p>
+            <h2 className="text-4xl md:text-5xl font-black mb-6 uppercase text-[#1a1a1a]">Designed for Professionals.</h2>
+            <p className="text-gray-500 font-sans text-lg max-w-2xl mx-auto">Everything you need to write, edit, secure, and professionally manage your documents.</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto auto-rows-[250px]">
@@ -336,8 +332,8 @@ export function LandingPage() {
                     <Boxes className="text-[#D4AF37]" />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-black uppercase text-[#1a1a1a] mb-2">Real-time CRDT Sync</h3>
-                    <p className="text-gray-500 text-sm max-w-sm leading-relaxed">P2P synchronization ensures you never encounter merge conflicts. Multiple cursors move seamlessly simultaneously.</p>
+                    <h3 className="text-2xl font-black uppercase text-[#1a1a1a] mb-2">Reliable Document Creation</h3>
+                    <p className="text-gray-500 text-sm max-w-sm leading-relaxed">Continuous automatic saving protects your work context dynamically. Experience highly reliable document creating features designed for professionals.</p>
                   </div>
                 </div>
                 <div className="absolute right-[-20%] bottom-[-50%] w-64 h-64 border-[40px] border-[#F4E091]/20 rounded-full group-hover:scale-110 transition-transform duration-700"></div>
@@ -350,8 +346,8 @@ export function LandingPage() {
                     <CheckCircle className="text-white" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black uppercase text-[#1a1a1a] mb-2">E2E Secure</h3>
-                    <p className="text-gray-500 text-sm leading-relaxed">Enterprise-grade 256-bit encryption for all data at rest and in transit.</p>
+                    <h3 className="text-xl font-black uppercase text-[#1a1a1a] mb-2">Secure Storage</h3>
+                    <p className="text-gray-500 text-sm leading-relaxed">Your data is stored in isolated, secure spaces with secure database connections and safe access points.</p>
                   </div>
                 </div>
               </TiltCard>
@@ -363,8 +359,8 @@ export function LandingPage() {
                     <Search className="text-blue-500" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black uppercase text-[#1a1a1a] mb-2">Vector Search</h3>
-                    <p className="text-gray-500 text-sm leading-relaxed">Lightning-fast semantic AI queries across thousands of deeply nested blocks.</p>
+                    <h3 className="text-xl font-black uppercase text-[#1a1a1a] mb-2">Create PDFs Professionally</h3>
+                    <p className="text-gray-500 text-sm leading-relaxed">Design beautiful page layouts, sign PDFs securely, and append digital signatures to documents professionally.</p>
                   </div>
                 </div>
               </TiltCard>
@@ -376,8 +372,8 @@ export function LandingPage() {
                     <Cpu className="text-white" />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-black uppercase text-white mb-2">Edge Delivery</h3>
-                    <p className="text-gray-400 text-sm max-w-sm leading-relaxed">Your content is served from locations physically closest to your users. Sub-50ms latency anywhere in the world.</p>
+                    <h3 className="text-2xl font-black uppercase text-white mb-2">Multi-Format Exports</h3>
+                    <p className="text-gray-400 text-sm max-w-sm leading-relaxed">Compile your creations into high-fidelity files. Instantly download standard PDF documents, Word-compatible files, or images.</p>
                   </div>
                 </div>
                 <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.8)_0,transparent_100%)]" style={{ backgroundSize: '20px 20px', backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)' }}></div>
@@ -665,24 +661,24 @@ function TiltCard({
   // Real-time developer diagnostic monitors
   const diagnostics: Record<string, { label: string, spec: string, metrics: string[] }> = {
     crdt: {
-      label: "crdt synchronization live",
-      spec: "RFC-4122 peer matrix",
-      metrics: ["state: synced", "peer latency: 1.4ms", "reconcile loop: active"]
+      label: "reliable document creating features",
+      spec: "continuous automatic save state",
+      metrics: ["status: running", "last save: just now", "draft history: active"]
     },
     security: {
-      label: "cryptography safe vault",
-      spec: "aes-256 secure storage",
-      metrics: ["cipher: AES-GCM-256", "private keys: local", "keys status: verified"]
+      label: "robust secure data defense",
+      spec: "secure sandboxed document space",
+      metrics: ["encryption: AES-256", "local persistence: active", "session security: verified"]
     },
     vector: {
-      label: "vector context map",
-      spec: "cosine similarity space",
-      metrics: ["accuracy: 99.98%", "queries: sub-1ms", "index nodes: online"]
+      label: "create PDFs full to professionally",
+      spec: "precision document annotations and signatures",
+      metrics: ["status: ready", "worker status: local optimized", "layout check: perfect alignment"]
     },
     edge: {
-      label: "host router analytics",
-      spec: "sub-50ms global network",
-      metrics: ["cdn route: local cache", "pop state: active", "rtt latency: 12ms"]
+      label: "format exports and downloads",
+      spec: "custom multi-format compile engine",
+      metrics: ["format support: raw/compiled/pages", "export options: rich word/pdf/images", "image quality: high definition"]
     }
   };
 
@@ -719,10 +715,10 @@ function TiltCard({
     if (onExamine) {
       const diag = diagnostics[type] || diagnostics.crdt;
       // Map to real feature titles
-      const niceTitle = type === "crdt" ? "Real-time CRDT Sync" 
-                      : type === "security" ? "End-To-End Security Vault"
-                      : type === "vector" ? "Semantic Vector Database"
-                      : "Global Edge Content Delivery";
+      const niceTitle = type === "crdt" ? "Reliable Document Creation" 
+                      : type === "security" ? "Secure Storage"
+                      : type === "vector" ? "Create PDFs Professionally"
+                      : "Multi-Format Exports";
       onExamine(niceTitle, diag.label.toUpperCase() + " | SPECS: " + diag.spec, diag.metrics);
     }
   };
@@ -891,97 +887,6 @@ function WaveGlowBackground() {
             }}
           />
         ))}
-      </div>
-    </div>
-  );
-}
-
-function DevPulseDashboard() {
-  const [totalUsers, setTotalUsers] = useState<number>(312); // Fallback base starting estimation
-  const [activeOnline, setActiveOnline] = useState<number>(12); // Pulse baseline estimation
-  const [syncedDocCount, setSyncedDocCount] = useState<number>(1420); // Sync transaction base
-  const [heartbeat, setHeartbeat] = useState<boolean>(true);
-
-  useEffect(() => {
-    // 1. Live subscribe to actual Firebase registered accounts count in Firestore users collection
-    try {
-      const userCol = collection(db, 'users');
-      const unsub = onSnapshot(userCol, (snapshot) => {
-        if (snapshot && !snapshot.empty) {
-          const registeredCount = snapshot.size;
-          setTotalUsers(registeredCount + 128); // Merge base estimation with real-time Firestore profile documents
-        }
-      }, (err) => {
-        console.warn("Firestore scale metrics stream paused, using grace fallback:", err);
-      });
-      return () => unsub();
-    } catch (e) {
-      console.warn("Database initialization skipped layout metrics:", e);
-    }
-  }, []);
-
-  useEffect(() => {
-    // 2. Continuous realistic telemetry fluctuation simulations (representing sub-channel activity)
-    const interval = setInterval(() => {
-      setActiveOnline((prev) => {
-        const delta = Math.random() > 0.5 ? 1 : -1;
-        const next = Math.max(8, Math.min(24, prev + delta));
-        return next;
-      });
-      setSyncedDocCount(prev => prev + Math.floor(Math.random() * 3));
-      setHeartbeat(prev => !prev);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div className="w-full mt-20 border-t border-gray-800 pt-16">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-        <div>
-          <span className="text-[#D4AF37] text-xs font-bold uppercase tracking-widest block mb-1 font-mono">DocCraft Ecosystem</span>
-          <h3 className="text-2xl font-black text-white uppercase tracking-tight font-sans">Platform Scale Metrics</h3>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-[#111]/80 backdrop-blur-lg rounded-3xl border border-gray-800 p-8 hover:border-[#D4AF37]/50 transition-all duration-300 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/5 rounded-full blur-2xl group-hover:bg-yellow-500/10 transition-all"></div>
-          <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center mb-6 border border-white/10">
-            <span className="relative flex h-3.5 w-3.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#D4AF37] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-[#D4AF37]"></span>
-            </span>
-          </div>
-          <p className="text-xs font-mono text-gray-400 uppercase tracking-widest mb-1">Live Online Users</p>
-          <h4 className="text-4xl font-extrabold text-white font-mono tracking-tight mb-2">
-            {activeOnline} <span className="text-xs text-emerald-400 font-bold ml-2 animate-pulse">● Active</span>
-          </h4>
-          <p className="text-sm text-gray-400">Interacting and collaborating on active documentation cards.</p>
-        </div>
-        
-        <div className="bg-[#111]/80 backdrop-blur-lg rounded-3xl border border-gray-800 p-8 hover:border-[#D4AF37]/50 transition-all duration-300 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/10 transition-all"></div>
-          <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center mb-6 border border-white/10 text-[#D4AF37]">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-5 h-5" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          </div>
-          <p className="text-xs font-mono text-[#D4AF37] uppercase tracking-widest mb-1">Ecosystem Accounts</p>
-          <h4 className="text-4xl font-extrabold text-white font-mono tracking-tight mb-2">
-            {totalUsers}
-          </h4>
-          <p className="text-sm text-gray-400">Total registered profiles verified inside Firestore.</p>
-        </div>
-
-        <div className="bg-[#111]/80 backdrop-blur-lg rounded-3xl border border-gray-800 p-8 hover:border-[#D4AF37]/50 transition-all duration-300 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl group-hover:bg-blue-500/10 transition-all"></div>
-          <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center mb-6 border border-white/10">
-             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-5 h-5 text-blue-400" strokeWidth="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-          </div>
-          <p className="text-xs font-mono text-gray-400 uppercase tracking-widest mb-1">Global Transactions</p>
-          <h4 className="text-4xl font-extrabold text-white font-mono tracking-tight mb-2 col-span-1">
-            {syncedDocCount.toLocaleString()}
-          </h4>
-          <p className="text-sm text-gray-400">Continuous real-time delta operations synchronized safely.</p>
-        </div>
       </div>
     </div>
   );

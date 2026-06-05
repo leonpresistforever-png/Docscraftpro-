@@ -20,6 +20,7 @@ export function RobotDictator({ editor, onOpenVoiceDoc, localEngine, useLocalMod
   const [showSettings, setShowSettings] = useState(false);
   const [reasoningKey, setReasoningKey] = useState("");
   const [customModel, setCustomModel] = useState("qwen-2.5-1.5b-instruct");
+  const [dictatorMode, setDictatorMode] = useState<'normal' | 'ai'>('ai');
   
   const recognitionRef = useRef<any>(null);
   const stopCallbackRef = useRef<(() => void) | null>(null);
@@ -33,6 +34,10 @@ export function RobotDictator({ editor, onOpenVoiceDoc, localEngine, useLocalMod
     if (storedModel) {
       setCustomModel(storedModel);
     }
+    const storedMode = localStorage.getItem('dictator_mode');
+    if (storedMode === 'normal' || storedMode === 'ai') {
+      setDictatorMode(storedMode);
+    }
   }, []);
 
   const handleCustomModelChange = (val: string) => {
@@ -44,6 +49,11 @@ export function RobotDictator({ editor, onOpenVoiceDoc, localEngine, useLocalMod
     setReasoningKey(val);
     if (val) localStorage.setItem('dictator_reason_key', encryptData(val));
     else localStorage.removeItem('dictator_reason_key');
+  };
+
+  const handleDictatorModeChange = (val: 'normal' | 'ai') => {
+    setDictatorMode(val);
+    localStorage.setItem('dictator_mode', val);
   };
 
   const startRecording = async () => {
@@ -118,20 +128,35 @@ export function RobotDictator({ editor, onOpenVoiceDoc, localEngine, useLocalMod
             return;
          }
          
+         // 1. Normal Mode - paste exactly what they said directly in the editor and stop
+         if (dictatorMode === 'normal') {
+            editor?.chain().focus('end').insertContent(`<p>${transcriptText}</p>`).run();
+            setStatus('idle');
+            setLiveTranscript("");
+            return;
+         }
+
          setStatus('processing');
          
-         // 1. If Local WebLLM Qwen 1.5B model is available, use it directly for 100% free offline execution!
+         // 2. AI Mode - generate comprehensive document
+         // A. If Local WebLLM Qwen 1.5B model is available, use it directly for 100% free offline execution!
          if (useLocalModel && localEngine) {
-            setLiveTranscript("Polishing transcript offline with Qwen...");
+            setLiveTranscript("Refining long detailed document offline...");
             try {
                const response = await localEngine.chat.completions.create({
                  messages: [
                    { 
                      role: 'user', 
-                     content: `As a professional editor assistance tool, refine and format this raw transcribed text beautifully with coherent structure, paragraphs, bullet points, and key points highlighted in bold. Respond strictly with raw structured HTML (no Markdown code block format wraps like \`\`\`html):\n\n"${transcriptText}"` 
+                     content: `As an expert technical creator and AI Assistant, write a very comprehensive, long, highly detailed, well-structured professional document on the topic: "${transcriptText}".
+Requirements:
+- Elaborate thoroughly (minimum 4 large sections).
+- Use professional HTML typography including headings (<h1>, <h2>), paragraphs, lists, and inline colors.
+- Highlight crucial words using transparent highlighted <mark> tags (e.g. style="background: rgba(212, 175, 55, 0.2); border-radius: 4px; padding: 2px;").
+- Create beautiful data comparison index tables where applicable.
+- Return ONLY valid raw HTML code without markdown code block wraps.` 
                    }
                  ],
-                 max_tokens: 1500
+                 max_tokens: 2500
                });
                const refined = response.choices[0]?.message?.content || transcriptText;
                editor?.chain().focus('end').insertContent(refined).run();
@@ -143,8 +168,8 @@ export function RobotDictator({ editor, onOpenVoiceDoc, localEngine, useLocalMod
             }
          }
 
-         // 2. Fall back to cloud API / Server processor
-         setLiveTranscript("Polishing text with AI Document Brain...");
+         // B. Fall back to cloud API / Server processor
+         setLiveTranscript("Structuring long rich document with AI Brain...");
          try {
             const aiRes = await fetch('/api/ai/process-transcript', {
               method: 'POST',
@@ -156,7 +181,16 @@ export function RobotDictator({ editor, onOpenVoiceDoc, localEngine, useLocalMod
               })
             });
             
-            const aiData = await aiRes.json();
+            const aiText = await aiRes.text();
+            let aiData: any;
+            try {
+               aiData = JSON.parse(aiText);
+            } catch (jsonErr) {
+               throw new Error(aiText || "Invalid server response.");
+            }
+
+            if (!aiRes.ok) throw new Error(aiData.error || "Failed to process transcript");
+
             if (aiData.correctedText) {
               editor?.chain().focus('end').insertContent(aiData.correctedText).run();
             } else {
@@ -166,7 +200,7 @@ export function RobotDictator({ editor, onOpenVoiceDoc, localEngine, useLocalMod
             setLiveTranscript("");
          } catch(e: any) {
             console.warn("AI processing error, pasting raw transcript directly:", e);
-            editor?.chain().focus('end').insertContent(transcriptText).run();
+            editor?.chain().focus('end').insertContent(`<p>${transcriptText}</p>`).run();
             setStatus('idle');
             setLiveTranscript("");
          }
@@ -247,18 +281,10 @@ export function RobotDictator({ editor, onOpenVoiceDoc, localEngine, useLocalMod
 
       {/* Robot Head */}
       <div className="relative">
-        {/* Launch Voice Doc Creator directly next to the gear settings button */}
-        <button 
-           onClick={(e) => { e.stopPropagation(); onOpenVoiceDoc?.(); }}
-           className="absolute -top-10 -left-10 z-50 p-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-full shadow-md hover:scale-110 active:scale-95 transition-all flex items-center justify-center border border-white focus:outline-none cursor-pointer"
-           title="Launch Voice Document Creator (Research & Write)"
-        >
-           <Sparkles className="w-4 h-4 text-white animate-pulse" />
-        </button>
-
         <button 
            onClick={(e) => { e.stopPropagation(); setShowSettings(!showSettings); }}
            className="absolute -top-10 right-0 z-50 p-2 bg-white/80 backdrop-blur border border-gray-200 rounded-full shadow-sm hover:bg-gray-50 transition-colors focus:outline-none cursor-pointer"
+           title="Robot Settings"
         >
            <Settings className="w-4 h-4 text-gray-500" />
         </button>
@@ -269,34 +295,49 @@ export function RobotDictator({ editor, onOpenVoiceDoc, localEngine, useLocalMod
               <button 
                  onClick={() => setShowSettings(false)}
                  className="absolute top-3.5 right-3.5 p-1 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors focus:outline-none cursor-pointer"
-                 title="Cut Settings"
+                 title="Close"
               >
                  <X className="w-4 h-4" />
               </button>
 
               <div className="text-xs font-bold text-gray-800 uppercase tracking-wider mb-1 pr-6 flex items-center gap-1.5 border-b border-gray-100 pb-1.5">
                  <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span>
-                 Robot API Settings (BYOK)
+                 Robot AI Dictation Settings
+              </div>
+
+              {/* Dual Mode Selector */}
+              <div className="space-y-1.5">
+                 <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">Robot Operating Mode</label>
+                 <div className="grid grid-cols-2 gap-1 bg-gray-100 p-1 rounded-lg">
+                    <button 
+                       type="button"
+                       onClick={() => handleDictatorModeChange('normal')}
+                       className={`py-1 text-[11px] font-bold rounded-md transition-all cursor-pointer ${dictatorMode === 'normal' ? 'bg-white shadow-sm text-indigo-700' : 'text-gray-400 hover:text-gray-600'}`}
+                    >
+                       Normal Text
+                    </button>
+                    <button 
+                       type="button"
+                       onClick={() => handleDictatorModeChange('ai')}
+                       className={`py-1 text-[11px] font-bold rounded-md transition-all cursor-pointer flex items-center justify-center gap-1 ${dictatorMode === 'ai' ? 'bg-white shadow-sm text-indigo-700' : 'text-gray-400 hover:text-gray-600'}`}
+                    >
+                       <Sparkles className="w-3 h-3 text-indigo-500" />
+                       AI Document
+                    </button>
+                 </div>
+                 <p className="text-[10px] text-gray-400 font-medium">
+                    {dictatorMode === 'normal' 
+                      ? "Direct mode: user speech writes straight to document raw." 
+                      : "AI mode: automatically designs detailed formatted layout pages."
+                    }
+                 </p>
               </div>
 
               <div className="space-y-1">
-                 <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">Speech-to-Text Engine</label>
-                 <input 
-                    type="text"
-                    placeholder="Local Browser Web Speech (Always Free & Offline)"
-                    value="Web Speech API (Free & Offline Active)"
-                    readOnly={true}
-                    disabled={true}
-                    autoComplete="off"
-                    className="w-full text-xs border border-gray-200 rounded p-1.5 focus:border-blue-400 outline-none bg-gray-50/50 text-gray-500 font-medium"
-                 />
-              </div>
-
-              <div className="space-y-1">
-                 <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">AI Reasoning API Key</label>
+                 <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">AI Reasoning API Key (BYOK)</label>
                  <input 
                     type="password"
-                    placeholder="custom OpenAI, Groq, OpenRouter or Gemini Key (Optional)"
+                    placeholder="Provide your custom API key (optional)"
                     value={reasoningKey}
                     onChange={(e) => handleReasoningKeyChange(e.target.value)}
                     autoComplete="off"
@@ -305,28 +346,16 @@ export function RobotDictator({ editor, onOpenVoiceDoc, localEngine, useLocalMod
               </div>
 
               <div className="space-y-1">
-                 <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">AI Engine/Model (e.g. qwen-2.5-72b)</label>
+                 <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">AI Engine/Model</label>
                  <input 
                     type="text"
-                    placeholder="qwen-2.5-72b or any custom model"
+                    placeholder="custom model, e.g. gemini-3.5-flash"
                     value={customModel}
                     onChange={(e) => handleCustomModelChange(e.target.value)}
                     autoComplete="off"
                     className="w-full text-xs border border-gray-200 rounded p-1.5 focus:border-blue-400 outline-none bg-gray-50/50"
                  />
               </div>
-
-              {/* Quick Trigger Button inside drawer */}
-              <button 
-                 onClick={() => {
-                   setShowSettings(false);
-                   onOpenVoiceDoc?.();
-                 }}
-                 className="mt-1.5 w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold py-2 px-3 rounded-lg text-xs transition-colors focus:outline-none flex items-center justify-center gap-1.5 border border-indigo-200 cursor-pointer"
-              >
-                 <Mic className="w-3.5 h-3.5 text-indigo-500"/>
-                 Voice Document Creator (Expert)
-              </button>
            </div>
         )}
 

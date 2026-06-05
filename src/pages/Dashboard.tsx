@@ -79,18 +79,27 @@ export function Dashboard() {
 
   const shareDoc = async (e: any, d: any) => {
     e.stopPropagation();
+    const newSharedState = !d.isShared;
     try {
+      await updateDoc(doc(db, 'documents', d.id), { isShared: newSharedState });
+      const shareUrl = window.location.origin + '/doc/' + d.id;
       if (navigator.share) {
          await navigator.share({
             title: d.title,
             text: 'Check out this document',
-            url: window.location.origin + '/doc/' + d.id
+            url: shareUrl
          });
-         await updateDoc(doc(db, 'documents', d.id), { isShared: true });
       } else {
-         alert(`Link: ${window.location.origin}/doc/${d.id}`);
+         try {
+           await navigator.clipboard.writeText(shareUrl);
+           alert(newSharedState ? "Document is now shared! Public link copied to clipboard." : "Document is now private.");
+         } catch (clipErr) {
+           alert(`Public link: ${shareUrl}\n(Please copy this URL)`);
+         }
       }
-    } catch (err) { }
+    } catch (err) {
+      console.error("Failed to share", err);
+    }
   };
 
   const quickActions = [
@@ -405,15 +414,20 @@ export function Dashboard() {
                     <div className="p-3 rounded-xl bg-blue-50 text-blue-500">
                       <FileText className="w-6 h-6" />
                     </div>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={(e) => shareDoc(e, doc)} className="text-gray-400 hover:text-blue-500 p-1">
-                        <Share2 className="w-5 h-5" />
+                    <div className="flex items-center gap-1.5 opacity-100">
+                      <button 
+                        onClick={(e) => shareDoc(e, doc)} 
+                        className={`p-1.5 rounded-lg border transition-all duration-200 cursor-pointer ${doc.isShared ? 'bg-blue-50 border-blue-200 text-blue-500 hover:bg-blue-100' : 'bg-gray-50 border-gray-200 text-gray-400 hover:bg-gray-100'}`}
+                        title={doc.isShared ? 'Shared (Public)' : 'Private'}
+                      >
+                        <Share2 className="w-3.5 h-3.5" />
                       </button>
-                      <button onClick={(e) => toggleStar(e, doc.id, doc.isStarred)} className={`p-1 ${doc.isStarred ? 'text-yellow-400' : 'text-gray-400 hover:text-yellow-400'}`}>
-                        <Star className={`w-5 h-5 ${doc.isStarred ? 'fill-current' : ''}`} />
-                      </button>
-                      <button className="text-gray-400 hover:text-gray-800 p-1">
-                        <MoreHorizontal className="w-5 h-5" />
+                      <button 
+                        onClick={(e) => toggleStar(e, doc.id, doc.isStarred)} 
+                        className={`p-1.5 rounded-lg border transition-all duration-200 cursor-pointer ${doc.isStarred ? 'bg-yellow-50 border-yellow-200 text-yellow-500 hover:bg-yellow-100' : 'bg-gray-50 border-gray-200 text-gray-400 hover:bg-gray-100'}`}
+                        title={doc.isStarred ? 'Starred' : 'Unstarred'}
+                      >
+                        <Star className={`w-3.5 h-3.5 ${doc.isStarred ? 'fill-current' : ''}`} />
                       </button>
                     </div>
                   </div>

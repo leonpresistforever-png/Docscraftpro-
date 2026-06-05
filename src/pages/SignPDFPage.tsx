@@ -196,17 +196,29 @@ export function SignPDFPage() {
          processedDataUrl = canvas.toDataURL('image/png');
       }
 
-      // Convert data URL to buffer
-      const res = await fetch(processedDataUrl);
-      const imageBytes = await res.arrayBuffer();
+      // Convert data URL to buffer safely without fetch to avoid network block failures
+      let imageBytes: Uint8Array;
+      let mime = 'image/png';
+      try {
+        const arr = processedDataUrl.split(',');
+        mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        imageBytes = new Uint8Array(n);
+        while (n--) {
+          imageBytes[n] = bstr.charCodeAt(n);
+        }
+      } catch (parseBase64Error: any) {
+        throw new Error("Failed to parse signature base64 data: " + parseBase64Error.message);
+      }
 
       let image;
-      if (processedDataUrl.includes('image/png')) {
+      if (mime === 'image/png') {
         image = await pdfDoc.embedPng(imageBytes);
-      } else if (processedDataUrl.includes('image/jpeg')) {
+      } else if (mime === 'image/jpeg' || mime === 'image/jpg') {
         image = await pdfDoc.embedJpg(imageBytes);
       } else {
-        alert("Unsupported signature image format");
+        alert("Unsupported signature image format: " + mime);
         setIsProcessing(false);
         return null;
       }

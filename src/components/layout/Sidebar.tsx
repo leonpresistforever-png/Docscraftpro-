@@ -37,6 +37,18 @@ export function Sidebar({ defaultCollapsed = false }: { defaultCollapsed?: boole
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+
+  // Auto-collapse sidebar on smaller screens
+  useEffect(() => {
+    const handleResize = () => {
+      if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+        setIsCollapsed(true);
+      }
+    };
+    handleResize(); // Invoke on mount
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   
   // --- Task 1: Transition from Mock to Live Data ---
   useEffect(() => {

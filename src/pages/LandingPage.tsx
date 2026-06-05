@@ -434,7 +434,7 @@ export function LandingPage() {
                <h4 className="font-bold text-[#1a1a1a] uppercase text-xs tracking-wider mb-6">Company</h4>
                <ul className="space-y-4 text-sm text-gray-500">
                  <li><Link to="/about" className="hover:text-[#D4AF37] transition-colors">About</Link></li>
-                 <li><Link to="/blog" className="hover:text-[#D4AF37] transition-colors">Blog</Link></li>
+                 
                  <li><Link to="/careers" className="hover:text-[#D4AF37] transition-colors">Careers</Link></li>
                  <li><Link to="/contact" className="hover:text-[#D4AF37] transition-colors">Contact</Link></li>
                </ul>

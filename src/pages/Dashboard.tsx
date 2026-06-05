@@ -31,6 +31,7 @@ export function Dashboard() {
   const [workbenchFile, setWorkbenchFile] = useState<File | null>(null);
   const [isProcessingFile, setIsProcessingFile] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [isDirectUploadMode, setIsDirectUploadMode] = useState(false);
 
   // Workbench configurations
   const [watermarkText, setWatermarkText] = useState('CONFIDENTIAL');
@@ -95,7 +96,10 @@ export function Dashboard() {
   const quickActions = [
     { icon: <FilePlus className="w-5 h-5" />, label: 'New Document', href: '/doc/new' },
     { icon: <Globe className="w-5 h-5" />, label: 'Translate PDF', href: '/media' },
-    { icon: <Upload className="w-5 h-5" />, label: 'Upload & Extract', action: () => handleToolClick('Upload to Doc') },
+    { icon: <Upload className="w-5 h-5" />, label: 'Upload & Extract', action: () => {
+        setIsDirectUploadMode(true);
+        handleSelectFileInputClick();
+    } },
   ];
 
   const workbenchToolsList = [
@@ -145,9 +149,71 @@ export function Dashboard() {
     }
   };
 
-  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const autoProcessAndExtractFile = async (file: File) => {
+    setIsProcessingFile(true);
+    try {
+      let extractedText = '';
+      if (file.name.endsWith('.pdf')) {
+        const pdfjsLib = await import('pdfjs-dist');
+        const pdfjsVersion = (pdfjsLib as any).version || '4.10.38';
+        try {
+          pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString();
+        } catch (e) {
+          pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsVersion}/build/pdf.worker.min.mjs`;
+        }
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let text = '';
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          text += content.items.map((item: any) => item.str).join(' ') + '\n\n';
+        }
+        extractedText = text;
+      } else if (file.name.endsWith('.docx')) {
+        const mammoth = await import('mammoth');
+        const arrayBuffer = await file.arrayBuffer();
+        const result = await mammoth.extractRawText({ arrayBuffer });
+        extractedText = result.value;
+      } else {
+        extractedText = await file.text();
+      }
+
+      const newDocRef = doc(collection(db, 'documents'));
+      
+      const title = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+      const htmlContent = `<h1>${title}</h1>` + extractedText.split('\n\n').map(p => p.trim() ? `<p>${p.trim()}</p>` : '').join('');
+
+      await setDoc(newDocRef, {
+        title: title,
+        content: encryptData(htmlContent || `<h1>${title}</h1><p>Start writing...</p>`),
+        ownerId: user?.uid,
+        isPinned: false,
+        isArchived: false,
+        isStarred: false,
+        isShared: false,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+
+      navigate(`/doc/${newDocRef.id}`);
+    } catch (err: any) {
+      console.error("Auto extraction failed:", err);
+      alert("Failed to extract content: " + err.message);
+    } finally {
+      setIsProcessingFile(false);
+    }
+  };
+
+  const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setWorkbenchFile(e.target.files[0]);
+      const file = e.target.files[0];
+      if (isDirectUploadMode) {
+        setIsDirectUploadMode(false);
+        await autoProcessAndExtractFile(file);
+      } else {
+        setWorkbenchFile(file);
+      }
     }
   };
 
@@ -157,8 +223,12 @@ export function Dashboard() {
     try {
       if (workbenchTool === 'Upload to Doc') {
         const pdfjsLib = await import('pdfjs-dist');
-        const pdfjsVersion = (pdfjsLib as any).version || '3.11.174';
-        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsVersion}/build/pdf.worker.min.js`;
+        const pdfjsVersion = (pdfjsLib as any).version || '4.10.38';
+        try {
+          pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString();
+        } catch (e) {
+          pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsVersion}/build/pdf.worker.min.mjs`;
+        }
         const arrayBuffer = await workbenchFile.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
         let text = '';
@@ -222,7 +292,7 @@ export function Dashboard() {
 
   return (
     <div className="flex h-screen bg-dc-bg-page font-sans text-dc-text relative overflow-x-hidden">
-      <input type="file" ref={fileInputRef} hidden onChange={handleFileSelected} accept="application/pdf" />
+      <input type="file" ref={fileInputRef} hidden onChange={handleFileSelected} accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown,application/zip" />
       <Sidebar />
       <main className="flex-1 overflow-y-auto relative bg-[#FAF9F6]">
         
@@ -556,6 +626,22 @@ export function Dashboard() {
 
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Sleek Glassmorphic Processing Overlay */}
+      {isDirectUploadMode === false && isProcessingFile && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[9999] flex flex-col items-center justify-center animate-fade-in">
+          <div className="relative flex items-center justify-center w-28 h-28 mb-6">
+            <div className="absolute inset-0 border-4 border-t-yellow-400 border-r-indigo-500 border-b-cyan-500 border-l-purple-500 rounded-full animate-spin" style={{ animationDuration: '1s' }}></div>
+            <FileText className="w-12 h-12 text-yellow-400 animate-pulse" />
+          </div>
+          <h3 className="text-2xl font-bold text-white font-serif tracking-tight mb-2">
+            Extracting Document Contents...
+          </h3>
+          <p className="text-slate-400 text-sm max-w-sm text-center font-medium leading-relaxed">
+            Please wait while Sandbox Engine parses layout structure and creates your fully editable document.
+          </p>
         </div>
       )}
 

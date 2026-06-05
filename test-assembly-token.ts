@@ -1,4 +1,4 @@
-const apiKey = "4498f001b80e47a483f4f378400a9b06";
+const apiKey = process.env.ASSEMBLY_AI_API_KEY || "";
 
 async function run() {
   const res = await fetch("https://api.assemblyai.com/v2/realtime", {

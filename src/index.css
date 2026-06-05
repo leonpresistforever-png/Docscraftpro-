@@ -305,3 +305,48 @@ a[href^="data:application/"],
   border: 1px solid #bfdbfe !important;
 }
 
+/* Print optimizations to hide extra components, sidebars, robot dictations, and layout margins */
+@media print {
+  /* Hide all external elements and force standard white background formatting */
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  
+  /* Target everything except our canvas container */
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* Make only the canvas container and its core text visible */
+  #editor-canvas-container,
+  #editor-canvas-container * {
+    visibility: visible !important;
+  }
+
+  /* Reset layout of canvas for clean page flow */
+  #editor-canvas-container {
+    visibility: visible !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background-color: transparent !important;
+  }
+
+  /* Always hide the margins slider pins, buttons, and handles during printing */
+  [title*="Drag to Adjust Margins"],
+  .absolute.cursor-ew-resize,
+  .absolute.cursor-ns-resize,
+  input[type="range"],
+  .print\:hidden {
+    display: none !important;
+    visibility: hidden !important;
+  }
+}
+

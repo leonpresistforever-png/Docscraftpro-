@@ -9,10 +9,14 @@ import { PDFDocument } from 'pdf-lib';
 import SignatureCanvas from 'react-signature-canvas';
 import Draggable from 'react-draggable';
 
-// Configure PDF.js worker dynamically to match the imported package version or fallback to cdnjs
+// Configure PDF.js worker using Vite-compatible asset URL constructor, with a fallback to unpkg .mjs url
 const getWorkerSrc = () => {
-  const version = pdfjsLib.version || '3.11.174';
-  return `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${version}/pdf.worker.min.js`;
+  try {
+    return new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString();
+  } catch (e) {
+    const version = pdfjsLib.version || '4.10.38';
+    return `https://unpkg.com/pdfjs-dist@${version}/build/pdf.worker.min.mjs`;
+  }
 };
 pdfjsLib.GlobalWorkerOptions.workerSrc = getWorkerSrc();
 

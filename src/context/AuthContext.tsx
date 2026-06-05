@@ -239,6 +239,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithApple = async () => {
     const provider = new OAuthProvider('apple.com');
+    provider.addScope('email');
+    provider.addScope('name');
     await signInWithPopup(auth, provider);
   };
 

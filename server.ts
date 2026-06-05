@@ -551,6 +551,131 @@ Requirements:
     }
   });
 
+  app.post("/api/ai/generate-image", async (req, res) => {
+    try {
+      const { prompt, size, aspectRatio, customApiKey } = req.body;
+      const systemKey = process.env.GEMINI_API_KEY;
+      const apiKey = customApiKey || systemKey;
+      if (!apiKey) {
+        throw new Error("API Key configuration is missing. Please provide a BYOK key.");
+      }
+      const ai = new GoogleGenAI({ apiKey });
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.1-flash-image',
+        contents: {
+          parts: [{ text: prompt }],
+        },
+        config: {
+          imageConfig: {
+            aspectRatio: aspectRatio || "1:1",
+            imageSize: size || "1K"
+          }
+        },
+      });
+      let resultUrl = null;
+      for (const part of response.candidates?.[0]?.content?.parts || []) {
+        if (part.inlineData) {
+          resultUrl = `data:${part.inlineData.mimeType || 'image/png'};base64,${part.inlineData.data}`;
+          break;
+        }
+      }
+      res.json({ result: resultUrl });
+    } catch (e: any) {
+      console.error("Generate Image error:", e);
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.post("/api/ai/text-to-speech", async (req, res) => {
+    try {
+      const { text, customApiKey } = req.body;
+      const systemKey = process.env.GEMINI_API_KEY;
+      const apiKey = customApiKey || systemKey;
+      if (!apiKey) {
+        throw new Error("API Key configuration is missing.");
+      }
+      const ai = new GoogleGenAI({ apiKey });
+      const response = await ai.models.generateContent({
+        model: "gemini-3.1-flash-tts-preview",
+        contents: [{ parts: [{ text }] }],
+        config: {
+          responseModalities: ["AUDIO"],
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: { voiceName: 'Kore' },
+            },
+          },
+        },
+      });
+      const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+      res.json({ result: base64Audio });
+    } catch (e: any) {
+      console.error("TTS error:", e);
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.post("/api/ai/generate-video", async (req, res) => {
+    try {
+      const { prompt, aspectRatio, customApiKey } = req.body;
+      const systemKey = process.env.GEMINI_API_KEY;
+      const apiKey = customApiKey || systemKey;
+      if (!apiKey) {
+        throw new Error("API Key configuration is missing.");
+      }
+      const ai = new GoogleGenAI({ apiKey });
+      const operation = await ai.models.generateVideos({
+        model: 'veo-3.1-lite-generate-preview',
+        prompt: prompt,
+        config: {
+          numberOfVideos: 1,
+          resolution: '1080p',
+          aspectRatio: aspectRatio || '16:9'
+        }
+      });
+      res.json({ result: operation });
+    } catch (e: any) {
+      console.error("Video error:", e);
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.post("/api/ai/generate-music", async (req, res) => {
+    try {
+      const { prompt, customApiKey } = req.body;
+      const systemKey = process.env.GEMINI_API_KEY;
+      const apiKey = customApiKey || systemKey;
+      if (!apiKey) {
+        throw new Error("API Key configuration is missing.");
+      }
+      const ai = new GoogleGenAI({ apiKey });
+      const response = await ai.models.generateContentStream({
+        model: "lyria-3-clip-preview",
+        contents: prompt,
+      });
+
+      let audioBase64 = "";
+      let mimeType = "audio/wav";
+
+      for await (const chunk of response) {
+        const parts = chunk.candidates?.[0]?.content?.parts;
+        if (!parts) continue;
+        for (const part of parts) {
+          if (part.inlineData?.data) {
+            if (!audioBase64 && part.inlineData.mimeType) {
+              mimeType = part.inlineData.mimeType;
+            }
+            audioBase64 += part.inlineData.data;
+          }
+        }
+      }
+      res.json({ result: { audioBase64, mimeType } });
+    } catch (e: any) {
+      console.error("Music error:", e);
+      res.status(500).json({ error: e.message });
+    }
+  });
+
   app.post("/api/create-tip-checkout", async (req, res) => {
     try {
       const { amount } = req.body;

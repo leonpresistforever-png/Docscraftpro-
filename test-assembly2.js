@@ -5,7 +5,7 @@ const options = {
   path: '/v2/realtime/token',
   method: 'POST',
   headers: {
-    'Authorization': '4498f001b80e47a483f4f378400a9b06',
+    'Authorization': process.env.ASSEMBLY_AI_API_KEY || '',
     'Content-Type': 'application/json'
   }
 };

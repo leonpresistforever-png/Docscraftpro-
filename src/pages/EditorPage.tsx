@@ -267,6 +267,16 @@ export function EditorPage() {
   const [editorRightMargin, setEditorRightMargin] = useState(80); // Default md:px-20 padding-right
   const [editorVerticalMargin, setEditorVerticalMargin] = useState(80); // Default padding-top/bottom
 
+  const [isMobileScreen, setIsMobileScreen] = useState(false);
+  useEffect(() => {
+    const checkMobileness = () => {
+      setIsMobileScreen(window.innerWidth < 1024);
+    };
+    checkMobileness();
+    window.addEventListener('resize', checkMobileness);
+    return () => window.removeEventListener('resize', checkMobileness);
+  }, []);
+
   // Mouse down drag event handlers for rulers
   const handleLeftMarginMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -670,7 +680,11 @@ Requirements:
         extractedText = doc.body.innerText || doc.body.textContent || '';
       } else if (file.name.endsWith('.pdf')) {
         const pdfjsLib = await import('pdfjs-dist');
-        pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+        try {
+          pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString();
+        } catch (e) {
+          pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+        }
         const arrayBuffer = await file.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
         let text = '';
@@ -3197,6 +3211,7 @@ Requirements:
           style={{ backgroundColor: DOCUMENT_THEMES[docThemeKey]?.outerBgValue || '#EFEFEF' }}
         >
           <div 
+             id="editor-canvas-container"
              className={cn(
                "flex-1 w-full py-16 md:py-24 shadow-xl border h-fit transition-all duration-300 mb-20 relative outline-none print:shadow-none print:border-none print:m-0 print:min-h-0 print:p-0",
                selectedFormat === 'powerpoint' ? 'max-w-[1920px] aspect-video border-[16px] border-orange-200 shadow-2xl rounded-xl' :
@@ -3204,14 +3219,14 @@ Requirements:
                selectedFormat === 'jpg' ? 'max-w-[1080px] aspect-[4/5] border-[2px] border-gray-300 !p-0 shadow-2xl' :
                selectedFormat === 'zip' ? 'max-w-[800px] border-[4px] border-dashed border-gray-300 bg-gray-50' :
                selectedFormat === 'html' ? 'max-w-none border-t-[32px] border-gray-800 rounded-t-xl' :
-               'max-w-[1250px] min-h-[1056px]',
+               'max-w-[1550px] min-h-[1056px] w-[96%]',
                dragDropEditMode && 'cursor-text ring-4 ring-blue-400 ring-offset-8 rounded-lg selection:bg-blue-300'
              )}
              style={{
-               paddingLeft: selectedFormat === 'jpg' ? '0px' : `${editorLeftMargin}px`,
-               paddingRight: selectedFormat === 'jpg' ? '0px' : `${editorRightMargin}px`,
-               paddingTop: selectedFormat === 'jpg' ? '0px' : `${editorVerticalMargin}px`,
-               paddingBottom: selectedFormat === 'jpg' ? '0px' : `${editorVerticalMargin}px`,
+               paddingLeft: selectedFormat === 'jpg' ? '0px' : (isMobileScreen ? '16px' : `${editorLeftMargin}px`),
+               paddingRight: selectedFormat === 'jpg' ? '0px' : (isMobileScreen ? '16px' : `${editorRightMargin}px`),
+               paddingTop: selectedFormat === 'jpg' ? '0px' : (isMobileScreen ? '24px' : `${editorVerticalMargin}px`),
+               paddingBottom: selectedFormat === 'jpg' ? '0px' : (isMobileScreen ? '24px' : `${editorVerticalMargin}px`),
                backgroundColor: DOCUMENT_THEMES[docThemeKey]?.bgValue || '#FFFFFF',
                color: DOCUMENT_THEMES[docThemeKey]?.textValue || '#111827',
                borderColor: DOCUMENT_THEMES[docThemeKey]?.borderValue || '#E5E7EB'
@@ -3697,17 +3712,19 @@ Requirements:
 
       {/* AssemblyAI Robot Dictator */}
       {!focusMode && (
-        <RobotDictator 
-          editor={editor as any} 
-          localEngine={localEngine}
-          useLocalModel={useLocalModel}
-          onOpenVoiceDoc={() => {
-            setVoiceText("");
-            setVoiceResultStatus("idle");
-            setVoiceCreatorErrorMessage("");
-            setShowVoiceDocModal(true);
-          }}
-        />
+        <div className="print:hidden">
+          <RobotDictator 
+            editor={editor as any} 
+            localEngine={localEngine}
+            useLocalModel={useLocalModel}
+            onOpenVoiceDoc={() => {
+              setVoiceText("");
+              setVoiceResultStatus("idle");
+              setVoiceCreatorErrorMessage("");
+              setShowVoiceDocModal(true);
+            }}
+          />
+        </div>
       )}
       
       {/* Syntax Library Slider */}

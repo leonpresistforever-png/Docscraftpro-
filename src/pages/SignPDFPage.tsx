@@ -187,10 +187,10 @@ export function SignPDFPage() {
       // and strip any complex metadata (like progressive frames or custom ICC color profiles) that crashes PDF-Lib.
       try {
          const img = new Image();
-         img.src = signatureDataUrl;
          await new Promise((resolve, reject) => {
            img.onload = resolve;
            img.onerror = (e) => reject(new Error("Failed to load signature data URL into browser Image."));
+           img.src = signatureDataUrl;
          });
          const canvas = document.createElement('canvas');
          canvas.width = img.naturalWidth || sigSize.width || 200;
@@ -501,7 +501,7 @@ export function SignPDFPage() {
                  {activeTab === 'draw' && (
                     <div className="flex flex-col gap-4">
                        <p className="text-sm text-gray-500 font-medium">Draw your signature here</p>
-                       <div className="border border-gray-200 rounded-xl bg-[#f8fafc] h-[200px] relative flex items-center justify-center overflow-hidden">
+                       <div className="border border-gray-200 rounded-xl bg-[#f8fafc] h-[300px] relative flex items-center justify-center overflow-hidden">
                           <SignatureCanvas 
                              ref={sigCanvasRef}
                              penColor={sigColor}

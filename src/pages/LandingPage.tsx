@@ -20,6 +20,8 @@ export function LandingPage() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [examinedCard, setExaminedCard] = useState<{ title: string; description: string; extraDetails?: string[] } | null>(null);
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
 
   const handleExamine = (title: string, description: string, extraDetails?: string[]) => {
     setExaminedCard({ title, description, extraDetails });
@@ -383,7 +385,7 @@ export function LandingPage() {
       </section>
 
       {/* Section 6: Premium SaaS Footer */}
-      <footer className="bg-white pt-24 pb-12 border-t border-[#E4DBC5]">
+      <footer className="relative z-10 bg-white pt-24 pb-12 border-t border-[#E4DBC5]">
         <div className="max-w-[1400px] mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-16">
              {/* Brand Column */}
@@ -398,12 +400,47 @@ export function LandingPage() {
                  The intelligent, seamless workspace for high-velocity teams. Write down your ideas, and let our intelligence build the connections.
                </p>
                {/* Newsletter Input */}
-               <div className="bg-[#FAF9F6] border border-[#E4DBC5] rounded-full p-1.5 flex max-w-sm focus-within:border-[#D4AF37] focus-within:ring-2 focus-within:ring-[#D4AF37]/20 transition-all">
-                  <input type="email" placeholder="Join our newsletter" className="bg-transparent border-none outline-none pl-4 text-sm w-full text-[#1a1a1a] placeholder:text-gray-400" />
-                  <button className="bg-[#1A1A1A] hover:bg-[#333] transition-colors text-white w-10 h-10 rounded-full flex items-center justify-center ml-2 shrink-0">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-[#D4AF37]"><path d="m9 18 6-6-6-6"/></svg>
-                  </button>
-               </div>
+               {newsletterSubscribed ? (
+                 <motion.div 
+                   initial={{ opacity: 0, scale: 0.95 }}
+                   animate={{ opacity: 1, scale: 1 }}
+                   className="bg-[#E8F5E9] border border-[#A5D6A7] rounded-2xl p-4 text-[#2E7D32] text-sm font-medium max-w-sm shadow-sm flex items-center gap-2"
+                 >
+                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-[#2E7D32] shrink-0"><polyline points="20 6 9 17 4 12"/></svg>
+                   <div>
+                     <p className="font-bold">Thanks for subscribing!</p>
+                     <p className="text-xs text-[#4CAF50] mt-0.5">Welcome to DocCraft Pro weekly updates.</p>
+                   </div>
+                 </motion.div>
+               ) : (
+                 <form 
+                   onSubmit={(e) => {
+                     e.preventDefault();
+                     if (newsletterEmail.trim() && newsletterEmail.includes('@')) {
+                       setNewsletterSubscribed(true);
+                     } else {
+                       alert('Please enter a valid email address.');
+                     }
+                   }}
+                   className="bg-[#FAF9F6] border border-[#E4DBC5] rounded-full p-1.5 flex max-w-sm focus-within:border-[#D4AF37] focus-within:ring-2 focus-within:ring-[#D4AF37]/20 transition-all font-sans"
+                 >
+                    <input 
+                      type="email" 
+                      required
+                      placeholder="Join our newsletter" 
+                      value={newsletterEmail}
+                      onChange={(e) => setNewsletterEmail(e.target.value)}
+                      className="bg-transparent border-none outline-none pl-4 text-sm w-full text-[#1a1a1a] placeholder:text-gray-400 font-sans" 
+                    />
+                    <button 
+                      type="submit"
+                      title="Subscribe to Newsletter"
+                      className="bg-[#1A1A1A] hover:bg-[#333] transition-colors text-white w-10 h-10 rounded-full flex items-center justify-center ml-2 shrink-0 animate-pulse hover:animate-none"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-[#D4AF37]"><path d="m9 18 6-6-6-6"/></svg>
+                    </button>
+                 </form>
+               )}
              </div>
 
              {/* Links Columns */}
@@ -437,15 +474,15 @@ export function LandingPage() {
              </div>
           </div>
           
-          <div className="pt-8 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-400">
-            <p>&copy; 2026 DocCraft Inc. All rights reserved.</p>
-            <p className="text-center md:text-left text-gray-400 text-xs max-w-xl mx-auto">
+          <div className="pt-8 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-600">
+            <p className="font-medium">&copy; 2026 DocCraft Inc. All rights reserved.</p>
+            <p className="text-center md:text-left text-[#4b5563] text-xs max-w-xl mx-auto leading-relaxed">
               We believe in transparent, honest privacy policies. You own your data. We don't train our models on your private documents unless you explicitly opt in, and you can delete your account at any time.
             </p>
-            <div className="flex gap-6">
-              <Link to="/privacy-policy" className="hover:text-gray-600">Privacy Policy</Link>
-              <Link to="/terms" className="hover:text-gray-600">Terms of Service</Link>
-              <Link to="/cookies" className="hover:text-gray-600">Cookie Setting</Link>
+            <div className="flex gap-6 font-medium text-gray-500">
+              <Link to="/privacy-policy" className="hover:text-gray-800 transition-colors">Privacy Policy</Link>
+              <Link to="/terms" className="hover:text-gray-800 transition-colors">Terms of Service</Link>
+              <Link to="/cookies" className="hover:text-gray-800 transition-colors">Cookie Setting</Link>
             </div>
           </div>
         </div>

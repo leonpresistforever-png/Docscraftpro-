@@ -1366,10 +1366,39 @@ Requirements:
       // Fallback to client-side direct REST calls if Vercel serverless or server failure
       if (!success) {
         if (!customApiKey) {
-          throw new Error("Server API call failed. Please configure a BYOK key in settings to handle Direct AI operations in your browser.");
-        }
-        
-        const systemInstruction = `You are a professional editor and document architect. Your task is to analyze and profoundly enhance the provided text for maximum readability, clarity, and impact.
+          if (localEngine) {
+            setSyncStatus('Enhancing document locally with WebGPU AI...');
+            const response = await localEngine.chat.completions.create({
+              messages: [
+                { 
+                  role: 'user', 
+                  content: `As an expert technical creator and editor, write a beautifully structured professional HTML enhancement of the following text: "${text}".
+Requirements:
+- Structural elements: Keep/add headings (<h1>, <h2>), formatted paragraphs, lists.
+- Style additions: Use inline styles for text colors.
+- Highlighting: Wrap key concepts in <mark style="background: rgba(212, 175, 55, 0.2); border-radius: 4px; padding: 2px;">.
+- Return ONLY valid clean HTML ready to inject, with no markdown code blocks.` 
+                }
+              ],
+              max_tokens: 1024
+            });
+            enhancedText = response.choices[0]?.message?.content || text;
+            // standard markdown block clean
+            if (enhancedText.startsWith('```html')) {
+              enhancedText = enhancedText.substring(7);
+            } else if (enhancedText.startsWith('```')) {
+              enhancedText = enhancedText.substring(3);
+            }
+            if (enhancedText.endsWith('```')) {
+              enhancedText = enhancedText.substring(0, enhancedText.length - 3);
+            }
+            enhancedText = enhancedText.trim();
+            success = true;
+          } else {
+            throw new Error("Server API call failed. Please configure a BYOK key in settings, or start a Local Model in the 'Model Library' and toggle 'Local AI Mode' in the editor top-bar.");
+          }
+        } else {
+          const systemInstruction = `You are a professional editor and document architect. Your task is to analyze and profoundly enhance the provided text for maximum readability, clarity, and impact.
 Requirements:
 1. Structure into beautiful appropriate headings (<h1>, <h2>, <h3>) and elegantly arrange large heading titles. Add inline CSS to make heading texts have beautiful colors.
 2. Apply inline CSS to paragraph text to create beautiful text colors.
@@ -1380,24 +1409,25 @@ Requirements:
 7. CRITICAL: Add beautiful insightful charts using Mermaid.js where appropriate if the text contains comparison data. Format mermaid code blocks inside HTML like <pre><code class="language-mermaid">...</code></pre>
 8. CRITICAL: Only output the raw, valid HTML document. Do not include markdown formatting, code blocks (other than mermaid inside HTML), or conversational filler. The output must be purely clean.`;
 
-        const resultText = await directLlmCall({
-          prompt: `Enhance the following text:\n\n${text}`,
-          systemInstruction,
-          customApiKey,
-          isComplex: true
-        });
+          const resultText = await directLlmCall({
+            prompt: `Enhance the following text:\n\n${text}`,
+            systemInstruction,
+            customApiKey,
+            isComplex: true
+          });
 
-        enhancedText = resultText;
-        if (enhancedText.startsWith('```html')) {
-          enhancedText = enhancedText.substring(7);
-        } else if (enhancedText.startsWith('```')) {
-          enhancedText = enhancedText.substring(3);
+          enhancedText = resultText;
+          if (enhancedText.startsWith('```html')) {
+            enhancedText = enhancedText.substring(7);
+          } else if (enhancedText.startsWith('```')) {
+            enhancedText = enhancedText.substring(3);
+          }
+          if (enhancedText.endsWith('```')) {
+            enhancedText = enhancedText.substring(0, enhancedText.length - 3);
+          }
+          enhancedText = enhancedText.trim();
+          success = true;
         }
-        if (enhancedText.endsWith('```')) {
-          enhancedText = enhancedText.substring(0, enhancedText.length - 3);
-        }
-        enhancedText = enhancedText.trim();
-        success = true;
       }
       
       editor.commands.setContent(enhancedText);
@@ -1418,7 +1448,7 @@ Requirements:
     setIsProcessingAI(true);
     try {
       let completion = "";
-      if (useLocalModel && localEngine && !customApiKey) {
+      if ((useLocalModel || !customApiKey) && localEngine) {
         const asyncChunkGenerator = await localEngine.chat.completions.create({
           messages: [
             { role: 'user', content: 'You are an AI auto-completion engine. Provide strictly only the next paragraph text. Do not add conversational wrapper text or markdown.\n\n' + prompt }
@@ -1481,7 +1511,7 @@ Requirements:
       Query: ${q}`;
       
       let res = "";
-      if (useLocalModel && localEngine && !customApiKey) {
+      if ((useLocalModel || !customApiKey) && localEngine) {
         setLoadingMsg(true);
         const asyncChunkGenerator = await localEngine.chat.completions.create({
           messages: [
@@ -2124,7 +2154,7 @@ Requirements:
 
     try {
       let result = "";
-      if (useLocalModel && localEngine && !customApiKey) {
+      if ((useLocalModel || !customApiKey) && localEngine) {
         const asyncChunkGenerator = await localEngine.chat.completions.create({
           messages: [
             { role: 'user', content: 'You are an advanced text processing AI. Follow the instructions strictly. Do not add greetings or wrap your answer in markdown code blocks. Preserve HTML tags perfectly when requested.\n\n' + prompt }
@@ -2205,7 +2235,7 @@ Requirements:
 
     try {
       let result = "";
-      if (useLocalModel && localEngine && !customApiKey) {
+      if ((useLocalModel || !customApiKey) && localEngine) {
         setLoadingMsg(true);
         const asyncChunkGenerator = await localEngine.chat.completions.create({
           messages: [

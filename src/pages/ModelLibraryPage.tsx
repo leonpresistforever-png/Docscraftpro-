@@ -521,7 +521,12 @@ export function ModelLibraryPage() {
           initProgressCallback: (progress: any) => {
             setModels(prev => prev.map(m => {
               if (m.id === modelId && m.status === 'downloading') {
-                return { ...m, progress: Math.floor(progress.progress * 100) };
+                let pVal = progress.progress;
+                if (pVal <= 1.0) {
+                  pVal = pVal * 100;
+                }
+                const finalProgress = Math.min(Math.max(Math.floor(pVal), 0), 100);
+                return { ...m, progress: finalProgress };
               }
               return m;
             }));

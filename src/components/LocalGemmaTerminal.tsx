@@ -184,6 +184,16 @@ export function LocalGemmaTerminal({ onEngineReady, isActive }: LocalGemmaTermin
 
   const currentModelName = AVAILABLE_MODELS.find(m => m.id === selectedModelId)?.name || selectedModelId;
 
+  const getProgressPercentage = () => {
+    if (!initProgress || typeof initProgress.progress !== 'number') return 0;
+    let p = initProgress.progress;
+    // MLC sometimes outputs ratio 0.0-1.0 and sometimes 0-100%
+    if (p <= 1.0) {
+      p = p * 100;
+    }
+    return Math.min(Math.max(Math.round(p), 0), 100);
+  };
+
   return (
     <div className="relative max-w-4xl mx-auto my-10 p-[1px] rounded-2xl group overflow-visible">
        
@@ -404,13 +414,13 @@ export function LocalGemmaTerminal({ onEngineReady, isActive }: LocalGemmaTermin
                            <Database className="w-3.5 h-3.5 text-pink-500 animate-bounce" /> 
                            Downloading Weights...
                          </span>
-                         <span className="font-mono">{Math.round(initProgress.progress * 100)}%</span>
+                         <span className="font-mono">{getProgressPercentage()}%</span>
                        </div>
                        <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden shadow-inner border border-slate-200">
                          <motion.div 
                             className="bg-gradient-to-r from-red-500 via-pink-500 to-indigo-500 h-full rounded-full animate-pulse"
                             initial={{ width: 0 }}
-                            animate={{ width: `${Math.round(initProgress.progress * 100)}%` }}
+                            animate={{ width: `${getProgressPercentage()}%` }}
                             transition={{ bounce: 0 }}
                          />
                        </div>

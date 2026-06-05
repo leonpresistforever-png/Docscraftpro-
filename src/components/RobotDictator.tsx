@@ -141,7 +141,7 @@ export function RobotDictator({ editor, onOpenVoiceDoc, localEngine, useLocalMod
          
          // 2. AI Mode - generate comprehensive document
          // A. If Local WebLLM Qwen 1.5B model is available, use it directly for 100% free offline execution!
-         if (useLocalModel && localEngine) {
+         if ((useLocalModel || !reasoningKey) && localEngine) {
             setLiveTranscript("Refining long detailed document offline...");
             try {
                const response = await localEngine.chat.completions.create({
@@ -157,9 +157,19 @@ Requirements:
 - Return ONLY valid raw HTML code without markdown code block wraps.` 
                    }
                  ],
-                 max_tokens: 2500
+                 max_tokens: 1024
                });
-               const refined = response.choices[0]?.message?.content || transcriptText;
+               let refined = response.choices[0]?.message?.content || transcriptText;
+               // Clean markdown wraps from local model output if present
+               if (refined.startsWith('```html')) {
+                 refined = refined.substring(7);
+               } else if (refined.startsWith('```')) {
+                 refined = refined.substring(3);
+               }
+               if (refined.endsWith('```')) {
+                 refined = refined.substring(0, refined.length - 3);
+               }
+               refined = refined.trim();
                editor?.chain().focus('end').insertContent(refined).run();
                setStatus('idle');
                setLiveTranscript("");

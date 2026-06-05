@@ -500,7 +500,7 @@ export function Sidebar({ defaultCollapsed = false }: { defaultCollapsed?: boole
                   type="text" 
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="Semantic Quick Find (Orama AI)..."
+                  placeholder="Find documents..."
                   className="flex-1 bg-transparent border-none outline-none text-gray-800 placeholder-gray-400 font-medium"
                   autoFocus
                 />

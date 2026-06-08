@@ -55,6 +55,7 @@ import {
 } from 'lucide-react';
 import { askGeminiFlash, askGeminiProComplex, directLlmCall } from '../lib/gemini';
 import { LocalGemmaTerminal } from '../components/LocalGemmaTerminal';
+import { runLocalChain } from '../utils/langchainLocal';
 import { marked } from 'marked';
 import { HexColorPicker } from 'react-colorful';
 
@@ -350,22 +351,61 @@ export function EditorPage() {
   const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem('samba_custom_key');
-    if (stored) {
-      try {
-        setCustomApiKey(decryptData(stored));
-      } catch (e) {
-        setCustomApiKey(stored);
+    const loadSecureKeys = async () => {
+      const stored = localStorage.getItem('samba_custom_key');
+      if (stored) {
+        try {
+          setCustomApiKey(decryptData(stored));
+        } catch (e) {
+          setCustomApiKey(stored);
+        }
       }
-    }
-  }, []);
 
-  const handleCustomKeyChange = (val: string) => {
+      if (user?.uid) {
+        try {
+          const secureSnap = await getDoc(doc(db, 'users', user.uid, 'config', 'byok'));
+          if (secureSnap.exists() && secureSnap.data()?.key) {
+            try {
+              setCustomApiKey(decryptData(secureSnap.data().key));
+            } catch (e) {
+              setCustomApiKey(secureSnap.data().key);
+            }
+          }
+        } catch (e) {
+          console.warn("Could not load secure BYOK key from Firestore cloud:", e);
+        }
+      }
+    };
+
+    loadSecureKeys();
+  }, [user]);
+
+  const handleCustomKeyChange = async (val: string) => {
     setCustomApiKey(val);
     if (val) {
       localStorage.setItem('samba_custom_key', encryptData(val));
+      if (user?.uid) {
+        try {
+          await setDoc(doc(db, 'users', user.uid, 'config', 'byok'), {
+            key: encryptData(val),
+            updatedAt: serverTimestamp()
+          });
+        } catch (e) {
+          console.warn("Failed to save secure BYOK key to Firestore cloud:", e);
+        }
+      }
     } else {
       localStorage.removeItem('samba_custom_key');
+      if (user?.uid) {
+        try {
+          await setDoc(doc(db, 'users', user.uid, 'config', 'byok'), {
+            key: "",
+            updatedAt: serverTimestamp()
+          });
+        } catch (e) {
+          console.warn("Failed to clear secure BYOK key from Firestore cloud:", e);
+        }
+      }
     }
   };
 
@@ -468,16 +508,18 @@ Requirements:
         // Bypass local model and use API
         generatedHtml = await askGeminiProComplex(detailedPrompt, customApiKey);
       } else if (localEngine) {
-        // Use default local Qwen 2.5 model via WebLLM
-        const response = await localEngine.chat.completions.create({
-          messages: [
-            { role: 'user', content: detailedPrompt }
-          ],
-          stream: false,
-          temperature: 0.6,
-          max_tokens: 3000
-        });
-        generatedHtml = response.choices[0]?.message?.content || "";
+        try {
+          // Use default local Qwen 2.5 model via WebLLM with LangChain crash protection
+          generatedHtml = await runLocalChain(
+            localEngine,
+            "You are an expert design assistant formatting high-quality HTML document chapters.",
+            detailedPrompt,
+            800
+          );
+        } catch (localErr) {
+          console.warn("Local WebGPU AI execution failed or crashed. Falling back to Cloud Gemini API:", localErr);
+          generatedHtml = await askGeminiProComplex(detailedPrompt, "");
+        }
       } else {
         // Fallback to the cloud model proxy so it works seamlessly and cleanly
         generatedHtml = await askGeminiProComplex(detailedPrompt, "");
@@ -1161,6 +1203,38 @@ Requirements:
     },
   });
 
+  // Dynamic Mermaid rendering engine with infinite-loop prevention
+  useEffect(() => {
+    if (!editor) return;
+    const timer = setTimeout(() => {
+      const elms = document.querySelectorAll('.tiptap pre code.language-mermaid');
+      if (elms.length === 0) return;
+      elms.forEach(async (el, i) => {
+        const rawCode = el.textContent || '';
+        if (!rawCode.trim()) return;
+        if (el.parentElement?.getAttribute('data-mermaid-rendered') === 'true') return;
+        
+        try {
+          const uniqueId = `mermaid-chart-${Date.now()}-${i}`;
+          const { default: mermaid } = await import('mermaid');
+          mermaid.initialize({ startOnLoad: false, theme: 'neutral', securityLevel: 'loose' });
+          const { svg } = await mermaid.render(uniqueId, rawCode);
+          
+          el.parentElement!.setAttribute('data-mermaid-rendered', 'true');
+          const chartContainer = document.createElement('div');
+          chartContainer.className = 'mermaid-rendered-container my-4 p-4 bg-gray-50/50 rounded-xl border border-gray-150 flex justify-center overflow-auto max-w-full';
+          chartContainer.innerHTML = svg;
+          
+          (el.parentElement as HTMLElement).style.display = 'none';
+          el.parentElement!.insertAdjacentElement('afterend', chartContainer);
+        } catch (e) {
+          console.error("Mermaid parsing failed", e);
+        }
+      });
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [editor?.getHTML()]);
+
   const handleDocSave = async () => {
     const activeId = idRef.current;
     if (!activeId || !editor || activeId === 'new') return;
@@ -1209,6 +1283,11 @@ Requirements:
         const docSnap = await getDoc(doc(db, 'documents', id));
         if (docSnap.exists()) {
           const data = docSnap.data();
+          if (data.ownerId !== user.uid && data.isShared !== true) {
+             alert("Access denied: You do not have permission to view this document.");
+             navigate('/dashboard');
+             return;
+          }
           setDocTitle(data.title || 'Untitled Document');
           setIsStarred(data.isStarred || false);
           setIsShared(data.isShared || false);
@@ -1367,33 +1446,29 @@ Requirements:
       if (!success) {
         if (!customApiKey) {
           if (localEngine) {
-            setSyncStatus('Enhancing document locally with WebGPU AI...');
-            const response = await localEngine.chat.completions.create({
-              messages: [
-                { 
-                  role: 'user', 
-                  content: `As an expert technical creator and editor, write a beautifully structured professional HTML enhancement of the following text: "${text}".
-Requirements:
-- Structural elements: Keep/add headings (<h1>, <h2>), formatted paragraphs, lists.
-- Style additions: Use inline styles for text colors.
-- Highlighting: Wrap key concepts in <mark style="background: rgba(212, 175, 55, 0.2); border-radius: 4px; padding: 2px;">.
-- Return ONLY valid clean HTML ready to inject, with no markdown code blocks.` 
-                }
-              ],
-              max_tokens: 1024
-            });
-            enhancedText = response.choices[0]?.message?.content || text;
-            // standard markdown block clean
-            if (enhancedText.startsWith('```html')) {
-              enhancedText = enhancedText.substring(7);
-            } else if (enhancedText.startsWith('```')) {
-              enhancedText = enhancedText.substring(3);
+            try {
+              setSyncStatus('Enhancing document locally with WebGPU AI...');
+              enhancedText = await runLocalChain(
+                localEngine,
+                "You are an expert technical creator and editor. Enhance the text structure using clean HTML.",
+                `Please write a beautifully structured professional HTML enhancement of the following text: "${text}". Keep/add headings (<h1>, <h2>), lists, paragraphs, and highlighters. Return ONLY valid clean HTML ready to inject, with no markdown code blocks.`,
+                600
+              );
+              // standard markdown block clean
+              if (enhancedText.startsWith('```html')) {
+                enhancedText = enhancedText.substring(7);
+              } else if (enhancedText.startsWith('```')) {
+                enhancedText = enhancedText.substring(3);
+              }
+              if (enhancedText.endsWith('```')) {
+                enhancedText = enhancedText.substring(0, enhancedText.length - 3);
+              }
+              enhancedText = enhancedText.trim();
+              success = true;
+            } catch (localErr: any) {
+              console.warn("Local WebGPU AI execution failed or crashed. Falling back to Google Cloud server processor:", localErr);
+              throw new Error(`Local model processing failed (${localErr.message || localErr}). Please configure a BYOK key in settings or use Cloud Direct Mode.`);
             }
-            if (enhancedText.endsWith('```')) {
-              enhancedText = enhancedText.substring(0, enhancedText.length - 3);
-            }
-            enhancedText = enhancedText.trim();
-            success = true;
           } else {
             throw new Error("Server API call failed. Please configure a BYOK key in settings, or start a Local Model in the 'Model Library' and toggle 'Local AI Mode' in the editor top-bar.");
           }
@@ -1449,17 +1524,17 @@ Requirements:
     try {
       let completion = "";
       if ((useLocalModel || !customApiKey) && localEngine) {
-        const asyncChunkGenerator = await localEngine.chat.completions.create({
-          messages: [
-            { role: 'user', content: 'You are an AI auto-completion engine. Provide strictly only the next paragraph text. Do not add conversational wrapper text or markdown.\n\n' + prompt }
-          ],
-          stream: false,
-          temperature: 0.7,
-          top_p: 0.9,
-          max_tokens: 512,
-          repetition_penalty: 1.1
-        });
-        completion = asyncChunkGenerator.choices[0]?.message?.content || "";
+        try {
+          completion = await runLocalChain(
+            localEngine,
+            'You are an AI auto-completion engine. Provide strictly only the next paragraph text continuations. Do not add any greetings, explanations, or code blocks.',
+            prompt,
+            400
+          );
+        } catch (localErr) {
+          console.warn("Local autocompletion failed or crashed. Falling back to Gemini Cloud:", localErr);
+          completion = (await askGeminiFlash(prompt, "")) || "";
+        }
       } else {
         completion = (await askGeminiFlash(prompt, customApiKey)) || "";
       }
@@ -1513,17 +1588,17 @@ Requirements:
       let res = "";
       if ((useLocalModel || !customApiKey) && localEngine) {
         setLoadingMsg(true);
-        const asyncChunkGenerator = await localEngine.chat.completions.create({
-          messages: [
-            { role: 'user', content: 'You are an AI assistant. Answer the user query based on context.\n\n' + prompt }
-          ],
-          stream: false,
-          temperature: 0.7,
-          top_p: 0.9,
-          max_tokens: 512,
-          repetition_penalty: 1.1
-        });
-        res = asyncChunkGenerator.choices[0]?.message?.content || "";
+        try {
+          res = await runLocalChain(
+            localEngine,
+            'You are a helpful AI assistant. Answer the user query clearly based on the provided context.',
+            prompt,
+            400
+          );
+        } catch (localErr) {
+          console.warn("Local chat assistant failed or crashed. Falling back to Gemini Cloud:", localErr);
+          res = (await askGeminiProComplex(prompt, "")) || "";
+        }
       } else {
         res = (await askGeminiProComplex(prompt, customApiKey)) || "";
       }
@@ -1610,6 +1685,7 @@ Requirements:
          filename: attachedFile?.name || 'file',
          contentType: attachedFile?.type || 'application/octet-stream',
          data: attachedFileBase64,
+         ownerId: user?.uid,
          createdAt: serverTimestamp()
       });
       
@@ -1649,6 +1725,7 @@ Requirements:
          filename: attachedPhotoFile?.name || 'photo.png',
          contentType: attachedPhotoFile?.type || 'image/png',
          data: attachedPhotoBase64,
+         ownerId: user?.uid,
          createdAt: serverTimestamp()
       });
       
@@ -2155,15 +2232,17 @@ Requirements:
     try {
       let result = "";
       if ((useLocalModel || !customApiKey) && localEngine) {
-        const asyncChunkGenerator = await localEngine.chat.completions.create({
-          messages: [
-            { role: 'user', content: 'You are an advanced text processing AI. Follow the instructions strictly. Do not add greetings or wrap your answer in markdown code blocks. Preserve HTML tags perfectly when requested.\n\n' + prompt }
-          ],
-          stream: false,
-          temperature: 0.3,
-          max_tokens: 2048,
-        });
-        result = asyncChunkGenerator.choices[0]?.message?.content || "";
+        try {
+          result = await runLocalChain(
+            localEngine,
+            'You are an advanced text processing AI. Follow the instructions strictly. Do not add greetings or wrap your answer in markdown code blocks. Preserve HTML tags perfectly when requested.',
+            prompt,
+            500
+          );
+        } catch (localErr) {
+          console.warn("Local text processing failed or crashed. Falling back to Gemini Cloud:", localErr);
+          result = (await askGeminiProComplex(prompt, "")) || "";
+        }
       } else {
         result = (await askGeminiProComplex(prompt, customApiKey)) || "";
       }
@@ -2237,17 +2316,17 @@ Requirements:
       let result = "";
       if ((useLocalModel || !customApiKey) && localEngine) {
         setLoadingMsg(true);
-        const asyncChunkGenerator = await localEngine.chat.completions.create({
-          messages: [
-            { role: 'user', content: 'You are a raw data parsing AI. You absolutely MUST NOT add greetings, conversational filler, or wrap your answer in markdown code blocks (` ``` `). Output exactly what is requested.\n\n' + prompt }
-          ],
-          stream: false,
-          temperature: 0.7,
-          top_p: 0.9,
-          max_tokens: 512,
-          repetition_penalty: 1.1
-        });
-        result = asyncChunkGenerator.choices[0]?.message?.content || "";
+        try {
+          result = await runLocalChain(
+            localEngine,
+            'You are a raw data parsing AI. You absolutely MUST NOT add greetings, conversational filler, or wrap your answer in markdown code blocks. Output exactly what is requested.',
+            prompt,
+            400
+          );
+        } catch (localErr) {
+          console.warn("Local data parsing failed or crashed. Falling back to Gemini Cloud:", localErr);
+          result = (await askGeminiProComplex(prompt, "")) || "";
+        }
       } else {
         result = (await askGeminiProComplex(prompt, customApiKey)) || "";
       }
@@ -3302,7 +3381,7 @@ Requirements:
                selectedFormat === 'jpg' ? 'max-w-[1080px] aspect-[4/5] border-[2px] border-gray-300 !p-0 shadow-2xl' :
                selectedFormat === 'zip' ? 'max-w-[800px] border-[4px] border-dashed border-gray-300 bg-gray-50' :
                selectedFormat === 'html' ? 'max-w-none border-t-[32px] border-gray-800 rounded-t-xl' :
-               'max-w-[1550px] min-h-[600px] w-[96%]',
+               'max-w-[1050px] min-h-[1200px] w-[96%]',
                dragDropEditMode && 'cursor-text ring-4 ring-blue-400 ring-offset-8 rounded-lg selection:bg-blue-300'
              )}
              style={{
@@ -3534,7 +3613,7 @@ Requirements:
                    setShowRuler(!showRuler);
                }} title="Toggle Margin Ruler" className={cn("transition-colors flex items-center gap-1.5 focus:outline-none", showRuler ? "text-indigo-600 font-bold bg-indigo-50 px-2 py-0.5 rounded animate-pulse" : "text-gray-500 hover:text-indigo-600")}><Scissors className="w-4 h-4"/> <span className="text-[11px] font-bold hidden md:inline">Ruler</span></button>
 
-                <div className="w-px h-6 bg-gray-200 mx-1"></div>
+                <div className="hidden"></div>
                 
                 {/* 🎙️ Voice Doc Creator */}
                 <button 
@@ -3543,31 +3622,14 @@ Requirements:
                     setVoiceText("");
                     setVoiceResultStatus("idle");
                     setVoiceCreatorErrorMessage("");
-                    setShowVoiceDocModal(true);
+                    // removed voice doc modal
+                    const removedVoiceDoc = true;
                   }} 
                   title="Voice Document Creator (Research & Write)" 
-                  className="text-red-500 hover:text-red-600 font-bold hover:bg-red-50 px-2.5 py-1 rounded transition-colors flex items-center gap-1.5 focus:outline-none"
+                  className="hidden"
                 >
                   <Mic className="w-4 h-4 text-red-500 animate-pulse"/> 
                   <span className="text-[11px] font-bold">Voice Doc</span>
-                </button>
-
-                {/* 🚀 Google Doc Export */}
-                <button 
-                  onClick={handleExportToGoogleDoc} 
-                  disabled={isGoogleDocExporting}
-                  title={getDocsToken() ? "Export to Google Docs" : "Connect & Export to Google Docs"} 
-                  className={cn(
-                    "font-bold px-2.5 py-1 rounded transition-all flex items-center gap-1.5 focus:outline-none",
-                    isGoogleDocExporting ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                  )}
-                >
-                  {isGoogleDocExporting ? (
-                    <RefreshCw className="w-4 h-4 animate-spin"/>
-                  ) : (
-                    <FileText className="w-4 h-4 text-blue-500"/>
-                  )}
-                  <span className="text-[11px] font-bold">{isGoogleDocExporting ? "Exporting..." : "Google Doc"}</span>
                 </button>
 
                 {/* 🚀 Google Slides Export */}
@@ -3586,24 +3648,6 @@ Requirements:
                     <Layers className="w-4 h-4 text-orange-500"/>
                   )}
                   <span className="text-[11px] font-bold">{isGoogleSlidesExporting ? "Slides..." : "Slides"}</span>
-                </button>
-
-                {/* 🚀 Google Forms Compile */}
-                <button 
-                  onClick={handleExportToGoogleForms} 
-                  disabled={isGoogleFormsExporting}
-                  title={getFormsToken() ? "Compile into Google Form" : "Connect & Compile into Google Form"} 
-                  className={cn(
-                    "font-bold px-2.5 py-1 rounded transition-all flex items-center gap-1.5 focus:outline-none",
-                    isGoogleFormsExporting ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
-                  )}
-                >
-                  {isGoogleFormsExporting ? (
-                    <RefreshCw className="w-4 h-4 animate-spin"/>
-                  ) : (
-                    <ListChecks className="w-4 h-4 text-emerald-500"/>
-                  )}
-                  <span className="text-[11px] font-bold">{isGoogleFormsExporting ? "Form..." : "Form"}</span>
                 </button>
                <button onClick={() => handleExport('zip')} title="Export as ZIP Backup" className="text-gray-500 hover:text-indigo-600 transition-colors flex items-center gap-1.5"><FileX className="w-4 h-4"/> <span className="text-[11px] font-bold hidden md:inline">ZIP</span></button>
              </div>

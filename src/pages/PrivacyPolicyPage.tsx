@@ -49,8 +49,8 @@ export function PrivacyPolicyPage() {
             <div className="p-5 bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
               <Lock className="w-6 h-6 text-[#D4AF37] mb-2" />
               <div>
-                <h4 className="font-bold text-sm text-gray-900 mb-1">Encrypted Pipelines</h4>
-                <p className="text-xs text-gray-500 leading-relaxed">SSL and database security locks protect user metadata.</p>
+                <h4 className="font-bold text-sm text-gray-900 mb-1">We Respect Your Privacy</h4>
+                <p className="text-xs text-gray-500 leading-relaxed">An unwavering commitment. We never monetize, share, or inspect your private content.</p>
               </div>
             </div>
             <div className="p-5 bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
@@ -70,12 +70,14 @@ export function PrivacyPolicyPage() {
                 <span className="text-dc-gold font-serif text-lg">01.</span> Information We Collect
               </h2>
               <p className="text-sm">
-                To maintain high-quality document calculations and secure application runtimes, we log standard web parameters during service execution. This data includes:
+                We believe in complete transparency and minimal data footprint. We do not collect or monitor invasive digital parameters such as your IP address, physical geo-location, device rendering profiles, or browser hardware configurations. 
+              </p>
+              <p className="text-sm mt-3">
+                The only information collected is what you explicitly provide to authenticate and preserve your session safely:
               </p>
               <ul className="list-disc pl-5 text-sm mt-3 space-y-2">
-                <li><strong>IP Addresses & Geo-location:</strong> Used to filter malicious traffic, monitor spam patterns, and guide geographic Content Delivery Network (CDN) routings.</li>
-                <li><strong>Device & Browser Profile:</strong> Monitors browser types, operating platforms, display dimensions, and rendering engines to optimize UI response times.</li>
-                <li><strong>Browser Identifiers (Cookies):</strong> Standard local storage keys and browser cookies set to preserve dark/light styling preferences and validate active secure user logins.</li>
+                <li><strong>Account Credentials:</strong> Your sign-up name and email address when creating an account, or secure profile credentials passed directly via Google or Apple OAuth providers.</li>
+                <li><strong>Session State Keys:</strong> Simple, standard browser local storage settings specifically designed to remember your active login state and user preferences (like your dark/light appearance).</li>
               </ul>
             </motion.section>
 

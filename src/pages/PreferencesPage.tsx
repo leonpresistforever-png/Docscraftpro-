@@ -15,7 +15,7 @@ import { saveAs } from 'file-saver';
 import jsPDF from 'jspdf';
 
 export function PreferencesPage() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('appearance');
   const [isExporting, setIsExporting] = useState(false);
 
@@ -211,11 +211,17 @@ export function PreferencesPage() {
                     <div className="space-y-4">
                       <button 
                         className="flex items-center gap-3 w-full p-4 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition-colors text-left"
-                        onClick={() => {
+                        onClick={async () => {
                           if (window.confirm('Are you sure you want to delete all permanent sessions and local data? This cannot be undone.')) {
-                            localStorage.clear();
-                            sessionStorage.clear();
-                            window.location.reload();
+                            try {
+                              localStorage.clear();
+                              sessionStorage.clear();
+                              await logout();
+                              window.location.href = '/';
+                            } catch (err) {
+                              console.error("Failed to delete permanent session:", err);
+                              window.location.reload();
+                            }
                           }
                         }}
                       >

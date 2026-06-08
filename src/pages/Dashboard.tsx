@@ -41,6 +41,7 @@ export function Dashboard() {
 
   useEffect(() => {
     if (!user) return;
+    
     const q = query(
       collection(db, 'documents'),
       where('ownerId', '==', user.uid)

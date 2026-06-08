@@ -152,6 +152,7 @@ export function ModelLibraryPage() {
   const [sheetModalContent, setSheetModalContent] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isAbortedRef = useRef(false);
+  const needsResetRef = useRef(false);
 
   // Configuration
   const [modelConfigs, setModelConfigs] = useState<Record<string, { maxTokens: number; topK: number; topP: number; temperature: number; accelerator: 'GPU' | 'CPU'; systemPrompt: string }>>({});
@@ -243,8 +244,13 @@ export function ModelLibraryPage() {
 
   const handleStop = () => {
     isAbortedRef.current = true;
+    needsResetRef.current = true;
     if (engineRef.current && engineRef.current.interruptGenerate) {
-      engineRef.current.interruptGenerate();
+      try {
+        engineRef.current.interruptGenerate();
+      } catch (e) {
+        console.error("Native interrupt error:", e);
+      }
     }
     setIsTyping(false);
   };
@@ -605,6 +611,21 @@ export function ModelLibraryPage() {
     if (!chatInput.trim() || !engineRef.current || isTyping) return;
     
     isAbortedRef.current = false;
+    
+    // Auto-reload stopped engine state to clear background worker deadlocks
+    if (needsResetRef.current) {
+      needsResetRef.current = false;
+      if (chatModel) {
+        setCurrentlyScanning("Refreshing local engine state...");
+        try {
+          await initEngine(chatModel.id);
+        } catch (e) {
+          console.error("Local engine state refresh failed:", e);
+        }
+        setCurrentlyScanning(null);
+      }
+    }
+    
     const userMsg = chatInput.trim();
     const currentSkill = activeSkill;
     const newMsg: ChatMessage = { id: Date.now().toString(), role: 'user', content: userMsg, skill: currentSkill };

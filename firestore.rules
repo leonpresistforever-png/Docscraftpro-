@@ -19,6 +19,10 @@ service cloud.firestore {
     // Users Collection: Profiles and credits only accessible/customizable by the owner
     match /users/{userId} {
       allow read, write: if isOwner(userId);
+
+      match /{allSubcollections=**} {
+        allow read, write: if isOwner(userId);
+      }
     }
 
     // Documents Collection: Access restricted to owner, unless owner explicitly set isShared to true
@@ -55,9 +59,13 @@ service cloud.firestore {
       );
     }
 
-    // Document Media/File Attachments: Accessible by any signed-in user
+    // Document Media/File Attachments: Secure access restricted to owner only
     match /doc_attachments/{attachmentId} {
-      allow read, write: if isSignedIn();
+      allow read: if isSignedIn() && (resource == null || !('ownerId' in resource.data) || resource.data.ownerId == request.auth.uid);
+      allow write: if isSignedIn() && (
+        (resource == null && request.resource.data.ownerId == request.auth.uid) ||
+        (resource != null && resource.data.ownerId == request.auth.uid && (request.resource == null || request.resource.data.ownerId == request.auth.uid))
+      );
     }
 
     // Support Tickets Collection: Accessible for creation by anyone, but read/write/delete restricted to ensure data privacy
@@ -66,9 +74,9 @@ service cloud.firestore {
       allow read, update, delete: if false;
     }
 
-    // Nexus Chat Logs: Accessible by any signed-in user
+    // Nexus Chat Logs: Disabled/unused to prevent any unintended access
     match /nexus_chats/{chatId} {
-      allow read, write: if isSignedIn();
+      allow read, write: if false;
     }
   }
 }

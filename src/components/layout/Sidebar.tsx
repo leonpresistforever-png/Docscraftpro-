@@ -192,7 +192,6 @@ export function Sidebar({ defaultCollapsed = false }: { defaultCollapsed?: boole
   const archiveDocumentAction = async (docId: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
     try {
       await updateDoc(doc(db, 'documents', docId), {
         isArchived: true,

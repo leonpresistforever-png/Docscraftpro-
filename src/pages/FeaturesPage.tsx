@@ -1,84 +1,166 @@
 import React from 'react';
 import { Navbar } from '../components/layout/Navbar';
+import { Footer } from '../components/layout/Footer';
 import { motion } from 'motion/react';
-import { Sparkles, PenTool, LayoutDashboard, BrainCircuit } from 'lucide-react';
+import { 
+  PenTool, 
+  BrainCircuit, 
+  Columns, 
+  BarChart3, 
+  FileCheck, 
+  Table2, 
+  History, 
+  Paperclip, 
+  UserCheck, 
+  GitMerge, 
+  Trash2, 
+  Lock,
+  Sparkles
+} from 'lucide-react';
 
 export function FeaturesPage() {
+  const featuresList = [
+    {
+      title: "Clean Formatting Engine",
+      desc: "Minimalist, frictionless typography sandbox equipped with real-time editing, nested checklists, code blocks with syntax highlighting, and advanced structural formats.",
+      icon: <PenTool className="w-5 h-5 text-blue-600" />,
+      tag: "CORE EDITOR"
+    },
+    {
+      title: "On-Device AI Assistance",
+      desc: "An integrated browser LLM processing directly on your client GPU using WebGPU under WebLLM. Rest assured, your drafts remain entirely local and private.",
+      icon: <BrainCircuit className="w-5 h-5 text-indigo-600" />,
+      tag: "SECURE AI"
+    },
+    {
+      title: "Manga & Multi-Frame Grid",
+      desc: "Break away from a single linear text block. Piece together complex multi-column frames and storyboards using precise manga panel bounding structures.",
+      icon: <Columns className="w-5 h-5 text-purple-600" />,
+      tag: "LAYOUT CANVAS"
+    },
+    {
+      title: "Inline Recharts & Graphs",
+      desc: "Build highly descriptive visual charts (Bar, Line, Pie) dynamically using D3 and Recharts, and store them directly inside your pages.",
+      icon: <BarChart3 className="w-5 h-5 text-amber-600" />,
+      tag: "DATA GRAPHICS"
+    },
+    {
+      title: "Digital Signatures & Watermarks",
+      desc: "Convert text, markdown files, and HTML to clean PDFs. Apply custom watermarks and secure physical digital signatures safely inside your sandbox.",
+      icon: <FileCheck className="w-5 h-5 text-emerald-600" />,
+      tag: "PDF TOOLKIT"
+    },
+    {
+      title: "AI Tables & Sheets Generator",
+      desc: "Instruct your local AI to layout descriptive tables with pipes. Export matrices in standard Markdown formats without building them manually.",
+      icon: <Table2 className="w-5 h-5 text-cyan-600" />,
+      tag: "DATA MATRICES"
+    },
+    {
+      title: "Automatic Revision Backups",
+      desc: "Complete autosaving checkpoints that store content snapshots. View detailed backlogs and easily restore previous document drafts.",
+      icon: <History className="w-5 h-5 text-rose-600" />,
+      tag: "VERSIONING"
+    },
+    {
+      title: "Robust Media & Web Clipper",
+      desc: "Embed rich layouts, drag-and-drop web snapshots, or upload local image assets smoothly with full rendering compliance.",
+      icon: <Paperclip className="w-5 h-5 text-orange-600" />,
+      tag: "MEDIA IMPORTER"
+    },
+    {
+      title: "Autonomous Action Agent",
+      desc: "Deploy client-side self-reflective agents to write out details, structural reviews, or comprehensive summaries recursively.",
+      icon: <UserCheck className="w-5 h-5 text-teal-600" />,
+      tag: "AUTO ENGINE"
+    },
+    {
+      title: "Mermaid Flow Logic Maps",
+      desc: "Illustrate dynamic ideas visually by mapping flow charts and complex relations natively in markdown with full Mermaid compliance.",
+      icon: <GitMerge className="w-5 h-5 text-violet-600" />,
+      tag: "DIAGRAMS"
+    },
+    {
+      title: "Write Peacefully",
+      desc: "Click on the document button to start writing your documents peacefully.",
+      icon: <PenTool className="w-5 h-5 text-emerald-600" />,
+      tag: "COMPOSER"
+    },
+    {
+      title: "Local E2E AES Encryption",
+      desc: "Secure document databases in Firestore using personal, local AES encryption keys to guarantee total private document security.",
+      icon: <Lock className="w-5 h-5 text-[#D4AF37]" />,
+      tag: "DEEP PRIVACY"
+    }
+  ];
+
   const container = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: { staggerChildren: 0.2 }
+      transition: { staggerChildren: 0.1 }
     }
   };
 
   const item = {
-    hidden: { opacity: 0, y: 30 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" as const } }
+    hidden: { opacity: 0, y: 15 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.5 } }
   };
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] font-sans text-dc-text pt-24 overflow-hidden">
+    <div className="min-h-screen bg-[#FDFBF7] font-sans text-dc-text pt-24 flex flex-col justify-between">
       <Navbar />
-      <main className="w-full max-w-[1200px] mx-auto px-6 py-20 pb-32">
+      
+      <main className="w-full max-w-[1240px] mx-auto px-6 py-20 pb-32 flex-1">
         <motion.div 
-          initial={{ opacity: 0, y: 30 }} 
+          initial={{ opacity: 0, y: 20 }} 
           animate={{ opacity: 1, y: 0 }} 
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="text-center mb-24"
+          transition={{ duration: 0.6 }}
+          className="text-center mb-20"
         >
-          <div className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-dc-gold/10 text-dc-gold text-sm font-bold uppercase tracking-widest mb-6">
-            <Sparkles className="w-4 h-4" /> Unparalleled Power
+          <div className="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-full bg-dc-gold/10 text-dc-gold text-xs font-bold uppercase tracking-widest mb-4">
+            <Sparkles className="w-3.5 h-3.5" /> Capabilities Overview
           </div>
-          <h1 className="text-5xl md:text-7xl font-black mb-6 uppercase tracking-tight text-[#1a1a1a]">Featuring Next-Gen <br/> Document Architecture</h1>
-          <p className="text-xl md:text-2xl text-gray-500 max-w-3xl mx-auto font-medium">
-             A masterclass in software engineering. Everything you need to write, edit, and orchestrate complex ideas, built with uncompromising speed and fluidity.
+          <h1 className="text-4xl md:text-6xl font-black mb-6 uppercase tracking-tight text-[#1a1a1a] font-serif leading-tight">
+            Sophisticated tools, built client-first
+          </h1>
+          <p className="text-lg md:text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed">
+            Every feature is executed with pristine layout, typography, and privacy principles in mind. Here is exactly what our document engine can do.
           </p>
         </motion.div>
         
         <motion.div 
           variants={container}
           initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, margin: "-100px" }}
-          className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
+          animate="show"
+          className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
         >
-           <motion.div variants={item} className="bg-white p-10 rounded-[2rem] border border-[#E4DBC5] shadow-xl shadow-amber-50/50 hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 group">
-              <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 mb-8 group-hover:scale-110 transition-transform">
-                 <PenTool className="w-6 h-6" />
+          {featuresList.map((f, i) => (
+            <motion.div 
+              key={i} 
+              variants={item} 
+              className="bg-white p-8 rounded-2xl border border-[#E4DBC5] shadow-xs hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group"
+            >
+              <div>
+                <header className="flex justify-between items-center mb-6">
+                  <div className="w-10 h-10 bg-[#FAF9F6] border border-dc-border rounded-xl flex items-center justify-center group-hover:bg-white group-hover:border-dc-gold transition-colors">
+                    {f.icon}
+                  </div>
+                  <span className="text-[10px] font-bold font-mono tracking-widest text-[#D4AF37] bg-amber-50/50 px-2 py-0.5 rounded border border-amber-200/50">
+                    {f.tag}
+                  </span>
+                </header>
+                <h2 className="text-xl font-bold text-[#1a1a1a] mb-2">{f.title}</h2>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  {f.desc}
+                </p>
               </div>
-              <h2 className="text-2xl font-black text-[#1a1a1a] mb-4 uppercase tracking-wide">Pro-Grade Editing Engine</h2>
-              <p className="text-gray-600 leading-relaxed text-lg">
-                Beneath our minimalist interface lies a powerhouse rendering engine. DocCraft handles complex nested tables, mathematical equations via KaTeX, dynamic inline logic statements, and massive documents without dropping a single frame. Enjoy buttery-smooth scrolling and instantaneous text formatting.
-              </p>
-           </motion.div>
-
-           <motion.div variants={item} className="bg-indigo-950 p-10 rounded-[2rem] shadow-xl hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 group text-indigo-50">
-              <div className="w-14 h-14 bg-indigo-900/50 rounded-2xl flex items-center justify-center text-indigo-300 mb-8 group-hover:scale-110 transition-transform">
-                 <BrainCircuit className="w-6 h-6" />
-              </div>
-              <h2 className="text-2xl font-black text-white mb-4 uppercase tracking-wide">Zero-Latency AI Intelligence</h2>
-              <p className="text-indigo-200/80 leading-relaxed text-lg">
-                We've integrated an advanced local WebLLM engine directly into your browser. Experience grammar correction, tone adjustment, automatic summarization, and context-aware expansion that processes in real-time, completely offline, ensuring your private drafts never leave your machine.
-              </p>
-           </motion.div>
-
-           <motion.div variants={item} className="bg-white p-10 rounded-[2rem] border border-[#E4DBC5] shadow-xl shadow-amber-50/50 hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 group">
-              <div className="w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600 mb-8 group-hover:scale-110 transition-transform">
-                 <LayoutDashboard className="w-6 h-6" />
-              </div>
-              <h2 className="text-2xl font-black text-[#1a1a1a] mb-4 uppercase tracking-wide">Manga & Freeform Canvas</h2>
-              <p className="text-gray-600 leading-relaxed text-lg">
-                Break free from the rigid constraints of endless scrolling text. Our revolutionary Manga Panel architecture allows you to create dynamic, comic-book style grid layouts. Clip drawings precisely into frames, or use Clipper Studio to float watermark sketches anywhere on the page.
-              </p>
-           </motion.div>
+            </motion.div>
+          ))}
         </motion.div>
       </main>
-      <footer className="bg-white pt-12 pb-12 border-t border-[#E4DBC5]">
-        <div className="max-w-[1400px] mx-auto px-6 text-center text-sm text-gray-400 font-medium">
-           <p>&copy; {new Date().getFullYear()} DocCraft Inc. The Ultimate Text Tool.</p>
-        </div>
-      </footer>
+
+      <Footer />
     </div>
   );
 }

@@ -8,7 +8,7 @@ import { VisualCaptcha } from '../components/VisualCaptcha';
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '0x4AAAAAADITOkdYnpXv2YLs';
 
 export function AuthPage() {
-  const { user, signInWithGoogle, signInWithEmail, signUpWithEmail, signInAsDemo } = useAuth();
+  const { user, signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
   const navigate = useNavigate();
   const [isSignUp, setIsSignUp] = useState(false);
   

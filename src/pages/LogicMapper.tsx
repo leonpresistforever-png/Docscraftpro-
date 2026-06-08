@@ -184,11 +184,11 @@ export function LogicMapper() {
     }
   };
 
-  // Drag and Drop Logic
-  const handleNodeMouseDown = (e: React.MouseEvent, nodeId: string) => {
-    // If clicking a control inside node, ignore
+  // Drag and Drop Logic with dynamically bound window pointer listeners for responsive Mobile Touch + Mouse drag!
+  const handleNodePointerDown = (e: React.PointerEvent, nodeId: string) => {
     const target = e.target as HTMLElement;
-    if (target.closest('.no-drag-area')) return;
+    // If clicking an active control, button or form input inside card, ignore dragging action
+    if (target.closest('.no-drag-area') || target.closest('button') || target.closest('input') || target.closest('select') || target.closest('textarea')) return;
     
     e.preventDefault();
     setSelectedNodeId(nodeId);
@@ -198,40 +198,53 @@ export function LogicMapper() {
       // Connect option
       if (linkSourceId !== nodeId) {
         const edgeId = `edge-${Date.now()}`;
-        setEdges([...edges, { id: edgeId, source: linkSourceId, target: nodeId, animated: true, color: '#4f46e5' }]);
+        setEdges(prev => [...prev, { id: edgeId, source: linkSourceId, target: nodeId, animated: true, color: '#4f46e5' }]);
       }
       setLinkSourceId(null);
       return;
     }
 
     setDragNodeId(nodeId);
-    if (canvasRef.current) {
-      const nodeObj = nodes.find(n => n.id === nodeId);
-      if (nodeObj) {
-        const canvasRect = canvasRef.current.getBoundingClientRect();
-        // Mouse coordinate in absolute view minus previous offset coordinates
-        dragOffset.current = {
-          x: e.clientX - canvasRect.left - nodeObj.x,
-          y: e.clientY - canvasRect.top - nodeObj.y
-        };
-      }
-    }
-  };
-
-  const handleCanvasMouseMove = (e: React.MouseEvent) => {
-    if (!dragNodeId || !canvasRef.current) return;
-    const canvasRect = canvasRef.current.getBoundingClientRect();
-    const desiredX = e.clientX - canvasRect.left - dragOffset.current.x;
-    const desiredY = e.clientY - canvasRect.top - dragOffset.current.y;
+    if (!canvasRef.current) return;
     
-    // Boundary snap
-    const finalX = Math.max(10, Math.min(canvasRect.width - 250, desiredX));
-    const finalY = Math.max(10, Math.min(canvasRect.height - 200, desiredY));
+    // Find initial node measurements dynamically to stay fully isolated inside the closure helper
+    const nodeObj = nodes.find(n => n.id === nodeId);
+    if (!nodeObj) return;
 
-    setNodes(prev => prev.map(n => n.id === dragNodeId ? { ...n, x: Math.round(finalX), y: Math.round(finalY) } : n));
+    const canvasRect = canvasRef.current.getBoundingClientRect();
+    const startDragOffset = {
+      x: e.clientX - canvasRect.left - nodeObj.x,
+      y: e.clientY - canvasRect.top - nodeObj.y
+    };
+    dragOffset.current = startDragOffset;
+
+    const handleWindowPointerMove = (moveEvent: PointerEvent) => {
+      if (!canvasRef.current) return;
+      const cRect = canvasRef.current.getBoundingClientRect();
+      const desiredX = moveEvent.clientX - cRect.left - startDragOffset.x;
+      const desiredY = moveEvent.clientY - cRect.top - startDragOffset.y;
+      
+      const finalX = Math.max(10, Math.min(cRect.width - nodeObj.width - 10, desiredX));
+      const finalY = Math.max(10, Math.min(cRect.height - nodeObj.height - 10, desiredY));
+
+      setNodes(prev => prev.map(n => n.id === nodeId ? { ...n, x: Math.round(finalX), y: Math.round(finalY) } : n));
+    };
+
+    const handleWindowPointerUp = () => {
+      setDragNodeId(null);
+      window.removeEventListener('pointermove', handleWindowPointerMove);
+      window.removeEventListener('pointerup', handleWindowPointerUp);
+    };
+
+    window.addEventListener('pointermove', handleWindowPointerMove, { passive: true });
+    window.addEventListener('pointerup', handleWindowPointerUp, { passive: true });
   };
 
-  const handleCanvasMouseUp = () => {
+  const handleCanvasPointerMove = (e: React.PointerEvent) => {
+    // Handled dynamically on window level to avoid boundary escapement bugs
+  };
+
+  const handleCanvasPointerUp = () => {
     setDragNodeId(null);
   };
 
@@ -423,13 +436,13 @@ export function LogicMapper() {
               </button>
             </div>
 
-            {/* Canvas Area Container */}
+            {/* Canvas Area Container with touch containment and unified pointers */}
             <div 
               ref={canvasRef}
-              className="flex-1 bg-white rounded-3xl border border-[#EAE6DF] relative overflow-hidden select-none cursor-default shadow-sm"
-              onMouseMove={handleCanvasMouseMove}
-              onMouseUp={handleCanvasMouseUp}
-              onMouseLeave={handleCanvasMouseUp}
+              className="flex-1 bg-white rounded-3xl border border-[#EAE6DF] relative overflow-hidden select-none cursor-default shadow-sm touch-none"
+              onPointerMove={handleCanvasPointerMove}
+              onPointerUp={handleCanvasPointerUp}
+              onPointerLeave={handleCanvasPointerUp}
               onClick={() => { setSelectedNodeId(null); setSelectedEdgeId(null); setLinkSourceId(null); }}
               style={{
                 backgroundImage: 'radial-gradient(#e2e8f0 1.2px, transparent 1.2px)',
@@ -448,7 +461,7 @@ export function LogicMapper() {
                 </div>
               )}
 
-              {/* Rendering Interactive Flow Nodes */}
+              {/* Rendering Interactive Flow Nodes with unified pointers */}
               {nodes.map(node => {
                 const isSelected = selectedNodeId === node.id;
                 const isPossibleTarget = linkSourceId && linkSourceId !== node.id;
@@ -456,7 +469,7 @@ export function LogicMapper() {
                 return (
                   <div
                     key={node.id}
-                    onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
+                    onPointerDown={(e) => handleNodePointerDown(e, node.id)}
                     className={`absolute flex flex-col justify-between p-4 rounded-xl border select-none transition-shadow ${isSelected ? 'ring-4 ring-indigo-500/20 border-indigo-500 shadow-lg z-30 scale-[1.01]' : 'shadow-sm z-20 hover:shadow-md border-[#EAE6DF]'} ${isPossibleTarget ? 'cursor-alias ring-4 ring-emerald-500/30 border-emerald-500 scale-[1.03] animate-pulse duration-700' : ''}`}
                     style={{
                       left: node.x,
@@ -507,40 +520,48 @@ export function LogicMapper() {
           </div>
 
           {/* Style Customizer Sidebar Panel */}
-          <div className="w-[360px] border-l border-[#EAE6DF] bg-white p-6 shrink-0 flex flex-col gap-6 overflow-y-auto no-scrollbar z-20 shadow-xl">
+          <div className="w-[380px] border-l border-[#EAE6DF] bg-white p-6 shrink-0 flex flex-col gap-6 overflow-y-auto no-scrollbar z-20 shadow-2xl relative">
             
             {/* Context title block */}
-            <div className="pb-4 border-b border-slate-100">
-              <h2 className="text-sm tracking-[0.2em] font-serif uppercase font-bold text-slate-800 flex items-center gap-2">
-                <Layers className="w-4 h-4 text-indigo-600" /> Property Controls
+            <div className="pb-4 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-xs tracking-[0.25em] font-sans uppercase font-extrabold text-slate-800 flex items-center gap-2">
+                <Layers className="w-4 h-4 text-indigo-600 animate-pulse" /> Element Inspector
               </h2>
+              <span className="text-[9px] font-mono font-bold bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                {activeNode ? 'Card Active' : selectedEdgeId ? 'Arrow Active' : 'Idle'}
+              </span>
             </div>
 
             {/* If a Node is selected */}
             {activeNode && (
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-2">Display Title</h3>
+              <div className="space-y-6 animate-in fade-in slide-in-from-right duration-200">
+                
+                {/* Visual Section: Header Label */}
+                <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl shadow-xs">
+                  <h3 className="text-[10px] uppercase font-bold tracking-widest text-slate-500 mb-2 font-mono flex items-center gap-1.5">
+                    <Edit3 className="w-3.5 h-3.5 text-slate-400" /> Card Headline
+                  </h3>
                   <textarea
                     value={activeNode.label}
+                    placeholder="Enter process step text..."
                     onChange={(e) => updateSelectedNode({ label: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 outline-none focus:border-indigo-400 focus:bg-white text-sm transition-all shadow-inner"
+                    className="w-full bg-white border border-slate-200 rounded-lg p-2.5 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 text-xs font-medium transition-all shadow-sm"
                     rows={2}
                   />
                 </div>
 
-                <div>
-                  <h3 className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-2 flex justify-between">
-                    <span>Dimension Controls</span>
-                    <span className="text-[10px] text-indigo-600 font-mono font-bold">"Adjust Expand"</span>
+                {/* Visual Section: Geometric Slider */}
+                <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl shadow-xs">
+                  <h3 className="text-[10px] uppercase font-bold tracking-widest text-slate-500 mb-3 font-mono flex justify-between items-center">
+                    <span>Card Dimensions</span>
+                    <span className="text-[10px] text-indigo-600 font-mono font-bold font-sans">"Adjust Expand"</span>
                   </h3>
                   
-                  {/* Custom direct Resize Sliders for Width and Height ("adjust expand") */}
-                  <div className="space-y-4 bg-slate-50 p-4 border border-slate-200/60 rounded-xl shadow-inner">
-                    <div className="space-y-1.5 animate-fade-in">
-                      <div className="flex justify-between text-[11px] font-bold text-slate-600">
-                        <span>Card Width:</span>
-                        <span>{activeNode.width}px</span>
+                  <div className="space-y-4">
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs font-semibold text-slate-700">
+                        <span>Width:</span>
+                        <span className="font-mono text-[11px] text-indigo-600 font-bold">{activeNode.width}px</span>
                       </div>
                       <input 
                         type="range" 
@@ -548,14 +569,14 @@ export function LogicMapper() {
                         max={300} 
                         value={activeNode.width} 
                         onChange={e => updateSelectedNode({ width: parseInt(e.target.value) })}
-                        className="w-full accent-indigo-600" 
+                        className="w-full accent-indigo-600 cursor-ew-resize py-1" 
                       />
                     </div>
 
-                    <div className="space-y-1.5">
-                      <div className="flex justify-between text-[11px] font-bold text-slate-600">
-                        <span>Card Height:</span>
-                        <span>{activeNode.height}px</span>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs font-semibold text-slate-700">
+                        <span>Height:</span>
+                        <span className="font-mono text-[11px] text-indigo-600 font-bold">{activeNode.height}px</span>
                       </div>
                       <input 
                         type="range" 
@@ -563,77 +584,82 @@ export function LogicMapper() {
                         max={200} 
                         value={activeNode.height} 
                         onChange={e => updateSelectedNode({ height: parseInt(e.target.value) })}
-                        className="w-full accent-indigo-600" 
+                        className="w-full accent-indigo-600 cursor-ew-resize py-1" 
                       />
                     </div>
                   </div>
                 </div>
 
-                <div>
-                  <h3 className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-2.5">Shape Pattern</h3>
-                  <div className="grid grid-cols-2 gap-2">
+                {/* Visual Section: Shape presets */}
+                <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl shadow-xs">
+                  <h3 className="text-[10px] uppercase font-bold tracking-widest text-slate-500 mb-2.5 font-mono">Shape Archetype</h3>
+                  <div className="grid grid-cols-2 gap-1.5">
                     {[
-                      { id: 'rectangle', label: 'Process' },
-                      { id: 'diamond', label: 'Decision' },
-                      { id: 'oval', label: 'Terminus' },
-                      { id: 'parallelogram', label: 'Input/Output' },
-                      { id: 'cylinder', label: 'Database' },
-                      { id: 'document', label: 'Document' },
+                      { id: 'rectangle', label: 'Process', glyph: '▭' },
+                      { id: 'diamond', label: 'Decision', glyph: '◇' },
+                      { id: 'oval', label: 'Terminus', glyph: '⬭' },
+                      { id: 'parallelogram', label: 'In / Out', glyph: '▱' },
+                      { id: 'cylinder', label: 'Database', glyph: '⛃' },
+                      { id: 'document', label: 'Document', glyph: '🗎' },
                     ].map(shape => (
                       <button
                         key={shape.id}
                         onClick={() => updateSelectedNode({ shape: shape.id as any })}
-                        className={`p-2 rounded-xl text-xs font-bold border transition-all text-center ${activeNode.shape === shape.id ? 'bg-indigo-600 text-white border-indigo-700 shadow-md scale-102' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'}`}
+                        className={`p-2 rounded-lg text-xs font-bold border transition-all text-left flex items-center justify-between ${activeNode.shape === shape.id ? 'bg-indigo-600 text-white border-indigo-700 shadow-sm' : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'}`}
                       >
-                        {shape.label}
+                        <span className="truncate">{shape.label}</span>
+                        <span className="text-[10px] font-bold opacity-80 font-serif leading-none ml-1">{shape.glyph}</span>
                       </button>
                     ))}
                   </div>
                 </div>
 
-                <div>
-                  <h3 className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-2.5">Preset Theme Block</h3>
-                  <div className="space-y-2 max-h-[170px] overflow-y-auto no-scrollbar border rounded-xl p-2 bg-slate-50">
+                {/* Visual Section: Colors */}
+                <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl shadow-xs">
+                  <h3 className="text-[10px] uppercase font-bold tracking-widest text-slate-500 mb-2.5 font-mono">Visual Palette Theme</h3>
+                  <div className="space-y-1.5 max-h-[170px] overflow-y-auto no-scrollbar border rounded-lg p-1 bg-white">
                     {PRESET_COLORS.map((col, index) => (
                       <div
                         key={index}
                         onClick={() => updateSelectedNode({ color: col.bg, textColor: col.text })}
-                        className="p-2.5 rounded-xl border border-slate-200 bg-white hover:border-indigo-400 transition-colors cursor-pointer flex items-center justify-between"
+                        className="p-2 rounded-lg border border-slate-100 hover:border-indigo-400 transition-colors cursor-pointer flex items-center justify-between"
+                        style={{ backgroundColor: col.bg + '20' }}
                       >
                         <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 rounded-full border border-slate-300" style={{ backgroundColor: col.bg }}></div>
-                          <span className="text-xs font-bold text-slate-700">{col.name}</span>
+                          <div className="w-4 h-4 rounded border border-slate-300" style={{ backgroundColor: col.bg }}></div>
+                          <span className="text-xs font-bold text-slate-750" style={{ color: col.text }}>{col.name}</span>
                         </div>
-                        {activeNode.color === col.bg && <Check className="w-3.5 h-3.5 text-indigo-600" />}
+                        {activeNode.color === col.bg && <Check className="w-3.5 h-3.5 text-slate-700 font-extrabold" />}
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div>
-                  <h3 className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-2">Border Style</h3>
+                {/* Border types */}
+                <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl shadow-xs">
+                  <h3 className="text-[10px] uppercase font-bold tracking-widest text-slate-500 mb-2 font-mono">Contour Dashes</h3>
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => updateSelectedNode({ borderStyle: 'solid' })}
-                      className={`p-2 rounded-xl text-xs font-bold border transition-all ${activeNode.borderStyle === 'solid' ? 'bg-slate-800 text-white border-slate-900 shadow-sm' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200/70'}`}
+                      className={`p-2 rounded-lg text-xs font-bold border transition-all ${activeNode.borderStyle === 'solid' ? 'bg-slate-800 text-white border-slate-900 shadow-sm' : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'}`}
                     >
-                      Solid border
+                      Solid Line
                     </button>
                     <button
                       onClick={() => updateSelectedNode({ borderStyle: 'dashed' })}
-                      className={`p-2 rounded-xl text-xs font-bold border transition-all ${activeNode.borderStyle === 'dashed' ? 'bg-slate-800 text-white border-slate-900 shadow-sm' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200/70'}`}
+                      className={`p-2 rounded-lg text-xs font-bold border transition-all ${activeNode.borderStyle === 'dashed' ? 'bg-slate-800 text-white border-slate-900 shadow-sm' : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'}`}
                     >
-                      Dashed border
+                      Dashed Stroke
                     </button>
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-slate-100">
+                <div className="pt-2">
                   <button
                     onClick={handleDeleteSelected}
-                    className="w-full py-3 bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
+                    className="w-full py-3 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer hover:shadow-sm"
                   >
-                    <Trash2 className="w-3.5 h-3.5" /> Delete Active Card
+                    <Trash2 className="w-3.5 h-3.5" /> Purge Selected Card
                   </button>
                 </div>
               </div>
@@ -641,60 +667,60 @@ export function LogicMapper() {
 
             {/* If an Edge is selected */}
             {selectedEdgeId && !selectedNodeId && (
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-2">Arrow Label</h3>
+              <div className="space-y-6 animate-in fade-in slide-in-from-right duration-200">
+                <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl shadow-xs">
+                  <h3 className="text-[10px] uppercase font-bold tracking-widest text-slate-500 mb-2 font-mono">Arrow Label</h3>
                   <input
                     type="text"
                     value={edges.find(e => e.id === selectedEdgeId)?.label || ''}
                     onChange={(e) => updateSelectedEdge({ label: e.target.value })}
                     placeholder="e.g. Yes, No, Sync"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 outline-none focus:border-indigo-400 focus:bg-white text-sm transition-all shadow-inner font-bold"
+                    className="w-full bg-white border border-slate-200 rounded-lg p-2.5 outline-none focus:border-indigo-400 text-xs font-bold transition-all shadow-sm"
                   />
                 </div>
 
-                <div>
-                  <h3 className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-2">Animation Effect</h3>
+                <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl shadow-xs">
+                  <h3 className="text-[10px] uppercase font-bold tracking-widest text-slate-500 mb-2 font-mono">Arrow Animation</h3>
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => updateSelectedEdge({ animated: true })}
-                      className={`p-2 rounded-xl text-xs font-bold border transition-all ${edges.find(e => e.id === selectedEdgeId)?.animated ? 'bg-indigo-600 text-white border-indigo-700 shadow-md' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'}`}
+                      className={`p-2 rounded-lg text-xs font-bold border transition-all ${edges.find(e => e.id === selectedEdgeId)?.animated ? 'bg-indigo-600 text-white border-indigo-700 shadow-sm' : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'}`}
                     >
-                      Flowing Ant line
+                      Flowing Pulse
                     </button>
                     <button
                       onClick={() => updateSelectedEdge({ animated: false })}
-                      className={`p-2 rounded-xl text-xs font-bold border transition-all ${!edges.find(e => e.id === selectedEdgeId)?.animated ? 'bg-indigo-600 text-white border-indigo-700 shadow-md' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'}`}
+                      className={`p-2 rounded-lg text-xs font-bold border transition-all ${!edges.find(e => e.id === selectedEdgeId)?.animated ? 'bg-indigo-600 text-white border-indigo-700 shadow-sm' : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'}`}
                     >
-                      Static Arrow
+                      Static Path
                     </button>
                   </div>
                 </div>
 
-                <div>
-                  <h3 className="text-xs uppercase tracking-widest text-slate-400 font-bold mb-2">Arrow Color</h3>
-                  <div className="flex gap-2">
+                <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl shadow-xs">
+                  <h3 className="text-[10px] uppercase font-bold tracking-widest text-slate-500 mb-2 font-mono">Arrow Stroke Tint</h3>
+                  <div className="flex gap-2.5 bg-white p-2.5 rounded-lg border border-slate-150">
                     {['#64748b', '#4f46e5', '#059669', '#d97706', '#e11d48'].map(col => (
                       <button
                         key={col}
                         onClick={() => updateSelectedEdge({ color: col })}
-                        className="w-6 h-6 rounded-full border border-slate-300 relative transition-transform hover:scale-110 shadow-sm shrink-0"
+                        className="w-7 h-7 rounded-full border border-slate-300 relative transition-transform hover:scale-110 shadow-xs shrink-0 flex items-center justify-center cursor-pointer"
                         style={{ backgroundColor: col }}
                       >
                         {edges.find(e => e.id === selectedEdgeId)?.color === col && (
-                          <span className="absolute inset-0.5 rounded-full border border-white"></span>
+                          <span className="w-2.5 h-2.5 rounded-full bg-white border border-slate-400"></span>
                         )}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-slate-100">
+                <div className="pt-2">
                   <button
                     onClick={handleDeleteSelected}
-                    className="w-full py-3 bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
+                    className="w-full py-3 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer hover:shadow-sm"
                   >
-                    <Trash2 className="w-3.5 h-3.5" /> Delete Selected Arrow
+                    <Trash2 className="w-3.5 h-3.5" /> Purge Selected Arrow
                   </button>
                 </div>
               </div>
@@ -702,10 +728,10 @@ export function LogicMapper() {
 
             {/* If nothing is selected */}
             {!selectedNodeId && !selectedEdgeId && (
-              <div className="text-center py-20 bg-slate-50/50 rounded-2xl border border-[#EAE6DF] border-dashed p-6">
+              <div className="text-center py-24 bg-slate-50/50 rounded-2xl border border-[#EAE6DF] border-dashed p-6 my-auto select-none">
                 <Layout className="w-10 h-10 mx-auto text-slate-300 mb-3 animate-bounce" />
-                <h4 className="text-xs font-bold text-slate-5050 uppercase tracking-widest">No Element Selected</h4>
-                <p className="text-[11px] text-slate-400 mt-2 max-w-[200px] mx-auto leading-relaxed">Click any node or link arrow line directly on the canvas to configure parameters.</p>
+                <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-[0.2em]">No Card Inspected</h4>
+                <p className="text-[11px] text-slate-400 mt-2 max-w-[200px] mx-auto leading-relaxed">Click any card node or connecting line directly on the canvas to configure parameters live.</p>
               </div>
             )}
           </div>

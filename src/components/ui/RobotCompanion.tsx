@@ -3,7 +3,7 @@ import { motion, useAnimation } from 'motion/react';
 
 export function RobotCompanion({ isActionTriggered, onFlipComplete }: { isActionTriggered?: boolean, onFlipComplete?: () => void }) {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [robotMode, setRobotMode] = useState<'sad' | 'smashing' | 'cheering'>('sad');
+  const [robotMode, setRobotMode] = useState<'happy' | 'smashing' | 'cheering'>('happy');
   
   const leftArmControls = useAnimation();
   const rightArmControls = useAnimation();
@@ -66,17 +66,16 @@ export function RobotCompanion({ isActionTriggered, onFlipComplete }: { isAction
   }, [isActionTriggered, leftArmControls, rightArmControls, wrapperControls, onFlipComplete]);
 
   // State-driven poses
-  const headRotateX = robotMode === 'sad' ? 15 - mousePosition.y * 5 : -mousePosition.y * 10;
+  const headRotateX = robotMode === 'happy' ? -mousePosition.y * 10 : -mousePosition.y * 10;
   const headRotateY = mousePosition.x * 15;
-  const headTilt = robotMode === 'sad' ? -15 : 0;
-  const leftArmRaise = robotMode === 'sad' ? 25 : (robotMode === 'cheering' ? -150 : 25);
+  const headTilt = robotMode === 'happy' ? 0 : 0;
+  const leftArmRaise = robotMode === 'happy' ? -25 : (robotMode === 'cheering' ? -150 : 25);
   
-  // Right arm rests hard left leaning on the massive button when sad (-110deg)
-  const rightArmRaise = robotMode === 'sad' ? -110 : (robotMode === 'cheering' ? 150 : -25);
+  // Clean right arm pose
+  const rightArmRaise = robotMode === 'happy' ? 25 : (robotMode === 'cheering' ? 150 : -25);
   
-  // Arm tracking mix (only track cursor subtly if not smashing, disable partially when sad to keep his arm on the button)
-  const dynamicRightArm = robotMode === 'sad' ? { rotateZ: rightArmRaise - (mousePosition.y * 5) } : { rotateZ: rightArmRaise - (mousePosition.y * 20) };
-  const dynamicLeftArm = robotMode === 'sad' ? { rotateZ: leftArmRaise + (mousePosition.y * 10) } : { rotateZ: leftArmRaise + (mousePosition.y * 20) };
+  const dynamicRightArm = robotMode === 'happy' ? { rotateZ: rightArmRaise - (mousePosition.y * 15) } : { rotateZ: rightArmRaise - (mousePosition.y * 20) };
+  const dynamicLeftArm = robotMode === 'happy' ? { rotateZ: leftArmRaise + (mousePosition.y * 15) } : { rotateZ: leftArmRaise + (mousePosition.y * 20) };
 
   return (
     <motion.div 
@@ -86,10 +85,10 @@ export function RobotCompanion({ isActionTriggered, onFlipComplete }: { isAction
       className="relative w-56 h-56 drop-shadow-[0_15px_30px_rgba(0,0,0,0.25)] z-20 cursor-grab"
       style={{ perspective: "1000px" }}
     >
-      {/* Main Wrapper (breathing sighing idle for sad) */}
+      {/* Main Wrapper (breathing sighing idle for happy) */}
       <motion.div 
-        animate={robotMode === 'sad' ? { y: [0, 8, 0] } : (robotMode === 'cheering' ? { y: [-20, 10, -20] } : { y: 0 })}
-        transition={{ duration: robotMode === 'sad' ? 4 : 0.6, repeat: Infinity, ease: "easeInOut" }}
+        animate={robotMode === 'happy' ? { y: [0, -6, 0] } : (robotMode === 'cheering' ? { y: [-20, 10, -20] } : { y: 0 })}
+        transition={{ duration: robotMode === 'happy' ? 3.5 : 0.6, repeat: Infinity, ease: "easeInOut" }}
         className="flex flex-col items-center justify-end h-full [transform-style:preserve-3d]"
       >
         {/* Head */}
@@ -108,8 +107,6 @@ export function RobotCompanion({ isActionTriggered, onFlipComplete }: { isAction
                  scale: robotMode === 'cheering' ? 1.3 : 1
                }}
              >
-                {/* Sad Droop Cutout overlaying eye */}
-                {robotMode === 'sad' && <div className="absolute top-[-2px] left-[-2px] right-[-2px] h-4 bg-gradient-to-b from-[#E8E8E8] to-[#CACACA] transform origin-top rotate-[-15deg]"></div>} 
                 {robotMode === 'cheering' && <div className="absolute inset-0 bg-[#D4AF37] opacity-40 animate-pulse"></div>}
                 <div className="absolute top-[4px] left-[5px] w-2.5 h-2.5 bg-white rounded-full"></div>
              </motion.div>
@@ -121,20 +118,18 @@ export function RobotCompanion({ isActionTriggered, onFlipComplete }: { isAction
                  scale: robotMode === 'cheering' ? 1.3 : 1
                }}
              >
-                {/* Sad Droop Cutout overlaying eye */}
-                {robotMode === 'sad' && <div className="absolute top-[-2px] left-[-2px] right-[-2px] h-4 bg-gradient-to-b from-[#E8E8E8] to-[#CACACA] transform origin-top rotate-[15deg]"></div>} 
                 {robotMode === 'cheering' && <div className="absolute inset-0 bg-[#D4AF37] opacity-40 animate-pulse"></div>}
                 <div className="absolute top-[4px] left-[5px] w-2.5 h-2.5 bg-white rounded-full"></div>
              </motion.div>
            </div>
            
-           {/* Mouth (Frown when sad, big smile when cheering, regular otherwise) */}
+           {/* Mouth (Happy smile curve) */}
            <motion.div 
              animate={
                robotMode === 'cheering' 
                  ? { width: "45px", height: "18px", borderBottomLeftRadius: "20px", borderBottomRightRadius: "20px", backgroundColor: "#1A1A1A", rotateZ: 0, marginTop: "8px" }
-                 : (robotMode === 'sad' 
-                     ? { width: "30px", height: "12px", borderBottomLeftRadius: "50%", borderBottomRightRadius: "50%", backgroundColor: "transparent", borderTopWidth: "3px", borderBottomWidth: "0px", rotateZ: 0, marginTop: "12px" } 
+                 : (robotMode === 'happy' 
+                     ? { width: "32px", height: "12px", borderBottomLeftRadius: "50%", borderBottomRightRadius: "50%", backgroundColor: "transparent", borderBottomWidth: "3px", borderTopWidth: "0px", rotateZ: 0, marginTop: "8px" } 
                      : { width: "32px", height: "12px", borderBottomLeftRadius: "50%", borderBottomRightRadius: "50%", backgroundColor: "transparent", borderBottomWidth: "3px", borderTopWidth: "0px", rotateZ: 0, marginTop: "8px" })
              }
              className={`border-[#1A1A1A] opacity-80 ${robotMode === 'cheering' ? 'border-none' : ''}`} 
@@ -166,26 +161,26 @@ export function RobotCompanion({ isActionTriggered, onFlipComplete }: { isAction
            {/* Left Arm */}
            <motion.div 
              animate={robotMode === 'smashing' ? leftArmControls : dynamicLeftArm}
-             transition={(robotMode === 'smashing' || robotMode === 'sad') ? undefined : (robotMode === 'cheering' ? { duration: 0.4, repeat: Infinity, repeatType: "reverse" } : { type: "spring", stiffness: 200, damping: 20 })}
+             transition={(robotMode === 'smashing' || robotMode === 'happy') ? undefined : (robotMode === 'cheering' ? { duration: 0.4, repeat: Infinity, repeatType: "reverse" } : { type: "spring", stiffness: 200, damping: 20 })}
              className="absolute -left-4 top-10 w-12 h-20 bg-gradient-to-br from-white to-[#E0E0E0] rounded-[2rem] border-2 border-[#F4E091] origin-top shadow-sm z-30 flex items-end justify-center pb-2"
            >
              <div className="w-7 h-7 bg-[#D0D0D0] rounded-full border border-[#C0C0C0] shadow-inner relative z-10" />
            </motion.div>
            
-           {/* Right Arm (Elbow balance deeply on button when sad) */}
+           {/* Right Arm */}
            <motion.div 
              animate={robotMode === 'smashing' ? rightArmControls : dynamicRightArm}
-             transition={(robotMode === 'smashing' || robotMode === 'sad') ? undefined : (robotMode === 'cheering' ? { duration: 0.5, repeat: Infinity, repeatType: "reverse" } : { type: "spring", stiffness: 200, damping: 20 })}
+             transition={(robotMode === 'smashing' || robotMode === 'happy') ? undefined : (robotMode === 'cheering' ? { duration: 0.5, repeat: Infinity, repeatType: "reverse" } : { type: "spring", stiffness: 200, damping: 20 })}
              className="absolute -right-4 top-10 w-12 h-20 bg-gradient-to-bl from-white to-[#E0E0E0] rounded-[2rem] border-2 border-[#F4E091] origin-top shadow-sm z-30 flex items-end justify-center pb-2"
            >
              <div className="w-7 h-7 bg-[#D0D0D0] rounded-full border border-[#C0C0C0] shadow-inner relative z-10" />
              
-             {/* Fingers (only wiggle if not smashing, and droop limp if sad) */}
+             {/* Fingers */}
              {robotMode !== 'smashing' && (
                <div className="absolute -bottom-2 left-2 flex gap-[2px]">
-                 <motion.div animate={robotMode==='sad'?{rotateZ:90}:{rotateZ: mousePosition.x * 30 + mousePosition.y * 10}} className={`w-[8px] h-3 bg-[#A0A0A0] rounded-full origin-top ${robotMode==='sad'?'mt-2':''}`} />
-                 <motion.div animate={robotMode==='sad'?{rotateZ:90}:{rotateZ: mousePosition.x * 20 - mousePosition.y * 10}} className={`w-[8px] h-4 bg-[#B0B0B0] rounded-full origin-top mt-[1px] ${robotMode==='sad'?'mt-2':''}`} />
-                 <motion.div animate={robotMode==='sad'?{rotateZ:90}:{rotateZ: mousePosition.x * 10 + mousePosition.y * 20}} className={`w-[8px] h-3 bg-[#909090] rounded-full origin-top mt-[2px] ${robotMode==='sad'?'mt-2':''}`} />
+                 <motion.div animate={{rotateZ: mousePosition.x * 20 + mousePosition.y * 10}} className="w-[8px] h-3 bg-[#A0A0A0] rounded-full origin-top" />
+                 <motion.div animate={{rotateZ: mousePosition.x * 15 - mousePosition.y * 10}} className="w-[8px] h-4 bg-[#B0B0B0] rounded-full origin-top mt-[1px]" />
+                 <motion.div animate={{rotateZ: mousePosition.x * 10 + mousePosition.y * 20}} className="w-[8px] h-3 bg-[#909090] rounded-full origin-top mt-[2px]" />
                </div>
              )}
            </motion.div>

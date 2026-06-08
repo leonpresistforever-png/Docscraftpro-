@@ -90,26 +90,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const savedDemo = localStorage.getItem('demoLogin');
-    if (savedDemo) {
-      try {
-        setUser(JSON.parse(savedDemo));
-        setLoading(false);
-        
-        // Load demo data from localStorage
-        const demoData = localStorage.getItem('demoUserData');
-        if (demoData) {
-          setUserData(JSON.parse(demoData));
-        } else {
-          setUserData({ credits: 20, subscription: 'Starter' });
-        }
-        return;
-      } catch (err) {
-        console.error("Failed to parse local demo state", err);
-        localStorage.removeItem('demoLogin');
-      }
-    }
-
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       try {
         setUser(currentUser);
@@ -145,7 +125,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!user) return;
-    if (user.uid === 'demo-123') return;
     
     // Listen to user data with error handling
     const unsubscribe = onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
@@ -165,16 +144,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   const updateUserCredits = async (addedCredits: number, subscriptionPlan?: string) => {
-    if (user?.uid === 'demo-123') {
-      const newData = { 
-        credits: (userData?.credits || 0) + addedCredits, 
-        subscription: subscriptionPlan || userData?.subscription 
-      };
-      setUserData(newData);
-      localStorage.setItem('demoUserData', JSON.stringify(newData));
-      return;
-    }
-    
     if (user) {
       const userRef = doc(db, 'users', user.uid);
       const currentCredits = userData?.credits || 0;
@@ -189,13 +158,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const consumeCredits = async (amount: number): Promise<boolean> => {
     if (!userData || userData.credits < amount) return false;
     
-    if (user?.uid === 'demo-123') {
-       const newData = { ...userData, credits: userData.credits - amount };
-       setUserData(newData);
-       localStorage.setItem('demoUserData', JSON.stringify(newData));
-       return true;
-    }
-    
     if (user) {
        const userRef = doc(db, 'users', user.uid);
        await updateDoc(userRef, { credits: userData.credits - amount, updatedAt: new Date().toISOString() });
@@ -205,9 +167,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signInAsDemo = () => {
-    const demoUser = { uid: 'demo-123', email: 'demo@example.com', displayName: 'Demo Account', photoURL: null };
-    localStorage.setItem('demoLogin', JSON.stringify(demoUser));
-    setUser(demoUser);
+    console.warn("Demo sign in is fully retired. Please authenticate with a real account.");
   };
 
   const signInWithGoogle = async () => {
@@ -258,7 +218,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
-    localStorage.removeItem('demoLogin');
     await signOut(auth);
     setUser(null);
   };

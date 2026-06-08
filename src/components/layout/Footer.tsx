@@ -62,6 +62,11 @@ export function Footer() {
                   Escalate an Issue
                 </Link>
               </li>
+              <li>
+                <Link to="/docs" className="hover:text-[#D4AF37] transition-colors text-gray-400 font-medium">
+                  Documentation
+                </Link>
+              </li>
             </ul>
           </div>
 

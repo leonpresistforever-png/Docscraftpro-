@@ -206,7 +206,7 @@ export function LandingPage() {
              initial={{ opacity: 0, scale: 0, y: 150 }}
              animate={isLoaded ? { opacity: 1, scale: 1, y: 0 } : {}}
              transition={{ type: "spring", damping: 15, delay: 0.6 }}
-             className="absolute z-40 transform translate-x-[40px] md:translate-x-[180px] -translate-y-[110px] md:-translate-y-[110px] scale-[0.85] md:scale-[1.1] origin-bottom pointer-events-auto"
+             className="absolute z-40 transform translate-x-[110px] md:translate-x-[220px] -translate-y-[120px] md:-translate-y-[110px] scale-[0.65] md:scale-[0.9] origin-bottom pointer-events-auto"
            >
              <RobotCompanion isActionTriggered={isFlipping} onFlipComplete={finishLaunch} />
            </motion.div>
@@ -267,8 +267,8 @@ export function LandingPage() {
               Tap into DocCraft Pro's robust block-based architecture via our GraphQL and REST APIs. Everything is an object, letting you sculpt documentation exactly how you need it.
             </p>
             <div className="flex gap-4">
-              <button className="bg-white text-black font-semibold px-6 py-3 rounded-full hover:bg-gray-200 transition-colors">Read Docs</button>
-              <button className="border border-gray-700 text-white font-semibold px-6 py-3 rounded-full hover:border-[#D4AF37] transition-colors">View API Reference</button>
+              <Link to="/docs" className="bg-white text-black font-semibold px-6 py-3 rounded-full hover:bg-gray-200 transition-colors">Read Docs</Link>
+              <Link to="/api" className="border border-gray-700 text-white font-semibold px-6 py-3 rounded-full hover:border-[#D4AF37] transition-colors">View API Reference</Link>
             </div>
           </div>
           <div className="bg-[#111] rounded-2xl border border-gray-800 shadow-2xl p-6 relative overflow-hidden transform lg:rotate-2 hover:rotate-0 transition-transform duration-500">
@@ -399,51 +399,10 @@ export function LandingPage() {
                <p className="text-gray-500 text-sm max-w-xs mb-8 leading-relaxed">
                  The intelligent, seamless workspace for high-velocity teams. Write down your ideas, and let our intelligence build the connections.
                </p>
-               {/* Newsletter Input */}
-               {newsletterSubscribed ? (
-                 <motion.div 
-                   initial={{ opacity: 0, scale: 0.95 }}
-                   animate={{ opacity: 1, scale: 1 }}
-                   className="bg-[#E8F5E9] border border-[#A5D6A7] rounded-2xl p-4 text-[#2E7D32] text-sm font-medium max-w-sm shadow-sm flex items-center gap-2"
-                 >
-                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-[#2E7D32] shrink-0"><polyline points="20 6 9 17 4 12"/></svg>
-                   <div>
-                     <p className="font-bold">Thanks for subscribing!</p>
-                     <p className="text-xs text-[#4CAF50] mt-0.5">Welcome to DocCraft Pro weekly updates.</p>
-                   </div>
-                 </motion.div>
-               ) : (
-                 <form 
-                   onSubmit={(e) => {
-                     e.preventDefault();
-                     if (newsletterEmail.trim() && newsletterEmail.includes('@')) {
-                       setNewsletterSubscribed(true);
-                     } else {
-                       alert('Please enter a valid email address.');
-                     }
-                   }}
-                   className="bg-[#FAF9F6] border border-[#E4DBC5] rounded-full p-1.5 flex max-w-sm focus-within:border-[#D4AF37] focus-within:ring-2 focus-within:ring-[#D4AF37]/20 transition-all font-sans"
-                 >
-                    <input 
-                      type="email" 
-                      required
-                      placeholder="Join our newsletter" 
-                      value={newsletterEmail}
-                      onChange={(e) => setNewsletterEmail(e.target.value)}
-                      className="bg-transparent border-none outline-none pl-4 text-sm w-full text-[#1a1a1a] placeholder:text-gray-400 font-sans" 
-                    />
-                    <button 
-                      type="submit"
-                      title="Subscribe to Newsletter"
-                      className="bg-[#1A1A1A] hover:bg-[#333] transition-colors text-white w-10 h-10 rounded-full flex items-center justify-center ml-2 shrink-0 animate-pulse hover:animate-none"
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-[#D4AF37]"><path d="m9 18 6-6-6-6"/></svg>
-                    </button>
-                 </form>
-               )}
-             </div>
+               /* Newsletter Removed */
+              </div>
 
-             {/* Links Columns */}
+              {/* Links Columns */}
              <div>
                <h4 className="font-bold text-[#1a1a1a] uppercase text-xs tracking-wider mb-6">Product</h4>
                <ul className="space-y-4 text-sm text-gray-500">
@@ -457,8 +416,8 @@ export function LandingPage() {
                <h4 className="font-bold text-[#1a1a1a] uppercase text-xs tracking-wider mb-6">Developers</h4>
                <ul className="space-y-4 text-sm text-gray-500">
                  <li><a href="#" className="hover:text-[#D4AF37] transition-colors">Documentation</a></li>
-                 <li><a href="#" className="hover:text-[#D4AF37] transition-colors">API Reference</a></li>
-                 <li><a href="#" className="hover:text-[#D4AF37] transition-colors">Status</a></li>
+                 
+                 
                  <li><a href="#" className="hover:text-[#D4AF37] transition-colors">GitHub Repo</a></li>
                </ul>
              </div>
@@ -468,7 +427,7 @@ export function LandingPage() {
                <ul className="space-y-4 text-sm text-gray-500">
                  <li><Link to="/about" className="hover:text-[#D4AF37] transition-colors">About</Link></li>
                  
-                 <li><Link to="/careers" className="hover:text-[#D4AF37] transition-colors">Careers</Link></li>
+                 
                  <li><Link to="/contact" className="hover:text-[#D4AF37] transition-colors">Contact</Link></li>
                </ul>
              </div>
@@ -605,17 +564,16 @@ function FloatingElements({ onExamine, onRelease }: { onExamine: (title: string,
         }}
       >
         <div className="w-full h-full bg-[#1A1A1A] p-5 rounded-[14px]">
-          <div className="flex gap-1.5 mb-4 border-b border-[#333] pb-3">
-            <div className="w-2.5 h-2.5 rounded-full bg-red-400"></div>
-            <div className="w-2.5 h-2.5 rounded-full bg-yellow-400"></div>
-            <div className="w-2.5 h-2.5 rounded-full bg-green-400"></div>
+          <div className="flex items-center justify-between mb-4 border-b border-[#332] pb-3">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+              <span className="text-[10px] font-mono text-green-400 tracking-wider font-bold">CLIENT SYNC STATE</span>
+            </div>
+            <span className="text-[8px] font-mono text-gray-500">v2.4.1</span>
           </div>
-          <div className="font-mono text-[9px] leading-[1.6]">
-             <div className="text-gray-400">import { "User" } from '@models';</div>
-             <div className="text-blue-300 mt-2">async function <span className="text-yellow-300">initDoc()</span> {"{"}</div>
-             <div className="pl-4 text-green-300">const val = await getData();</div>
-             <div className="pl-4 text-orange-300">return process(val);</div>
-             <div className="text-blue-300">{"}"}</div>
+          <div className="font-sans text-[11px] leading-relaxed text-gray-300">
+             <div className="font-bold text-white mb-1 uppercase tracking-tight">Active Collaborative Link</div>
+             <p className="text-[10px] text-gray-450">Connecting downstream references natively to prevent document schema drifts. Compiled under 1.2ms latency.</p>
           </div>
         </div>
       </motion.div>

@@ -22,7 +22,22 @@ export async function signInForGoogleForms(): Promise<string> {
   provider.addScope('https://www.googleapis.com/auth/forms.body');
   provider.addScope('https://www.googleapis.com/auth/drive.file');
   
-  const result = await signInWithPopup(auth, provider);
+  let result;
+  if (auth.currentUser) {
+    const { linkWithPopup } = await import('firebase/auth');
+    try {
+      result = await linkWithPopup(auth.currentUser, provider);
+    } catch (linkErr: any) {
+      if (linkErr.code === 'auth/credential-already-in-use') {
+        result = await signInWithPopup(auth, provider);
+      } else {
+        throw linkErr;
+      }
+    }
+  } else {
+    result = await signInWithPopup(auth, provider);
+  }
+  
   const credential = GoogleAuthProvider.credentialFromResult(result);
   const token = credential?.accessToken;
   if (!token) {

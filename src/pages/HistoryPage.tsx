@@ -38,7 +38,13 @@ export function HistoryPage() {
         // Get primary doc
         const docSnap = await getDoc(doc(db, 'documents', id));
         if (docSnap.exists()) {
-          setDocTitle(docSnap.data().title);
+          const docData = docSnap.data();
+          if (docData.ownerId !== user.uid && docData.isShared !== true) {
+            alert("Access denied: You do not have permission to view this document.");
+            navigate('/dashboard');
+            return;
+          }
+          setDocTitle(docData.title);
         }
 
         // Get snapshots

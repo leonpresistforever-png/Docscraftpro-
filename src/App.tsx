@@ -32,9 +32,11 @@ import { AboutPage } from './pages/AboutPage';
 import { IntegrationsPage } from './pages/IntegrationsPage';
 import { ChangelogPage } from './pages/ChangelogPage';
 import { FeaturesPage } from './pages/FeaturesPage';
-import { CareersPage } from './pages/CareersPage';
+
 import { ContactPage } from './pages/ContactPage';
 import { SupportFormPage } from './pages/SupportFormPage';
+
+import { DocumentationPage } from './pages/DocumentationPage';
 import { AnimatePresence, motion } from 'motion/react';
 import { InternalSecurityGate } from './components/InternalSecurityGate';
 
@@ -74,10 +76,15 @@ function AnimatedRoutes() {
         <Route path="/integrations" element={<IntegrationsPage />} />
         <Route path="/changelog" element={<ChangelogPage />} />
         <Route path="/features" element={<FeaturesPage />} />
-        <Route path="/careers" element={<CareersPage />} />
+        <Route path="/careers" element={<Navigate to="/" replace />} />
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/support-form" element={<SupportFormPage />} />
+        <Route path="/api" element={<Navigate to="/" replace />} />
+        <Route path="/api-reference" element={<Navigate to="/" replace />} />
+        <Route path="/docs" element={<DocumentationPage />} />
+        <Route path="/documentation" element={<DocumentationPage />} />
+        <Route path="/status" element={<Navigate to="/" replace />} />
         <Route path="/dashboard" element={<PageTransition><ProtectedRoute><Dashboard /></ProtectedRoute></PageTransition>} />
         <Route path="/media" element={<PageTransition><ProtectedRoute><MediaLab /></ProtectedRoute></PageTransition>} />
         <Route path="/chat" element={<PageTransition><ProtectedRoute><AiChat /></ProtectedRoute></PageTransition>} />

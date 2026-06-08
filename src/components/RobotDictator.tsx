@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Editor } from '@tiptap/react';
-import { Mic, Loader2, StopCircle, AlertCircle, Settings, X, Sparkles } from 'lucide-react';
+import { Mic, Loader2, StopCircle, AlertCircle, Settings, X, Sparkles, CheckCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { encryptData, decryptData } from '../lib/encryption';
 import { directLlmCall } from '../lib/gemini';
+import { db } from '../lib/firebase';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 interface RobotDictatorProps {
   editor: Editor | null;
@@ -15,6 +17,7 @@ interface RobotDictatorProps {
 type RobotStatus = 'idle' | 'initializing' | 'recording' | 'processing' | 'error';
 
 export function RobotDictator({ editor, onOpenVoiceDoc, localEngine, useLocalModel }: RobotDictatorProps) {
+  const { user } = useAuth();
   const [status, setStatus] = useState<RobotStatus>('idle');
   const [liveTranscript, setLiveTranscript] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -27,29 +30,72 @@ export function RobotDictator({ editor, onOpenVoiceDoc, localEngine, useLocalMod
   const stopCallbackRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
-    const storedReason = localStorage.getItem('dictator_reason_key');
-    if (storedReason) {
-      try { setReasoningKey(decryptData(storedReason)); } catch (e) { setReasoningKey(storedReason); }
-    }
-    const storedModel = localStorage.getItem('dictator_custom_model');
-    if (storedModel) {
-      setCustomModel(storedModel);
-    }
-    const storedMode = localStorage.getItem('dictator_mode');
-    if (storedMode === 'normal' || storedMode === 'ai') {
-      setDictatorMode(storedMode);
-    }
-  }, []);
+    const loadKeys = async () => {
+      const storedReason = localStorage.getItem('dictator_reason_key');
+      if (storedReason) {
+        try { setReasoningKey(decryptData(storedReason)); } catch (e) { setReasoningKey(storedReason); }
+      }
+      
+      if (user?.uid) {
+        try {
+          const secretSnap = await getDoc(doc(db, 'users', user.uid, 'config', 'dictator_key'));
+          if (secretSnap.exists() && secretSnap.data()?.key) {
+            try {
+              setReasoningKey(decryptData(secretSnap.data().key));
+            } catch (e) {
+              setReasoningKey(secretSnap.data().key);
+            }
+          }
+        } catch (e) {
+          console.warn("Could not read secure dictator key from Cloud DB:", e);
+        }
+      }
+
+      const storedModel = localStorage.getItem('dictator_custom_model');
+      if (storedModel) {
+        setCustomModel(storedModel);
+      }
+      const storedMode = localStorage.getItem('dictator_mode');
+      if (storedMode === 'normal' || storedMode === 'ai') {
+        setDictatorMode(storedMode);
+      }
+    };
+
+    loadKeys();
+  }, [user]);
 
   const handleCustomModelChange = (val: string) => {
     setCustomModel(val || "qwen-2.5-1.5b-instruct");
     localStorage.setItem('dictator_custom_model', val);
   };
 
-  const handleReasoningKeyChange = (val: string) => {
+  const handleReasoningKeyChange = async (val: string) => {
     setReasoningKey(val);
-    if (val) localStorage.setItem('dictator_reason_key', encryptData(val));
-    else localStorage.removeItem('dictator_reason_key');
+    if (val) {
+      localStorage.setItem('dictator_reason_key', encryptData(val));
+      if (user?.uid) {
+        try {
+          await setDoc(doc(db, 'users', user.uid, 'config', 'dictator_key'), {
+            key: encryptData(val),
+            updatedAt: serverTimestamp()
+          });
+        } catch (e) {
+          console.warn("Failed to store dictator key to Cloud DB:", e);
+        }
+      }
+    } else {
+      localStorage.removeItem('dictator_reason_key');
+      if (user?.uid) {
+        try {
+          await setDoc(doc(db, 'users', user.uid, 'config', 'dictator_key'), {
+            key: "",
+            updatedAt: serverTimestamp()
+          });
+        } catch (e) {
+          console.warn("Failed to delete dictator key from Cloud DB:", e);
+        }
+      }
+    }
   };
 
   const handleDictatorModeChange = (val: 'normal' | 'ai') => {
@@ -341,7 +387,7 @@ Please do the following:
         <button 
            onClick={(e) => { e.stopPropagation(); setShowSettings(!showSettings); }}
            className="absolute -top-10 right-0 z-50 p-2 bg-white/80 backdrop-blur border border-gray-200 rounded-full shadow-sm hover:bg-gray-50 transition-colors focus:outline-none cursor-pointer"
-           title="Robot Settings"
+           title="Voice to Document Text Settings"
         >
            <Settings className="w-4 h-4 text-gray-500" />
         </button>
@@ -359,12 +405,12 @@ Please do the following:
 
               <div className="text-xs font-bold text-gray-800 uppercase tracking-wider mb-1 pr-6 flex items-center gap-1.5 border-b border-gray-100 pb-1.5">
                  <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span>
-                 Robot AI Dictation Settings
+                 Voice to Document Settings
               </div>
 
               {/* Dual Mode Selector */}
               <div className="space-y-1.5">
-                 <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">Robot Operating Mode</label>
+                 <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">Voice to Document Text Mode</label>
                  <div className="grid grid-cols-2 gap-1 bg-gray-100 p-1 rounded-lg">
                     <button 
                        type="button"
@@ -394,12 +440,27 @@ Please do the following:
                  <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">AI Reasoning API Key (BYOK)</label>
                  <input 
                     type="password"
-                    placeholder="Provide your custom API key (optional)"
+                    placeholder={reasoningKey ? "••••••••••••••••" : "Provide your custom API key (optional)"}
                     value={reasoningKey}
                     onChange={(e) => handleReasoningKeyChange(e.target.value)}
                     autoComplete="off"
                     className="w-full text-xs border border-gray-200 rounded p-1.5 focus:border-blue-400 outline-none bg-gray-50/50"
                  />
+                 {reasoningKey && (
+                    <div className="flex items-center justify-between bg-blue-50 border border-blue-100 rounded p-1.5 text-[10px] text-blue-700 font-bold mt-1.5">
+                       <span className="flex items-center gap-1">
+                          <CheckCircle className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                          Secure Custom Key Loaded
+                       </span>
+                       <button 
+                          type="button"
+                          onClick={() => handleReasoningKeyChange('')}
+                          className="text-red-500 hover:text-red-700 underline text-[9px] uppercase font-bold focus:outline-none cursor-pointer"
+                       >
+                          Wipe Key
+                       </button>
+                    </div>
+                 )}
               </div>
 
               <div className="space-y-1">

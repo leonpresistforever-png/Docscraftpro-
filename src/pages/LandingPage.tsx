@@ -566,14 +566,14 @@ function FloatingElements({ onExamine, onRelease }: { onExamine: (title: string,
         <div className="w-full h-full bg-[#1A1A1A] p-5 rounded-[14px]">
           <div className="flex items-center justify-between mb-4 border-b border-[#332] pb-3">
             <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-              <span className="text-[10px] font-mono text-green-400 tracking-wider font-bold">CLIENT SYNC STATE</span>
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+              <span className="text-[10px] font-mono text-amber-400 tracking-wider font-bold">WORKSPACE DIRECTORY</span>
             </div>
-            <span className="text-[8px] font-mono text-gray-500">v2.4.1</span>
+            <span className="text-[8px] font-mono text-gray-500">v1.0.0</span>
           </div>
           <div className="font-sans text-[11px] leading-relaxed text-gray-300">
-             <div className="font-bold text-white mb-1 uppercase tracking-tight">Active Collaborative Link</div>
-             <p className="text-[10px] text-gray-450">Connecting downstream references natively to prevent document schema drifts. Compiled under 1.2ms latency.</p>
+             <div className="font-bold text-white mb-1 uppercase tracking-tight">Click on document to open the documents</div>
+             <p className="text-[10px] text-gray-400">Select any of your documents below to immediately load the visual workspace editor, write notes, draw diagrams, or export files.</p>
           </div>
         </div>
       </motion.div>

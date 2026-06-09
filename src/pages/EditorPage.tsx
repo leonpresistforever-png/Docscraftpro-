@@ -1050,6 +1050,11 @@ Requirements:
   const [lineWidth, setLineWidth] = useState(3);
   const [isDrawing, setIsDrawing] = useState(false);
 
+  // Dynamic A4 page auto-cut calculations and letter limit configurations
+  const [isCharLimitEnabled, setIsCharLimitEnabled] = useState(true);
+  const [maxPageCharCount, setMaxPageCharCount] = useState(3000); // characters per page limit recommended
+  const [dynamicPagesCount, setDynamicPagesCount] = useState(1);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ codeBlock: false, heading: { levels: [1, 2, 3, 4, 5, 6] } }),
@@ -1202,6 +1207,15 @@ Requirements:
       }
     },
   });
+
+  // Auto-counting pages based on DOM height scrollHeight dynamically
+  useEffect(() => {
+    const canvasEl = document.getElementById('editor-canvas-container');
+    if (canvasEl) {
+      const calculated = Math.max(1, Math.ceil(canvasEl.scrollHeight / 1120));
+      setDynamicPagesCount(calculated);
+    }
+  }, [editor?.getHTML()]);
 
   // Dynamic Mermaid rendering engine with infinite-loop prevention
   useEffect(() => {
@@ -1982,11 +1996,11 @@ Requirements:
               }
             `;
             parent.appendChild(styleTag);
-            parent.style.position = 'fixed';
-            parent.style.left = '0';
-            parent.style.top = '0';
-            parent.style.zIndex = '999999'; 
-            parent.style.opacity = '0.01'; 
+            parent.style.position = 'absolute';
+            parent.style.left = '-12000px';
+            parent.style.top = '-12000px';
+            parent.style.zIndex = '-99999'; 
+            parent.style.opacity = '1'; 
             parent.style.pointerEvents = 'none';
             parent.style.width = '800px';
             
@@ -2116,10 +2130,10 @@ Requirements:
             const styleTag = document.createElement('style');
             styleTag.innerHTML = `.pdf-export-parent, .pdf-export-parent * { color: #000000 !important; background-color: transparent !important; text-shadow: none !important; box-shadow: none !important; } .pdf-export-parent h1, .pdf-export-parent h2, .pdf-export-parent h3, .pdf-export-parent h4, .pdf-export-parent p, .pdf-export-parent li, .pdf-export-parent span, .pdf-export-parent strong, .pdf-export-parent label, .pdf-export-parent div, .pdf-export-parent pre, .pdf-export-parent code { color: #111111 !important; } .pdf-export-parent table, .pdf-export-parent th, .pdf-export-parent td { border: 1px solid #cccccc !important; color: #111111 !important; background-color: #ffffff !important; } .pdf-export-parent a { color: #2563eb !important; text-decoration: underline !important; } .pdf-export-parent .page-break-divider { page-break-after: always !important; page-break-inside: avoid !important; height: 0 !important; border: none !important; margin: 0 !important; padding: 0 !important; visibility: hidden !important; }`;
             parent.appendChild(styleTag);
-                parent.style.position = 'fixed';
-                parent.style.left = '0';
-                parent.style.top = '0';
-                parent.style.zIndex = '999999'; parent.style.opacity = '0.01'; parent.style.pointerEvents = 'none';
+                parent.style.position = 'absolute';
+                parent.style.left = '-12000px';
+                parent.style.top = '-12000px';
+                parent.style.zIndex = '-99999'; parent.style.opacity = '1'; parent.style.pointerEvents = 'none';
                 parent.style.width = '800px';
                 parent.style.padding = '40px';
                 parent.style.backgroundColor = '#ffffff';
@@ -3394,6 +3408,44 @@ Requirements:
                borderColor: DOCUMENT_THEMES[docThemeKey]?.borderValue || '#E5E7EB'
              }}
           >
+             {/* Dynamic absolute page split visual indicators */}
+             {Array.from({ length: Math.max(0, dynamicPagesCount - 1) }).map((_, idx) => {
+               const offsetTop = (idx + 1) * 1120;
+               return (
+                 <div
+                   key={idx}
+                   className="absolute left-0 right-0 border-t-2 border-dashed border-rose-300 pointer-events-none select-none print:hidden flex items-center justify-center opacity-75 hover:opacity-100 transition-opacity z-40"
+                   style={{ top: `${offsetTop}px` }}
+                   contentEditable={false}
+                 >
+                   <span className="bg-rose-50 text-rose-600 font-mono text-[9px] font-extrabold px-3 py-1 rounded-full border border-rose-200 mt-[-10px] shadow-sm flex items-center gap-1.5 animate-pulse">
+                     ✂️ PRINT PAGE {idx + 1} BOUNDARY (CUT-OFF LINE)
+                   </span>
+                 </div>
+               );
+             })}
+
+             {/* Character Overflow / Page Limit Alert */}
+             {(() => {
+               const txt = editor?.getText() || '';
+               const limit = maxPageCharCount * dynamicPagesCount;
+               if (isCharLimitEnabled && txt.length > limit) {
+                 return (
+                   <div className="absolute top-12 left-6 right-6 bg-rose-500 text-white font-mono text-xs font-bold px-4 py-2.5 rounded-lg border border-rose-600 shadow-xl flex items-center justify-between z-50 animate-bounce print:hidden mb-6" contentEditable={false}>
+                     <span className="flex items-center gap-1.5 text-left">
+                       ⚠️ PAGE OVERFLOW: Content has exceeded the recommended character capacity of your current physical pages ({limit} Ch)! Remaining text may be cut-off on print.
+                     </span>
+                     <button 
+                       onClick={() => setIsCharLimitEnabled(false)} 
+                       className="bg-rose-700 hover:bg-rose-800 px-2 py-1 rounded text-[10px] uppercase font-sans font-extrabold focus:outline-none transition-colors ml-2 shrink-0"
+                     >
+                       Disable Guard
+                     </button>
+                   </div>
+                 );
+               }
+               return null;
+             })()}
              {showRuler && (
                <>
                  {/* Horizontal Margin Ruler */}
@@ -3575,6 +3627,22 @@ Requirements:
                       <div title="Lines Count" className="flex items-center gap-1 bg-slate-50 border border-slate-100 px-2 rounded-lg py-0.5 shadow-xs">
                         <span className="text-[9px] text-slate-400 font-bold uppercase font-mono">Lines:</span>
                         <span className="text-[11px] font-bold font-mono text-emerald-600">{liveLineCount}</span>
+                      </div>
+
+                      <div title="Estimated Print Pages (A4)" className="flex items-center gap-1 bg-slate-50 border border-slate-100 px-2 rounded-lg py-0.5 shadow-xs">
+                        <span className="text-[9px] text-slate-400 font-bold uppercase font-mono">Pages:</span>
+                        <span className="text-[11px] font-bold font-mono text-teal-600">{dynamicPagesCount}</span>
+                      </div>
+
+                      <div 
+                        title="Toggle Page Character Limit Guard" 
+                        onClick={() => setIsCharLimitEnabled(!isCharLimitEnabled)}
+                        className={`flex items-center gap-1 cursor-pointer select-none border px-2 rounded-lg py-0.5 shadow-xs transition-colors ${isCharLimitEnabled ? 'bg-rose-50 border-rose-200 hover:bg-rose-100' : 'bg-slate-50 border-slate-100 hover:bg-slate-100'}`}
+                      >
+                        <span className="text-[9px] text-slate-400 font-bold uppercase font-mono">Limit Guard:</span>
+                        <span className={`text-[11px] font-bold font-mono ${isCharLimitEnabled ? 'text-rose-600' : 'text-slate-500'}`}>
+                          {isCharLimitEnabled ? `${maxPageCharCount * dynamicPagesCount} Ch` : 'Off'}
+                        </span>
                       </div>
 
                       <div title="Writing Session Duration" className="flex items-center gap-1 bg-amber-50 border border-amber-100 px-1.5 rounded-lg py-0.5 shadow-xs">

@@ -990,6 +990,7 @@ Requirements:
   const isInitialMount = useRef(true);
   const isIncomingLoadRef = useRef(false);
   const lastLoadedIdRef = useRef<string | null>(null);
+  const isDocumentLoadedRef = useRef(false);
   
   // Custom Popover States
   const [showSyntaxSlider, setShowSyntaxSlider] = useState(false);
@@ -1118,7 +1119,7 @@ Requirements:
     ],
     content: '',
     onUpdate: ({ editor }) => {
-      if (isIncomingLoadRef.current) return;
+      if (isIncomingLoadRef.current || !isDocumentLoadedRef.current) return;
       const currentId = idRef.current;
       if (!currentId || currentId === 'new') return;
       
@@ -1309,6 +1310,7 @@ Requirements:
              isIncomingLoadRef.current = true;
              editor.commands.setContent(decryptData(data.content || ''));
              isIncomingLoadRef.current = false;
+             isDocumentLoadedRef.current = true;
              
              // Check for pending custom element from Studio AFTER content is loaded
               const pendingElement = localStorage.getItem('pending_studio_element');
@@ -1398,6 +1400,7 @@ Requirements:
         }
         setSyncStatus('All changes saved');
         isInitialMount.current = false;
+        isDocumentLoadedRef.current = false;
         lastLoadedIdRef.current = id || null;
         loadOrCreateDoc();
     }
@@ -3395,35 +3398,20 @@ Requirements:
                selectedFormat === 'jpg' ? 'max-w-[1080px] aspect-[4/5] border-[2px] border-gray-300 !p-0 shadow-2xl' :
                selectedFormat === 'zip' ? 'max-w-[800px] border-[4px] border-dashed border-gray-300 bg-gray-50' :
                selectedFormat === 'html' ? 'max-w-none border-t-[32px] border-gray-800 rounded-t-xl' :
-               'max-w-[1050px] min-h-[1200px] w-[96%]',
+               'max-w-[1150px] min-h-[1400px] w-[98%]',
                dragDropEditMode && 'cursor-text ring-4 ring-blue-400 ring-offset-8 rounded-lg selection:bg-blue-300'
              )}
              style={{
                paddingLeft: selectedFormat === 'jpg' ? '0px' : (isMobileScreen ? '16px' : `${editorLeftMargin}px`),
                paddingRight: selectedFormat === 'jpg' ? '0px' : (isMobileScreen ? '16px' : `${editorRightMargin}px`),
                paddingTop: selectedFormat === 'jpg' ? '0px' : (isMobileScreen ? '24px' : `${editorVerticalMargin}px`),
-               paddingBottom: selectedFormat === 'jpg' ? '0px' : (isMobileScreen ? '24px' : `${editorVerticalMargin}px`),
+               paddingBottom: selectedFormat === 'jpg' ? '0px' : (isMobileScreen ? '16px' : `${editorVerticalMargin}px`),
                backgroundColor: DOCUMENT_THEMES[docThemeKey]?.bgValue || '#FFFFFF',
                color: DOCUMENT_THEMES[docThemeKey]?.textValue || '#111827',
                borderColor: DOCUMENT_THEMES[docThemeKey]?.borderValue || '#E5E7EB'
              }}
           >
-             {/* Dynamic absolute page split visual indicators */}
-             {Array.from({ length: Math.max(0, dynamicPagesCount - 1) }).map((_, idx) => {
-               const offsetTop = (idx + 1) * 1120;
-               return (
-                 <div
-                   key={idx}
-                   className="absolute left-0 right-0 border-t-2 border-dashed border-rose-300 pointer-events-none select-none print:hidden flex items-center justify-center opacity-75 hover:opacity-100 transition-opacity z-40"
-                   style={{ top: `${offsetTop}px` }}
-                   contentEditable={false}
-                 >
-                   <span className="bg-rose-50 text-rose-600 font-mono text-[9px] font-extrabold px-3 py-1 rounded-full border border-rose-200 mt-[-10px] shadow-sm flex items-center gap-1.5 animate-pulse">
-                     ✂️ PRINT PAGE {idx + 1} BOUNDARY (CUT-OFF LINE)
-                   </span>
-                 </div>
-               );
-             })}
+             {/* Physical page lines are internal metadata and are not drawn inside the clean canvas block */}
 
              {/* Character Overflow / Page Limit Alert */}
              {(() => {
@@ -3632,17 +3620,6 @@ Requirements:
                       <div title="Estimated Print Pages (A4)" className="flex items-center gap-1 bg-slate-50 border border-slate-100 px-2 rounded-lg py-0.5 shadow-xs">
                         <span className="text-[9px] text-slate-400 font-bold uppercase font-mono">Pages:</span>
                         <span className="text-[11px] font-bold font-mono text-teal-600">{dynamicPagesCount}</span>
-                      </div>
-
-                      <div 
-                        title="Toggle Page Character Limit Guard" 
-                        onClick={() => setIsCharLimitEnabled(!isCharLimitEnabled)}
-                        className={`flex items-center gap-1 cursor-pointer select-none border px-2 rounded-lg py-0.5 shadow-xs transition-colors ${isCharLimitEnabled ? 'bg-rose-50 border-rose-200 hover:bg-rose-100' : 'bg-slate-50 border-slate-100 hover:bg-slate-100'}`}
-                      >
-                        <span className="text-[9px] text-slate-400 font-bold uppercase font-mono">Limit Guard:</span>
-                        <span className={`text-[11px] font-bold font-mono ${isCharLimitEnabled ? 'text-rose-600' : 'text-slate-500'}`}>
-                          {isCharLimitEnabled ? `${maxPageCharCount * dynamicPagesCount} Ch` : 'Off'}
-                        </span>
                       </div>
 
                       <div title="Writing Session Duration" className="flex items-center gap-1 bg-amber-50 border border-amber-100 px-1.5 rounded-lg py-0.5 shadow-xs">

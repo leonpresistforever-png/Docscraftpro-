@@ -3,6 +3,7 @@ import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
 import { motion } from 'motion/react';
 import { Shield, Eye, Lock, FileText } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export function PrivacyPolicyPage() {
   const container = {
@@ -201,7 +202,48 @@ export function PrivacyPolicyPage() {
                   <strong>4. Disclaimer of Warranty:</strong> DocCraft Pro is provided on an "AS IS" and "AS AVAILABLE" basis without warranties of any kind, whether express or implied. We do not guarantee uninterrupted server runtimes or error-free rendering parameters.
                 </p>
                 <p>
-                  <strong>5. Contact Support:</strong> For legal disputes, compliance audits, or data deletion queries, please submit a support ticket in the support console or email our team directly at <span className="font-mono text-gray-900 font-semibold">{import.meta.env.VITE_SUPPORT_EMAIL || 'leonpresistforever@gmail.com'}</span>.
+                  <strong>5. Contact Support:</strong> For legal disputes, compliance audits, or data deletion queries, please submit a support ticket in the support console or redirect directly to our <Link to="/support-form?type=security" className="text-indigo-600 hover:underline font-mono font-bold">Compliance & Security Desk</Link>.
+                </p>
+              </div>
+            </motion.section>
+
+            {/* Early Access Beta and Free Service Pledge Callout */}
+            <motion.div 
+              variants={item} 
+              className="bg-gradient-to-br from-indigo-50 via-white to-emerald-50/50 p-6 md:p-8 rounded-3xl border border-indigo-150/80 shadow-md space-y-4 text-left"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-indigo-100/50 pb-4">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <span className="text-emerald-500 text-xl font-bold">✨</span> 100% Free Lifetime Guarantee
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    DocCraft Pro is committed to democratic, open, and fully accessible document creation tools for everyone.
+                  </p>
+                </div>
+                <div className="shrink-0 self-start sm:self-center px-4 py-2 bg-emerald-100/80 border border-emerald-200 text-emerald-800 rounded-full text-xs font-black tracking-wider uppercase select-none">
+                  100% Free Service
+                </div>
+              </div>
+
+              <div className="text-sm text-gray-650 leading-relaxed space-y-3">
+                <p>
+                  We are incredibly proud to provide a <strong>100% free toolset</strong> with zero paywalls, zero premium tiers, and zero credit limits. Your access to premium signature embedding, company stamps, PDF conversions, and high-fidelity text editors will remain fully free.
+                </p>
+                <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 text-xs text-indigo-900 leading-normal">
+                  <p className="font-bold flex items-center gap-1.5 uppercase text-indigo-950 mb-1">
+                    🚀 System Status Notice & Early Beta Access
+                  </p>
+                  Please keep in mind that DocCraft Pro is currently in <strong>early access beta</strong> under continuous improvement cycles. If you encounter any bugs, security flaws, rendering anomalies, or have feature proposals, please submit a report immediately! Your generous suggestions, debugging assistance, and comments light up the promising future of DocCraft. Thank you for your partnership!
+                </div>
+                <p className="text-xs text-gray-400 font-medium">
+                  Have feedback? Submit a report anytime on our raw <Link to="/support-form?type=feedback" className="text-indigo-600 hover:underline font-bold">Feedback Form</Link> to reach our engineering desk!
+                </p>
+              </div>
+            </motion.div>
+            <motion.section variants={item} className="hidden">
+              <div>
+                <p>
                 </p>
               </div>
             </motion.section>

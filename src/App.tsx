@@ -24,6 +24,7 @@ import { AutonomousAgentPage } from './pages/AutonomousAgentPage';
 import { LogicMapper } from './pages/LogicMapper';
 import SavedArchive from './pages/SavedArchive';
 import { SignPDFPage } from './pages/SignPDFPage';
+import { ImageTextEmbedderPage } from './pages/ImageTextEmbedderPage';
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
 import { TermsOfServicePage } from './pages/TermsOfServicePage';
 import { CompliancePage } from './pages/CompliancePage';
@@ -97,6 +98,7 @@ function AnimatedRoutes() {
         <Route path="/doc/:id/frames" element={<PageTransition><ProtectedRoute><FrameLibrary /></ProtectedRoute></PageTransition>} />
         <Route path="/doc/:id/tools/agent" element={<PageTransition><ProtectedRoute><AutonomousAgentPage /></ProtectedRoute></PageTransition>} />
         <Route path="/tools/sign-pdf" element={<PageTransition><ProtectedRoute><SignPDFPage /></ProtectedRoute></PageTransition>} />
+        <Route path="/tools/write-text-on-image" element={<PageTransition><ProtectedRoute><ImageTextEmbedderPage /></ProtectedRoute></PageTransition>} />
         <Route path="/preferences" element={<PageTransition><ProtectedRoute><PreferencesPage /></ProtectedRoute></PageTransition>} />
         <Route path="/trash" element={<PageTransition><ProtectedRoute><TrashPage /></ProtectedRoute></PageTransition>} />
         <Route path="/history/:id" element={<PageTransition><ProtectedRoute><HistoryPage /></ProtectedRoute></PageTransition>} />

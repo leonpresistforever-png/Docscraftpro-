@@ -3,21 +3,59 @@ import { Sidebar } from '../components/layout/Sidebar';
 import { 
   Settings, User, Shield, CreditCard, Zap, 
   Download, Moon, Sun, Palette, Globe, 
-  Key, Database, BarChart3, ChevronRight 
+  Key, Database, BarChart3, ChevronRight, Sparkles, Heart
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'motion/react';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, setDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import jsPDF from 'jspdf';
+import { useTheme } from '../context/ThemeContext';
+import { Link } from 'react-router-dom';
 
 export function PreferencesPage() {
   const { user, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState('appearance');
+  const { theme, setTheme, accentColor, setAccentColor } = useTheme();
+  const [profilePic, setProfilePic] = useState<string | null>(() => {
+    return localStorage.getItem('dc-profile-pic') || (user?.photoURL || null);
+  });
+
+  const handleProfilePicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target?.result as string;
+        setProfilePic(dataUrl);
+        localStorage.setItem('dc-profile-pic', dataUrl);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  const [activeTab, setActiveTab] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('tab') || 'appearance';
+  });
+  const [docCount, setDocCount] = useState<number | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchDocCount = async () => {
+      try {
+        const q = query(collection(db, 'documents'), where('ownerId', '==', user.uid));
+        const snapshot = await getDocs(q);
+        setDocCount(snapshot.size);
+      } catch (e) {
+        console.error("Failed to fetch doc count:", e);
+        setDocCount(0);
+      }
+    };
+    fetchDocCount();
+  }, [user]);
 
   const tabs = [
     { id: 'appearance', label: 'Appearance', icon: <Palette className="w-4 h-4" /> },
@@ -157,18 +195,44 @@ export function PreferencesPage() {
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-2xl border border-dc-border p-8 shadow-sm space-y-8">
                   <div>
                     <h2 className="text-lg font-bold mb-4">Theme Settings</h2>
-                    <div className="grid grid-cols-2 gap-4">
-                      <button className="flex flex-col items-center gap-3 p-4 rounded-xl border-2 border-dc-gold bg-yellow-50/50">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* Light Theme */}
+                      <button 
+                        onClick={() => setTheme('light')}
+                        className={`flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all text-left w-full ${
+                          theme === 'light' || !theme ? 'border-dc-gold bg-yellow-50/50 scale-[1.02]' : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
                         <div className="w-full aspect-video bg-white rounded-lg border border-gray-200 shadow-sm flex items-center justify-center">
                           <Sun className="w-8 h-8 text-dc-gold" />
                         </div>
-                        <span className="text-sm font-bold">Light Mode</span>
+                        <span className="text-sm font-bold text-gray-800">Light Mode</span>
                       </button>
-                      <button className="flex flex-col items-center gap-3 p-4 rounded-xl border border-gray-100 hover:border-gray-300">
-                        <div className="w-full aspect-video bg-gray-900 rounded-lg shadow-sm flex items-center justify-center">
-                          <Moon className="w-8 h-8 text-gray-500" />
+
+                      {/* Dark Theme */}
+                      <button 
+                        onClick={() => setTheme('dark')}
+                        className={`flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all text-left w-full ${
+                          theme === 'dark' ? 'border-dc-gold bg-slate-900/30 scale-[1.02]' : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="w-full aspect-video bg-gray-950 rounded-lg border border-gray-800 shadow-sm flex items-center justify-center">
+                          <Moon className="w-8 h-8 text-indigo-400" />
                         </div>
-                        <span className="text-sm font-medium text-gray-500">Dark Mode (Coming Soon)</span>
+                        <span className="text-sm font-bold text-gray-800">Dark Mode</span>
+                      </button>
+
+                      {/* Soothing Theme */}
+                      <button 
+                        onClick={() => setTheme('soothing')}
+                        className={`flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all text-left w-full ${
+                          theme === 'soothing' ? 'border-dc-gold bg-amber-50/20 scale-[1.02]' : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="w-full aspect-video bg-[#FAF6ED] rounded-lg border border-[#E6DFD3] shadow-sm flex items-center justify-center">
+                          <Sparkles className="w-8 h-8 text-amber-600" />
+                        </div>
+                        <span className="text-sm font-bold text-gray-800">Eye Soothing Mode</span>
                       </button>
                     </div>
                   </div>
@@ -179,7 +243,10 @@ export function PreferencesPage() {
                       {['#D4AF37', '#3B82F6', '#10B981', '#EC4899', '#8B5CF6', '#1A1A1A'].map(color => (
                         <button 
                           key={color}
-                          className="w-10 h-10 rounded-full border-2 border-white shadow-sm ring-2 ring-transparent hover:ring-gray-200 transition-all"
+                          onClick={() => setAccentColor(color)}
+                          className={`w-10 h-10 rounded-full border-2 border-white shadow-sm ring-2 transition-all cursor-pointer ${
+                            accentColor === color ? 'ring-active ring-[var(--dc-gold)] scale-110' : 'ring-transparent hover:ring-gray-300'
+                          }`}
                           style={{ backgroundColor: color }}
                         />
                       ))}
@@ -194,14 +261,55 @@ export function PreferencesPage() {
                   <div>
                     <h2 className="text-lg font-bold mb-4">Account Details</h2>
                     <div className="flex items-center gap-4 mb-6">
-                      <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
-                        <User className="w-8 h-8" />
+                      <div className="relative group w-16 h-16 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center text-gray-400 border border-gray-200">
+                        {profilePic ? (
+                          <img src={profilePic} alt="Profile" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        ) : (
+                          <User className="w-8 h-8" />
+                        )}
+                        <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-[10px] text-white font-bold cursor-pointer transition-opacity">
+                          Upload
+                          <input type="file" accept="image/*" className="hidden" onChange={handleProfilePicChange} />
+                        </label>
                       </div>
                       <div>
                         <p className="font-bold">{user?.email}</p>
                         <p className="text-sm text-gray-500">Free Tier Account</p>
                       </div>
                     </div>
+
+                    {/* Account Stats Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                      <div className="p-4 rounded-xl border border-gray-100 bg-gray-50/50 flex flex-col justify-between">
+                        <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Account Created</span>
+                        <p className="text-base font-bold text-gray-800 mt-2">
+                          {user?.metadata?.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : 'June 10, 2026'}
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-xl border border-gray-100 bg-gray-50/50 flex flex-col justify-between">
+                        <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">Last Sign In</span>
+                        <p className="text-base font-bold text-gray-800 mt-2">
+                          {user?.metadata?.lastSignInTime ? new Date(user.metadata.lastSignInTime).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Just Now'}
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-xl border border-gray-100 bg-gray-50/50 flex flex-col justify-between">
+                        <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">PDFs Created</span>
+                        <p className="text-2xl font-black text-purple-600 mt-2">
+                          {docCount !== null ? docCount : '...'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Account Deletion Alert Banner */}
+                    {localStorage.getItem('dc-deletion-scheduled') === 'true' && (
+                      <div className="p-4 rounded-xl border border-red-200 bg-red-50 text-red-700 flex flex-col gap-1.5 text-xs mb-8">
+                        <p className="font-bold flex items-center gap-1.5">
+                          <Shield className="w-4 h-4 text-red-600 animate-pulse" />
+                          ⚠️ SECURITY PURGE ACTIVE: Deletion Scheduled
+                        </p>
+                        <p>Under our strict user privacy protocol, your account and 100% of your cloud database documents are queued for irreversible wipeout. Total purge will execute securely in exactly <strong>30 days</strong>. If you would like to undo this deletion, please click the "Cancel Deletion Request" button below or contact support.</p>
+                      </div>
+                    )}
                   </div>
 
                   <div className="pt-6 border-t border-gray-100">
@@ -209,13 +317,18 @@ export function PreferencesPage() {
                     <p className="text-sm text-gray-500 mb-6">Irreversible and destructive actions.</p>
                     
                     <div className="space-y-4">
+                      {/* Delete session logs */}
                       <button 
                         className="flex items-center gap-3 w-full p-4 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition-colors text-left"
                         onClick={async () => {
-                          if (window.confirm('Are you sure you want to delete all permanent sessions and local data? This cannot be undone.')) {
+                          if (window.confirm('Are you sure you want to delete all permanent sessions and local data? This will clear cookies, logs, and completely log you out.')) {
                             try {
                               localStorage.clear();
                               sessionStorage.clear();
+                              // Clear active cookies
+                              document.cookie.split(";").forEach((c) => {
+                                document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+                              });
                               await logout();
                               window.location.href = '/';
                             } catch (err) {
@@ -228,21 +341,64 @@ export function PreferencesPage() {
                         <Shield className="w-5 h-5 flex-shrink-0" />
                         <div>
                           <p className="font-bold text-sm">Delete Permanent Session</p>
-                          <p className="text-xs text-red-500 opacity-80">Clears all local storage, preferences, and permanent sessions on this device.</p>
+                          <p className="text-xs text-red-500 opacity-80">Irreversibly logs you out, clearing all cookies, tokens, logs, and session history on this device.</p>
                         </div>
                       </button>
-                      <button 
-                        className="flex items-center gap-3 w-full p-4 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition-colors text-left"
-                        onClick={() => {
-                          alert('Please contact support to completely delete your account from servers.');
-                        }}
-                      >
-                        <User className="w-5 h-5 flex-shrink-0" />
-                        <div>
-                          <p className="font-bold text-sm">Delete Account</p>
-                          <p className="text-xs text-red-500 opacity-80">Permanently delete your account and cloud data.</p>
-                        </div>
-                      </button>
+
+                      {/* Delete account */}
+                      {localStorage.getItem('dc-deletion-scheduled') === 'true' ? (
+                        <button 
+                          className="flex items-center gap-3 w-full p-4 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors text-left"
+                          onClick={async () => {
+                            if (window.confirm('Cancel account deletion request? This will keep your documents active.')) {
+                              localStorage.removeItem('dc-deletion-scheduled');
+                              if (user) {
+                                await setDoc(doc(db, 'users', user.uid), {
+                                  deletionScheduledAt: null,
+                                  deletionDaysRemaining: null
+                                }, { merge: true });
+                              }
+                              alert('Your account secure deletion request has been canceled.');
+                              window.location.reload();
+                            }
+                          }}
+                        >
+                          <User className="w-5 h-5 flex-shrink-0 text-gray-500" />
+                          <div>
+                            <p className="font-bold text-sm">Cancel Deletion Request</p>
+                            <p className="text-xs text-gray-500">Keep your documents active and abort the scheduled account purge.</p>
+                          </div>
+                        </button>
+                      ) : (
+                        <button 
+                          className="flex items-center gap-3 w-full p-4 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition-colors text-left"
+                          onClick={async () => {
+                            if (window.confirm('Are you sure you want to schedule deletion? Your account and 100% of your cloud files will be securely and permanently purged after a 30-day hold.')) {
+                              try {
+                                localStorage.setItem('dc-deletion-scheduled', 'true');
+                                if (user) {
+                                  await setDoc(doc(db, 'users', user.uid), {
+                                    deletionScheduledAt: new Date().toISOString(),
+                                    deletionDaysRemaining: 30,
+                                    email: user.email || ''
+                                  }, { merge: true });
+                                }
+                                alert('Your account deletion sequence has been scheduled. Your data will be securely purged in 30 days under our privacy terms.');
+                                window.location.reload();
+                              } catch (err: any) {
+                                console.error("Deletion schedule failed:", err);
+                                alert("Failed to schedule account deletion: " + err.message);
+                              }
+                            }
+                          }}
+                        >
+                          <User className="w-5 h-5 flex-shrink-0" />
+                          <div>
+                            <p className="font-bold text-sm">Delete Account</p>
+                            <p className="text-xs text-red-500 opacity-80">Queues your account and all owned documents for a complete database purge in exactly 30 days.</p>
+                          </div>
+                        </button>
+                      )}
                     </div>
                   </div>
                 </motion.div>

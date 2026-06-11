@@ -99,6 +99,16 @@
     --dc-gold: #D4AF37;
     --dc-gold-hover: #E5C048;
   }
+
+  [data-theme='soothing'] {
+    --dc-bg-page: #FAF6ED;
+    --dc-bg-card: #FDFBF7;
+    --dc-text: #2c251d;
+    --dc-text-muted: #7d7265;
+    --dc-border: #E6DFD3;
+    --dc-gold: #AF8E1F;
+    --dc-gold-hover: #9A7C15;
+  }
 }
 
 body {
@@ -305,60 +315,37 @@ a[href^="data:application/"],
   border: 1px solid #bfdbfe !important;
 }
 
-/* Print optimizations to hide extra components, sidebars, robot dictations, and layout margins */
+/* Print optimizations to hide extra components, sidebars, and focus only on canvas area */
 @media print {
-  /* Force A4 print defaults, clean black text and simple layout flow */
-  html, body {
-    background-color: #ffffff !important;
-    background-image: none !important;
-    color: #000000 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100% !important;
-    height: auto !important;
-    overflow: visible !important;
-    font-size: 11pt !important;
-    line-height: 1.5 !important;
-  }
-
-  /* Hide headers, sidebars, interactive components and print-hidden elements */
-  .print\:hidden,
-  header,
-  footer,
-  aside,
-  .sidebar,
-  [title*="Drag to Adjust Margins"],
-  .absolute.cursor-ew-resize,
-  .absolute.cursor-ns-resize,
-  input[type="range"] {
-    display: none !important;
+  body * {
     visibility: hidden !important;
   }
-
-  /* Reset layout of canvas to full width for normal printing flow */
-  #editor-canvas-container {
-    display: block !important;
+  
+  #editor-canvas-container,
+  #editor-canvas-container * {
     visibility: visible !important;
-    position: static !important;
+  }
+  
+  #editor-canvas-container {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
+    min-height: 0 !important;
     margin: 0 !important;
-    padding: 20px !important;
-    border: none !important;
+    padding: 20mm !important;
     box-shadow: none !important;
+    border: none !important;
     background-color: #ffffff !important;
     color: #000000 !important;
   }
 
-  /* Ensure the text content editor component itself is fully visible and rendered in solid black count */
-  .ProseMirror,
-  .ProseMirror *,
-  #editor-canvas-container * {
-    color: #000000 !important;
-    background-color: transparent !important;
-    background-image: none !important;
-    opacity: 1 !important;
-    visibility: visible !important;
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid !important;
+  }
+  p, li, tr {
+    page-break-inside: avoid !important;
   }
 }
 

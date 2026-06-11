@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { ArrowLeft, Upload, Loader2, PenTool, Type, FileImage, Download, X, Save } from 'lucide-react';
+import { ArrowLeft, Upload, Loader2, PenTool, Type, FileImage, Download, X, Save, Share2 } from 'lucide-react';
 import { Sidebar } from '../components/layout/Sidebar';
 import * as pdfjsLib from 'pdfjs-dist';
 import { PDFDocument } from 'pdf-lib';
@@ -44,6 +44,11 @@ export function SignPDFPage() {
   const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
   const [sigPosition, setSigPosition] = useState({ x: 50, y: 50 });
   const [sigSize, setSigSize] = useState({ width: 200, height: 80 });
+
+  const stampDragRef = useRef<HTMLDivElement>(null);
+  const [stampDataUrl, setStampDataUrl] = useState<string | null>(null);
+  const [stampPosition, setStampPosition] = useState({ x: 150, y: 150 });
+  const [stampSize, setStampSize] = useState({ width: 120, height: 120 });
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [pdfDimensions, setPdfDimensions] = useState({ width: 0, height: 0 });
@@ -172,8 +177,20 @@ export function SignPDFPage() {
     }
   };
 
+  const handleStampUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setStampDataUrl(event.target?.result as string);
+        setStampPosition({ x: 150, y: 150 });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const getModifiedPdfBytes = async (): Promise<Uint8Array | null> => {
-    if (!pdfBytes || !signatureDataUrl) return null;
+    if (!pdfBytes || (!signatureDataUrl && !stampDataUrl)) return null;
     setIsProcessing(true);
 
     try {
@@ -181,59 +198,7 @@ export function SignPDFPage() {
       const pages = pdfDoc.getPages();
       const pageToEdit = pages[currentPage - 1]; // 0-indexed
 
-      let processedDataUrl = signatureDataUrl;
-
-      // Always render custom signatures through an offscreen canvas to guarantee clean, standard PNG encoding
-      // and strip any complex metadata (like progressive frames or custom ICC color profiles) that crashes PDF-Lib.
-      try {
-         const img = new Image();
-         await new Promise((resolve, reject) => {
-           img.onload = resolve;
-           img.onerror = (e) => reject(new Error("Failed to load signature data URL into browser Image."));
-           img.src = signatureDataUrl;
-         });
-         const canvas = document.createElement('canvas');
-         canvas.width = img.naturalWidth || sigSize.width || 200;
-         canvas.height = img.naturalHeight || sigSize.height || 80;
-         const ctx = canvas.getContext('2d');
-         ctx?.drawImage(img, 0, 0);
-         processedDataUrl = canvas.toDataURL('image/png');
-      } catch (canvasErr: any) {
-         console.warn("Canvas pre-processing failed, using raw data url instead:", canvasErr);
-      }
-
-      // Convert data URL to buffer safely without fetch to avoid network block failures
-      let imageBytes: Uint8Array;
-      let mime = 'image/png';
-      try {
-        const arr = processedDataUrl.split(',');
-        mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
-        const bstr = atob(arr[1]);
-        let n = bstr.length;
-        imageBytes = new Uint8Array(n);
-        while (n--) {
-          imageBytes[n] = bstr.charCodeAt(n);
-        }
-      } catch (parseBase64Error: any) {
-        throw new Error("Base64 parsing failed: " + parseBase64Error.message);
-      }
-
-      let image;
-      if (mime === 'image/png') {
-        image = await pdfDoc.embedPng(imageBytes);
-      } else if (mime === 'image/jpeg' || mime === 'image/jpg') {
-        image = await pdfDoc.embedJpg(imageBytes);
-      } else {
-        alert("Unsupported signature image format: " + mime);
-        setIsProcessing(false);
-        return null;
-      }
-
       const { width: pdfPageWidth, height: pdfPageHeight } = pageToEdit.getSize();
-      
-      // Calculate position mappings
-      // React-draggable gives x,y from top-left of canvas
-      // PDF-Lib uses x,y from bottom-left of page
       const canvasEl = pdfCanvasRef.current;
       const renderedWidth = (canvasEl && canvasEl.clientWidth) || pdfDimensions.width || 1;
       const renderedHeight = (canvasEl && canvasEl.clientHeight) || pdfDimensions.height || 1;
@@ -241,25 +206,125 @@ export function SignPDFPage() {
       const scaleX = pdfPageWidth / renderedWidth;
       const scaleY = pdfPageHeight / renderedHeight;
 
-      const pdfX = sigPosition.x * scaleX;
-      // In PDF, Y is measured from the bottom
-      const pdfY = pdfPageHeight - ((sigPosition.y + sigSize.height) * scaleY);
-      
-      const pdfWidth = sigSize.width * scaleX;
-      const pdfHeight = sigSize.height * scaleY;
+      // 1. Embed Signature (if loaded)
+      if (signatureDataUrl) {
+        let processedSigUrl = signatureDataUrl;
+        try {
+           const img = new Image();
+           await new Promise((resolve, reject) => {
+             img.onload = resolve;
+             img.onerror = (e) => reject(new Error("Failed to load signature data URL into browser Image."));
+             img.src = signatureDataUrl;
+           });
+           const canvas = document.createElement('canvas');
+           canvas.width = img.naturalWidth || sigSize.width || 200;
+           canvas.height = img.naturalHeight || sigSize.height || 80;
+           const ctx = canvas.getContext('2d');
+           ctx?.drawImage(img, 0, 0);
+           processedSigUrl = canvas.toDataURL('image/png');
+        } catch (canvasErr: any) {
+           console.warn("Signature Canvas pre-processing failed, using raw data url instead:", canvasErr);
+        }
 
-      pageToEdit.drawImage(image, {
-        x: pdfX,
-        y: pdfY,
-        width: pdfWidth,
-        height: pdfHeight,
-      });
+        let sigBytes: Uint8Array;
+        let sigMime = 'image/png';
+        try {
+          const arr = processedSigUrl.split(',');
+          sigMime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
+          const bstr = atob(arr[1]);
+          let n = bstr.length;
+          sigBytes = new Uint8Array(n);
+          while (n--) {
+            sigBytes[n] = bstr.charCodeAt(n);
+          }
+        } catch (parseBase64Error: any) {
+          throw new Error("Signature Base64 parsing failed: " + parseBase64Error.message);
+        }
+
+        let sigImage;
+        if (sigMime === 'image/png') {
+          sigImage = await pdfDoc.embedPng(sigBytes);
+        } else if (sigMime === 'image/jpeg' || sigMime === 'image/jpg') {
+          sigImage = await pdfDoc.embedJpg(sigBytes);
+        } else {
+          throw new Error("Unsupported signature image format: " + sigMime);
+        }
+
+        const pdfX = sigPosition.x * scaleX;
+        const pdfY = pdfPageHeight - ((sigPosition.y + sigSize.height) * scaleY);
+        const pdfWidth = sigSize.width * scaleX;
+        const pdfHeight = sigSize.height * scaleY;
+
+        pageToEdit.drawImage(sigImage, {
+          x: pdfX,
+          y: pdfY,
+          width: pdfWidth,
+          height: pdfHeight,
+        });
+      }
+
+      // 2. Embed Stamp (if loaded)
+      if (stampDataUrl) {
+        let processedStampUrl = stampDataUrl;
+        try {
+           const img = new Image();
+           await new Promise((resolve, reject) => {
+             img.onload = resolve;
+             img.onerror = (e) => reject(new Error("Failed to load stamp data URL into browser Image."));
+             img.src = stampDataUrl;
+           });
+           const canvas = document.createElement('canvas');
+           canvas.width = img.naturalWidth || stampSize.width || 120;
+           canvas.height = img.naturalHeight || stampSize.height || 120;
+           const ctx = canvas.getContext('2d');
+           ctx?.drawImage(img, 0, 0);
+           processedStampUrl = canvas.toDataURL('image/png');
+        } catch (canvasErr: any) {
+           console.warn("Stamp Canvas pre-processing failed, using raw data url instead:", canvasErr);
+        }
+
+        let stampBytes: Uint8Array;
+        let stampMime = 'image/png';
+        try {
+          const arr = processedStampUrl.split(',');
+          stampMime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
+          const bstr = atob(arr[1]);
+          let n = bstr.length;
+          stampBytes = new Uint8Array(n);
+          while (n--) {
+            stampBytes[n] = bstr.charCodeAt(n);
+          }
+        } catch (parseBase64Error: any) {
+          throw new Error("Stamp Base64 parsing failed: " + parseBase64Error.message);
+        }
+
+        let stampImage;
+        if (stampMime === 'image/png') {
+          stampImage = await pdfDoc.embedPng(stampBytes);
+        } else if (stampMime === 'image/jpeg' || stampMime === 'image/jpg') {
+          stampImage = await pdfDoc.embedJpg(stampBytes);
+        } else {
+          throw new Error("Unsupported stamp image format: " + stampMime);
+        }
+
+        const pdfX = stampPosition.x * scaleX;
+        const pdfY = pdfPageHeight - ((stampPosition.y + stampSize.height) * scaleY);
+        const pdfWidth = stampSize.width * scaleX;
+        const pdfHeight = stampSize.height * scaleY;
+
+        pageToEdit.drawImage(stampImage, {
+          x: pdfX,
+          y: pdfY,
+          width: pdfWidth,
+          height: pdfHeight,
+        });
+      }
 
       const modifiedPdfBytes = await pdfDoc.save();
       return modifiedPdfBytes;
     } catch (err: any) {
-      console.error("Signature embedding failed:", err);
-      alert("Failed to embed signature: " + (err?.message || String(err)));
+      console.error("Embedding failed:", err);
+      alert("Failed to embed signature/stamp: " + (err?.message || String(err)));
       return null;
     } finally {
       setIsProcessing(false);
@@ -305,24 +370,27 @@ export function SignPDFPage() {
               Sign PDF
             </h1>
           </div>
-          {signatureDataUrl && (
+          {pdfFile && (
              <div className="flex items-center gap-3">
                <button 
                   onClick={handleSaveToArchive}
                   disabled={isProcessing}
-                  className="py-2 px-5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold rounded-lg shadow-sm flex items-center gap-2"
+                  className="py-2 px-4 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold rounded-lg shadow-sm flex items-center gap-2 cursor-pointer"
                >
                  {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                  Save Doc
                </button>
-               <button 
-                  onClick={handleDownload}
-                  disabled={isProcessing}
-                  className="py-2 px-5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-md flex items-center gap-2"
-               >
-                  {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                  Download Signed PDF
-               </button>
+
+               {signatureDataUrl && (
+                 <button 
+                    onClick={handleDownload}
+                    disabled={isProcessing}
+                    className="py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-md flex items-center gap-2 cursor-pointer"
+                 >
+                    {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                    Download Signed PDF
+                 </button>
+               )}
              </div>
           )}
         </header>
@@ -440,6 +508,58 @@ export function SignPDFPage() {
                             className="absolute -top-3 -right-3 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 shadow-sm"
                             onClick={() => setSignatureDataUrl(null)}
                          ><X className="w-3 h-3" /></button>
+                       </div>
+                    </Draggable>
+                  )}
+                  {stampDataUrl && (
+                    <Draggable 
+                       nodeRef={stampDragRef}
+                       bounds="parent" 
+                       defaultPosition={{ x: 150, y: 150 }} 
+                       onStop={(e, data) => setStampPosition({ x: data.x, y: data.y })}
+                    >
+                       <div 
+                          ref={stampDragRef}
+                          style={{ 
+                             width: stampSize.width, 
+                             height: stampSize.height, 
+                             border: '1px dashed #ca8a04',
+                             backgroundColor: 'rgba(234, 179, 8, 0.1)'
+                          }} 
+                          className="absolute cursor-move flex items-center justify-center group touch-none"
+                       >
+                          <img src={stampDataUrl} alt="Company Stamp" className="w-full h-full object-contain pointer-events-none" />
+                          <div 
+                             className="absolute -bottom-2 -right-2 w-4 h-4 bg-yellow-600 rounded-full cursor-se-resize shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                             onMouseDown={(e) => {
+                                e.stopPropagation();
+                                const startX = e.clientX;
+                                const startY = e.clientY;
+                                const startW = stampSize.width;
+                                const startH = stampSize.height;
+                                const doDrag = (dragEvent: MouseEvent) => {
+                                   const newW = startW + dragEvent.clientX - startX;
+                                   const newH = startH + dragEvent.clientY - startY;
+                                   setStampSize({ width: Math.max(40, newW), height: Math.max(40, newH) });
+                                };
+                                const stopDrag = () => {
+                                   document.removeEventListener('mousemove', doDrag);
+                                   document.removeEventListener('mouseup', stopDrag);
+                                };
+                                document.addEventListener('mousemove', doDrag);
+                                document.addEventListener('mouseup', stopDrag);
+                             }}
+                          />
+                          <button 
+                             className="absolute -top-3 -right-3 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 shadow-sm"
+                             onClick={() => setStampDataUrl(null)}
+                          ><X className="w-3 h-3" /></button>
+                       </div>
+                    </Draggable>
+                  )}
+                  {false && (
+                    <Draggable nodeRef={dragRef}>
+                      <div ref={dragRef}>
                       </div>
                    </Draggable>
                  )}

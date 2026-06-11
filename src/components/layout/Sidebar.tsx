@@ -33,10 +33,20 @@ export function Sidebar({ defaultCollapsed = false }: { defaultCollapsed?: boole
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [sidebarProfilePic, setSidebarProfilePic] = useState<string | null>(null);
 
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+
+  useEffect(() => {
+    setSidebarProfilePic(localStorage.getItem('dc-profile-pic'));
+    const handleFocus = () => {
+      setSidebarProfilePic(localStorage.getItem('dc-profile-pic'));
+    };
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
 
   // Auto-collapse sidebar on smaller screens
   useEffect(() => {
@@ -148,7 +158,7 @@ export function Sidebar({ defaultCollapsed = false }: { defaultCollapsed?: boole
 
   // 2. User Profile Functionality
   const handleProfileClick = () => {
-    console.log("Opening Account/Workspace Dropdown...");
+    navigate('/preferences?tab=account');
   };
 
   // 3. New Page Creation
@@ -338,7 +348,9 @@ export function Sidebar({ defaultCollapsed = false }: { defaultCollapsed?: boole
           "w-8 h-8 rounded shrink-0 border overflow-hidden flex items-center justify-center relative",
           "bg-gradient-to-br from-[#1a1a1a] to-[#333] border-black"
         )}>
-          {user?.photoURL ? (
+          {sidebarProfilePic ? (
+            <img src={sidebarProfilePic} alt="Profile" className="w-full h-full object-cover z-10" />
+          ) : user?.photoURL ? (
             <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover z-10" />
           ) : (
             <div className="text-white text-xs font-bold z-10">{user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U'}</div>

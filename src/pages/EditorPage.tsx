@@ -61,7 +61,8 @@ import { HexColorPicker } from 'react-colorful';
 
 import { RobotDictator } from '../components/RobotDictator';
 import { OfflineNotepad } from '../components/OfflineNotepad';
-import { Notebook } from 'lucide-react';
+import FrameGridSelectorModal from '../components/FrameGridSelectorModal';
+import { Notebook, Frame, Sliders, FileImage, Grid } from 'lucide-react';
 
 const sanitizeAiError = (err: any): string => {
   const errMsg = err?.message || String(err);
@@ -991,9 +992,11 @@ Requirements:
   const isIncomingLoadRef = useRef(false);
   const lastLoadedIdRef = useRef<string | null>(null);
   const isDocumentLoadedRef = useRef(false);
+  const lastLoadedUserRef = useRef<string | null>(null);
   
   // Custom Popover States
   const [showSyntaxSlider, setShowSyntaxSlider] = useState(false);
+  const [showFrameGridModal, setShowFrameGridModal] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showHighlightPicker, setShowHighlightPicker] = useState(false);
   const [showWatermarkModal, setShowWatermarkModal] = useState(false);
@@ -1025,6 +1028,8 @@ Requirements:
   const [selectedLang, setSelectedLang] = useState('Spanish');
   const drawCanvasRef = useRef<HTMLCanvasElement>(null);
   const tableImageUploadRef = useRef<HTMLInputElement>(null);
+  const [showPhotoSizerModal, setShowPhotoSizerModal] = useState(false);
+  const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState<string | null>(null);
 
   const handleTableImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1032,8 +1037,8 @@ Requirements:
       const reader = new FileReader();
       reader.onload = (event) => {
         const dataUrl = event.target?.result as string;
-        // Set image max-width for compatibility in cells
-        editor?.chain().setImage({ src: dataUrl }).run();
+        setUploadedPhotoUrl(dataUrl);
+        setShowPhotoSizerModal(true);
       };
       reader.readAsDataURL(file);
     }
@@ -1213,7 +1218,11 @@ Requirements:
   useEffect(() => {
     const canvasEl = document.getElementById('editor-canvas-container');
     if (canvasEl) {
-      const calculated = Math.max(1, Math.ceil(canvasEl.scrollHeight / 1120));
+      const contentEl = canvasEl.querySelector('.ProseMirror') as HTMLElement;
+      // Use actual text content scrollHeight, falling back to canvasEl height
+      const height = contentEl ? contentEl.scrollHeight : canvasEl.scrollHeight;
+      // We divide by an average of 1120px representing an A4 visual content height unit
+      const calculated = Math.max(1, Math.ceil(height / 1120));
       setDynamicPagesCount(calculated);
     }
   }, [editor?.getHTML()]);
@@ -1253,6 +1262,7 @@ Requirements:
   const handleDocSave = async () => {
     const activeId = idRef.current;
     if (!activeId || !editor || activeId === 'new') return;
+    if (!isDocumentLoadedRef.current) return;
     setSyncStatus('Saving...');
     try {
       await updateDoc(doc(db, 'documents', activeId), {
@@ -1394,15 +1404,21 @@ Requirements:
       }
     }
     
-    if (editor && (isInitialMount.current || id !== lastLoadedIdRef.current)) {
-        if (saveTimeoutRef.current) {
-          clearTimeout(saveTimeoutRef.current);
+    if (editor && user) {
+        const userChanged = lastLoadedUserRef.current !== user.uid;
+        const idChanged = lastLoadedIdRef.current !== id;
+        
+        if (isInitialMount.current || userChanged || idChanged) {
+            if (saveTimeoutRef.current) {
+              clearTimeout(saveTimeoutRef.current);
+            }
+            setSyncStatus('All changes saved');
+            isInitialMount.current = false;
+            isDocumentLoadedRef.current = false;
+            lastLoadedIdRef.current = id || null;
+            lastLoadedUserRef.current = user.uid;
+            loadOrCreateDoc();
         }
-        setSyncStatus('All changes saved');
-        isInitialMount.current = false;
-        isDocumentLoadedRef.current = false;
-        lastLoadedIdRef.current = id || null;
-        loadOrCreateDoc();
     }
   }, [id, user, navigate, editor]);
 
@@ -2667,8 +2683,8 @@ Requirements:
                 </div>
              </div>
              
-             <Button variant="outline" size="sm" onClick={() => setShowSyntaxSlider(true)} className="border-teal-200 hover:bg-teal-50 text-teal-700">
-               <BarChart3 className="w-4 h-4 mr-2" /> Syntax Library
+             <Button variant="outline" size="sm" onClick={() => setShowFrameGridModal(true)} className="border-emerald-250 hover:bg-emerald-50 text-emerald-700 font-bold">
+               <Grid className="w-4 h-4 mr-2 text-emerald-600" /> Frame Pixel Grid
              </Button>
 
              <Button variant="outline" size="sm" onClick={() => setShowNotepad(true)} className="border-indigo-200 hover:bg-indigo-50 text-indigo-700 font-bold">
@@ -2678,6 +2694,22 @@ Requirements:
              <Button variant="outline" size="sm" onClick={() => { setWatermarkInitialImage(undefined); setShowWatermarkModal(true); }} className="border-indigo-200 hover:bg-indigo-50 text-indigo-700">
                <ImageIcon className="w-4 h-4 mr-2" /> Watermark Maker
              </Button>
+
+             <Button 
+               variant="outline" 
+               size="sm" 
+               onClick={handleExportToGoogleSlides} 
+               disabled={isGoogleSlidesExporting}
+               className="border-orange-200 hover:bg-orange-50 text-orange-700 font-bold ml-1"
+               title={getSlidesToken() ? "Export as Google Slides" : "Connect & Export to Google Slides"}
+             >
+               {isGoogleSlidesExporting ? (
+                 <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+               ) : (
+                 <Layers className="w-4 h-4 mr-2 text-orange-500" />
+               )}
+               {isGoogleSlidesExporting ? "Exporting Slides..." : "Export Slides"}
+             </Button>
              
              <div className="relative">
                <Button variant="outline" size="sm" onClick={() => setShowExportMenu(!showExportMenu)}>
@@ -2686,6 +2718,9 @@ Requirements:
                {showExportMenu && (
                  <div className="absolute top-full right-0 mt-2 w-48 bg-white border border-gray-200 shadow-xl rounded-xl py-1 z-[90]">
                    <p className="px-4 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-50">Select Format</p>
+                   <button onClick={() => { handleExportToGoogleSlides(); setShowExportMenu(false); }} className="w-full text-left px-4 py-2 text-sm text-amber-700 hover:bg-amber-50 font-bold flex items-center gap-2">
+                     <Layers className="w-4 h-4 text-amber-500 animate-pulse" /> Google Slides Present
+                   </button>
                    <button onClick={() => { handleExport('pdf'); setShowExportMenu(false); }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
                      <Printer className="w-4 h-4 text-gray-500" /> PDF Document
                    </button>
@@ -3337,11 +3372,25 @@ Requirements:
                 <FileSpreadsheet className="w-5 h-5" />
               </button>
               <button 
-                title="Frame/Panel" 
+                title="Syntax Snippet library" 
+                onClick={() => setShowSyntaxSlider(true)} 
+                className="p-1.5 flex-shrink-0 rounded hover:bg-teal-100 text-teal-600 hover:scale-110 transition-all ml-1"
+              >
+                <Sliders className="w-5 h-5" />
+              </button>
+              <button 
+                title="Photo Frame & Layouts" 
                 onClick={() => navigate(`/doc/${id}/frames`)} 
                 className="p-1.5 flex-shrink-0 rounded hover:bg-gray-200 text-gray-600 hover:scale-110 transition-all ml-1"
               >
-                <Layout className="w-5 h-5" />
+                <Frame className="w-5 h-5" />
+              </button>
+              <button 
+                title="Image Typography (Text on Image)" 
+                onClick={() => navigate('/tools/write-text-on-image')} 
+                className="p-1.5 flex-shrink-0 rounded hover:bg-orange-100 text-orange-600 hover:scale-110 transition-all ml-1"
+              >
+                <FileImage className="w-5 h-5" />
               </button>
               <div className="relative">
                 <button 
@@ -3814,6 +3863,114 @@ Requirements:
         </div>
       </div>
 
+      {showPhotoSizerModal && uploadedPhotoUrl && (
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 shadow-2xl backdrop-blur-sm p-4">
+          <div className="bg-[#FAF9F6] border border-gray-250 shadow-2xl w-full max-w-lg rounded-2xl flex flex-col overflow-hidden relative text-left">
+            {/* Header */}
+            <div className="p-4 flex items-center justify-between border-b border-gray-200 bg-white">
+              <div className="flex items-center gap-2">
+                <div className="p-1 px-2.5 bg-indigo-600 rounded-lg text-white font-bold text-xs uppercase font-mono tracking-wider select-none">
+                  Photo Studio
+                </div>
+                <h3 className="font-bold font-serif text-lg text-gray-800">Passport & ID Sizer</h3>
+              </div>
+              <button 
+                onClick={() => {
+                  setShowPhotoSizerModal(false);
+                  setUploadedPhotoUrl(null);
+                }} 
+                className="p-1.5 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-700 transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Content body split: Preview & presets */}
+            <div className="flex-1 p-6 flex flex-col gap-6 overflow-y-auto max-h-[70vh]">
+              {/* Photo Preview Card */}
+              <div className="flex flex-col items-center justify-center bg-gray-50 p-4 border border-gray-200 rounded-xl relative">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Sized Canvas Preview</span>
+                <div className="border shadow-md bg-white p-2 border-gray-300 relative rounded">
+                  <img 
+                    src={uploadedPhotoUrl} 
+                    alt="Uploaded Sizer" 
+                    className="object-cover max-w-full"
+                    style={{ 
+                      width: '180px', 
+                      height: '180px', 
+                      maxHeight: '260px' 
+                    }} 
+                  />
+                  {/* Aspect Ratio frame guides */}
+                  <div className="absolute inset-0 border-2 border-dashed border-indigo-400/50 pointer-events-none rounded m-2 animate-pulse" />
+                </div>
+                <span className="text-[10px] text-gray-450 font-mono mt-3">Visual guide. Embed will preserve exact aspect ratio.</span>
+              </div>
+
+              {/* Presets Grid */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Select Sizing Format</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {[
+                    { name: "US Passport", desc: "For passports & visas (51x51 mm)", width: "200px", height: "200px", label: "US Preset", flag: "🇺🇸" },
+                    { name: "Schengen/Europe Passport", desc: "Common European photo (35x45 mm)", width: "140px", height: "180px", label: "EU Standard", flag: "🇪🇺" },
+                    { name: "Corporate ID / Badge", desc: "Standard wallet size (85.6x54 mm)", width: "320px", height: "200px", label: "Business ID", flag: "💳" },
+                    { name: "Driver's License ID", desc: "Official transport portrait (24x36 mm)", width: "120px", height: "180px", label: "DL Mini", flag: "🚗" },
+                    { name: "Japan Resident Card", desc: "Official residency form (30x40 mm)", width: "150px", height: "200px", label: "Japan Standard", flag: "🇯🇵" },
+                    { name: "Uncropped Original", desc: "Bypass cropping, use original shape", width: "250px", height: "auto", label: "Natural Dimensions", flag: "🖼️" }
+                  ].map((preset, index) => (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        // Apply preset directly to document!
+                        editor?.chain().insertContent({
+                          type: 'image',
+                          attrs: {
+                            src: uploadedPhotoUrl,
+                            width: preset.width,
+                            height: preset.height,
+                            isFreestyle: false
+                          }
+                        }).run();
+                        setShowPhotoSizerModal(false);
+                        setUploadedPhotoUrl(null);
+                      }}
+                      className="p-3 bg-white hover:bg-neutral-50 active:bg-neutral-100 border border-gray-200 hover:border-indigo-300 rounded-xl transition text-left flex items-start gap-2.5 focus:outline-none shadow-xs group cursor-pointer"
+                    >
+                      <div className="text-xl shrink-0 p-1.5 bg-neutral-100 group-hover:bg-indigo-50 rounded-lg group-hover:scale-105 transition-all select-none">
+                        {preset.flag}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold text-xs text-gray-800 tracking-tight block truncate">{preset.name}</span>
+                          <span className="text-[8px] font-bold font-mono bg-indigo-50/80 text-indigo-700 px-1.5 py-0.5 rounded shrink-0">{preset.label}</span>
+                        </div>
+                        <p className="text-[10px] text-gray-400 mt-0.5 leading-tight truncate">{preset.desc}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
+              <span className="text-[10px] font-mono text-gray-400 select-none">DocCraft Professional Image Sizer v2.1</span>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setShowPhotoSizerModal(false);
+                  setUploadedPhotoUrl(null);
+                }}
+                className="bg-white hover:bg-gray-50"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showDrawModal && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 shadow-2xl backdrop-blur-sm">
            <div className="bg-[#FAF9F6] border border-gray-200 shadow-2xl w-[800px] h-[600px] rounded-xl flex flex-col overflow-hidden relative">
@@ -3903,6 +4060,18 @@ Requirements:
              setShowSyntaxSlider(false);
            }
         }} 
+      />
+
+      {/* Frame Resolution & Pixel Grid Selector */}
+      <FrameGridSelectorModal
+        isOpen={showFrameGridModal}
+        onClose={() => setShowFrameGridModal(false)}
+        onApply={(htmlContent: string) => {
+           if (editor) {
+             editor.chain().focus().insertContent(htmlContent).run();
+             setShowFrameGridModal(false);
+           }
+        }}
       />
 
       {/* 🎙️ Voice Doc Creator Modal Interface */}

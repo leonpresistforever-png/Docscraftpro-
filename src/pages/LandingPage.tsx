@@ -268,7 +268,6 @@ export function LandingPage() {
             </p>
             <div className="flex gap-4">
               <Link to="/docs" className="bg-white text-black font-semibold px-6 py-3 rounded-full hover:bg-gray-200 transition-colors">Read Docs</Link>
-              <Link to="/api" className="border border-gray-700 text-white font-semibold px-6 py-3 rounded-full hover:border-[#D4AF37] transition-colors">View API Reference</Link>
             </div>
           </div>
           <div className="bg-[#111] rounded-2xl border border-gray-800 shadow-2xl p-6 relative overflow-hidden transform lg:rotate-2 hover:rotate-0 transition-transform duration-500">
@@ -399,7 +398,7 @@ export function LandingPage() {
                <p className="text-gray-500 text-sm max-w-xs mb-8 leading-relaxed">
                  The intelligent, seamless workspace for high-velocity teams. Write down your ideas, and let our intelligence build the connections.
                </p>
-               /* Newsletter Removed */
+
               </div>
 
               {/* Links Columns */}
@@ -415,10 +414,10 @@ export function LandingPage() {
              <div>
                <h4 className="font-bold text-[#1a1a1a] uppercase text-xs tracking-wider mb-6">Developers</h4>
                <ul className="space-y-4 text-sm text-gray-500">
-                 <li><a href="#" className="hover:text-[#D4AF37] transition-colors">Documentation</a></li>
+                 <li><Link to="/docs" className="hover:text-[#D4AF37] transition-colors">Documentation</Link></li>
                  
                  
-                 <li><a href="#" className="hover:text-[#D4AF37] transition-colors">GitHub Repo</a></li>
+                 <li><a href="https://github.com/google/ai-studio" target="_blank" rel="noopener noreferrer" className="hover:text-[#D4AF37] transition-colors">GitHub Repo</a></li>
                </ul>
              </div>
 

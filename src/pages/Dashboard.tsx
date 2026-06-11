@@ -117,12 +117,17 @@ export function Dashboard() {
     { name: 'Sign PDF', desc: 'Securely draw, design, and overlay legal-grade initials or signature streams.', icon: <PenTool className="w-6 h-6 text-amber-500" /> },
     { name: 'Rotate PDF', desc: 'Correct tilted page configurations with quick rotation parameters.', icon: <RotateCw className="w-6 h-6 text-pink-500" /> },
     { name: 'Add Watermark', desc: 'Incorporate continuous secure diagonal watermark lettering blocks.', icon: <Droplets className="w-6 h-6 text-blue-500" /> },
-    { name: 'Add Page Numbers', desc: 'Sequence and inject precise formatting headers automatically.', icon: <ListOrdered className="w-6 h-6 text-green-500" /> }
+    { name: 'Add Page Numbers', desc: 'Sequence and inject precise formatting headers automatically.', icon: <ListOrdered className="w-6 h-6 text-green-500" /> },
+    { name: 'Image Typography', desc: 'Write custom highly customizable text layers directly embedded onto PNG/JPG image pixels perfectly.', icon: <FileType2 className="w-6 h-6 text-orange-500" /> }
   ];
 
   const handleToolClick = (toolName: string) => {
     if (toolName === 'Sign PDF') {
       navigate('/tools/sign-pdf');
+      return;
+    }
+    if (toolName === 'Image Typography') {
+      navigate('/tools/write-text-on-image');
       return;
     }
     setWorkbenchTool(toolName as any);
@@ -363,10 +368,10 @@ export function Dashboard() {
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h2 className="text-2xl font-serif font-bold tracking-tight">Secure PDF Workbench</h2>
-                <p className="text-sm text-dc-text-muted mt-1">Convert, sign, watermark, and modify layout documents in sandbox.</p>
+                <p className="text-sm text-dc-text-muted mt-1">Convert, sign, watermark, and modify layout documents safely.</p>
               </div>
-              <span className="text-xs uppercase tracking-widest font-extrabold bg-[#FDFCF8] border border-dc-gold/40 text-dc-gold px-3 py-1 rounded-full animate-pulse">
-                Pro Tools Sandbox
+              <span className="text-xs uppercase tracking-widest font-extrabold bg-[#FDFCF8] border border-dc-gold/40 text-dc-gold px-3 py-1 rounded-full">
+                Professional Tools
               </span>
             </div>
             
@@ -477,7 +482,7 @@ export function Dashboard() {
                   </div>
                   <div>
                     <h3 className="text-base font-extrabold tracking-wide text-slate-100 uppercase font-sans">{workbenchTool}</h3>
-                    <p className="text-[10px] text-yellow-400/80 font-bold uppercase tracking-wider mt-0.5">Secure Sandbox Optimizer</p>
+                    <p className="text-[10px] text-yellow-400/80 font-bold uppercase tracking-wider mt-0.5">Secure Document Optimizer</p>
                   </div>
                 </div>
                 <button 
@@ -527,7 +532,7 @@ export function Dashboard() {
                     <div className="overflow-hidden pr-6">
                       <h4 className="font-extrabold text-sm text-slate-100 truncate">{workbenchFile.name}</h4>
                       <p className="text-[11px] font-mono text-slate-400 mt-1 uppercase">
-                        {(workbenchFile.size / (1024 * 1024)).toFixed(2)} MB • Secure Sandbox Memory
+                        {(workbenchFile.size / (1024 * 1024)).toFixed(2)} MB • Secure Document Memory
                       </p>
                     </div>
                   </div>
@@ -632,7 +637,7 @@ export function Dashboard() {
                         className="relative z-10 w-full px-5 py-3.5 bg-slate-950 font-extrabold text-white rounded-[10px] hover:bg-slate-900 cursor-pointer opacity-95 transition-all text-xs tracking-widest uppercase flex items-center justify-center gap-2"
                       >
                         <Wand2 className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                        Exhaust Secure Sandbox Process
+                        Execute Core File Process
                       </button>
                     </div>
                   )}
@@ -655,7 +660,7 @@ export function Dashboard() {
             Extracting Document Contents...
           </h3>
           <p className="text-slate-400 text-sm max-w-sm text-center font-medium leading-relaxed">
-            Please wait while Sandbox Engine parses layout structure and creates your fully editable document.
+            Please wait while the processor core parses layout structure and creates your fully editable document.
           </p>
         </div>
       )}

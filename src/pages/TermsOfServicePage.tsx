@@ -76,14 +76,25 @@ export function TermsOfServicePage() {
 
             <motion.section variants={item} className="bg-white p-7 md:p-8 rounded-2xl border border-gray-200 shadow-sm">
               <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <span className="text-indigo-600 font-serif text-lg">02.</span> Intellectual Property (IP) Rights
+                <span className="text-indigo-600 font-serif text-lg">02.</span> Clear Intellectual Property & Copyright Guidance
               </h2>
-              <p className="text-sm">
-                The total architecture, design presets, software code compilation, responsive grid structures, text databases, system icons, and original vector files housed herein remain the exclusive property of DocCraft Inc.
-              </p>
-              <p className="text-sm mt-3">
-                Users retain absolute copyright over and intellectual possession of all documents, text guides, and logic mappings they author during their active editing workspace sessions. You grant the standard server process hosting permissions solely to load and render this text temporarily for your active sessions.
-              </p>
+              <div className="space-y-3.5 text-sm">
+                <p>
+                  To clarify what <strong>copyright</strong> covers inside this workspace, we divide intellectual property into two distinct, simple categories:
+                </p>
+                <div className="pl-4 border-l-4 border-emerald-500 py-1 space-y-1.5">
+                  <p className="font-bold text-gray-900">1. Your Documents belong to You (100% User Ownership)</p>
+                  <p className="text-gray-600">
+                    You retain full, exclusive, and unrestricted copyright and intellectual possession of any files, notes, draft agreements, signed PDFs, or layouts you create or compile on this platform. DocCraft Pro claims <strong>absolutely zero ownership or copyright</strong> over your creations. Your files remain yours to download, publish, or delete.
+                  </p>
+                </div>
+                <div className="pl-4 border-l-4 border-indigo-500 py-1 space-y-1.5">
+                  <p className="font-bold text-gray-900">2. Platform Software Engine (DocCraft Assets)</p>
+                  <p className="text-gray-600">
+                    The custom-designed platform source code, compiling scripts, responsive styles, visual layout grids, icons, and logo assets are protected by standard trademark and software copyright laws. These protections exist purely to prevent replication of the Platform's core user interface and tools.
+                  </p>
+                </div>
+              </div>
             </motion.section>
 
             <motion.section variants={item} className="bg-white p-7 md:p-8 rounded-2xl border border-gray-200 shadow-sm">

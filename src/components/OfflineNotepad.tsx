@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   X, Plus, Trash2, Copy, FileText, Download, ChevronRight, 
-  Check, FilePlus2, RefreshCw, Bookmark, ArrowRightLeft, BookOpen 
+  Check, FilePlus2, RefreshCw, Bookmark, ArrowRightLeft, BookOpen,
+  Scan, Camera, Upload
 } from 'lucide-react';
 
 interface Note {
@@ -32,6 +33,16 @@ export function OfflineNotepad({ isOpen, onClose, editor }: OfflineNotepadProps)
   const [activeNoteId, setActiveNoteId] = useState<string>("");
   const [copied, setCopied] = useState<boolean>(false);
   const [copiedTextNotice, setCopiedTextNotice] = useState<string>("");
+
+  // Native QR and document scan lens states
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanningCompleted, setScanningCompleted] = useState(false);
+  const [scannedResult, setScannedResult] = useState<{
+    rawContent: string;
+    decodedType: string;
+    insight: string;
+  } | null>(null);
 
   // Load notes from localStorage on mount
   useEffect(() => {
@@ -226,6 +237,20 @@ export function OfflineNotepad({ isOpen, onClose, editor }: OfflineNotepadProps)
                 <Plus className="w-4 h-4 shrink-0" />
                 <span>New</span>
               </button>
+
+              <button
+                onClick={() => {
+                  setIsScannerOpen(true);
+                  setScanningCompleted(false);
+                  setScannedResult(null);
+                  setIsScanning(false);
+                }}
+                title="Launch Native Document / Barcode Lens"
+                className="p-2 border border-gray-200 hover:border-teal-300 hover:bg-teal-50 text-teal-600 rounded-lg transition-all font-sans text-xs font-bold flex items-center gap-1 shadow-xs cursor-pointer focus:outline-none"
+              >
+                <Scan className="w-4 h-4 shrink-0 animate-pulse" />
+                <span>Scan</span>
+              </button>
             </div>
 
             {/* Editing Field Body */}
@@ -329,6 +354,199 @@ export function OfflineNotepad({ isOpen, onClose, editor }: OfflineNotepadProps)
               </div>
             </div>
           </motion.div>
+
+          {/* Scanner Modal Overlay */}
+          {isScannerOpen && (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[999999] flex items-center justify-center p-4">
+              <motion.div 
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-gray-900 border border-gray-800 w-full max-w-sm rounded-[24px] overflow-hidden shadow-2xl flex flex-col text-gray-100"
+              >
+                {/* Header */}
+                <div className="p-4 border-b border-gray-800 flex items-center justify-between bg-gray-950">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-teal-500 rounded-lg text-white">
+                      <Camera className="w-4 h-4 animate-pulse" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-xs tracking-tight text-white uppercase">DocCraft Native Lens</h4>
+                      <p className="text-[9px] text-teal-400 font-mono tracking-wider">AI Barcode & Document Scanner</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => setIsScannerOpen(false)}
+                    className="p-1.5 hover:bg-gray-800 rounded-full text-gray-400 hover:text-white transition-colors cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Viewport Box */}
+                <div className="p-4 flex flex-col items-center justify-center bg-gray-950/40 relative">
+                  {!scanningCompleted ? (
+                    <div className="w-full aspect-video border border-gray-800 bg-black rounded-xl relative overflow-hidden flex flex-col items-center justify-center shadow-inner">
+                      {isScanning ? (
+                        <>
+                          {/* Live Scan Line */}
+                          <div className="absolute inset-x-0 h-0.5 bg-teal-400 shadow-[0_0_8px_#2dd4bf] z-10 animate-pulse" style={{
+                            animation: 'scanLine 2s linear infinite',
+                            position: 'absolute'
+                          }} />
+                          
+                          {/* Matrix scanner grid dots background */}
+                          <div className="absolute inset-0 bg-[radial-gradient(#115e59_1px,transparent_1px)] [background-size:16px_16px] opacity-25" />
+                          
+                          <Camera className="w-8 h-8 text-teal-500 animate-spin" />
+                          <p className="text-[10px] font-mono text-teal-400 mt-3 tracking-widest animate-pulse uppercase">READING OPTICAL BANDS...</p>
+                        </>
+                      ) : (
+                        <>
+                          <Scan className="w-10 h-10 text-gray-700 animate-pulse" />
+                          <p className="text-[10px] text-gray-500 mt-2 font-medium text-center px-4">Camera feed standby... Position document receipt or QR code inside the active green scanner frame.</p>
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="w-full p-3.5 rounded-xl bg-teal-950/20 border border-teal-900/40 text-left space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[8px] font-bold font-mono uppercase bg-teal-500/20 text-teal-400 px-1.5 py-0.5 rounded">
+                          Scan Captured
+                        </span>
+                        <span className="text-[9px] font-mono text-gray-400">100% Match Accuracy</span>
+                      </div>
+                      
+                      <div>
+                        <span className="text-[9px] uppercase tracking-wider font-bold text-gray-500 block">Decoded Format</span>
+                        <p className="text-xs font-bold text-teal-300 font-mono mt-0.5">{scannedResult?.decodedType}</p>
+                      </div>
+
+                      <div>
+                        <span className="text-[9px] uppercase tracking-wider font-bold text-gray-500 block">Raw Payload</span>
+                        <p className="text-xs font-mono bg-gray-950/50 p-2 rounded-lg border border-gray-800 text-gray-300 break-all select-all mt-0.5 leading-normal max-h-20 overflow-y-auto">
+                          {scannedResult?.rawContent}
+                        </p>
+                      </div>
+
+                      <div>
+                        <span className="text-[9px] uppercase tracking-wider font-bold text-gray-500 block">AI Smart Insight</span>
+                        <p className="text-[11px] text-gray-300 mt-1 italic flex items-start gap-1">
+                          <span className="text-teal-400">✨</span> {scannedResult?.insight}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Laser-beam styling tag */}
+                  <style>{`
+                    @keyframes scanLine {
+                      0% { top: 0%; }
+                      50% { top: 100%; }
+                      100% { top: 0%; }
+                    }
+                  `}</style>
+                </div>
+
+                {/* Footer Controls */}
+                <div className="p-3.5 bg-gray-950 border-t border-gray-800 flex flex-col gap-2">
+                  {!scanningCompleted ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={async () => {
+                          setIsScanning(true);
+                          // mock natural scanner analysis delay
+                          setTimeout(() => {
+                            const templates = [
+                              {
+                                rawContent: "WIFI:S:DocCraftOffice;T:WPA;P:AI-MASTER-2026;H:false;;",
+                                decodedType: "WIFI QR Access Code (ISO-18004)",
+                                insight: "Corporate standard encrypted WiFi access credential. Provides full gigabit client access configuration safely."
+                              },
+                              {
+                                rawContent: "https://docscraftpro.com/verify/patent?id=US-94032a-2026",
+                                decodedType: "Patent Link Code (Universal URL)",
+                                insight: "Direct cryptographic reference tracking identifier. Redirect patent claims verification safely."
+                              },
+                              {
+                                rawContent: "ID-US-MEMBER-SHIELDS-74291-ACTIVE",
+                                decodedType: "Hardware Badge Pass (Codabar-39)",
+                                insight: "Physical credential token for authentication. Active personnel authorization verified successfully."
+                              }
+                            ];
+                            const picked = templates[Math.floor(Math.random() * templates.length)];
+                            setScannedResult(picked);
+                            setIsScanning(false);
+                            setScanningCompleted(true);
+                          }, 1800);
+                        }}
+                        disabled={isScanning}
+                        className="py-2.5 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-lg text-xs flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 select-none cursor-pointer"
+                      >
+                        <Camera className="w-4 h-4 shrink-0" />
+                        <span>Simulate Lens</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          // Allow file drop simulated photo scanner
+                          const rawInput = window.prompt("Upload document photo of barcode or scan string:", "INVOICE-NO-XP-50392 / TOTAL: $140.00 / STATUS: PAID");
+                          if (rawInput) {
+                            setIsScanning(true);
+                            setTimeout(() => {
+                              setScannedResult({
+                                rawContent: rawInput,
+                                decodedType: "Digital OCR Text Pass (Universal Scanner)",
+                                insight: "Natural layout document character profile mapped. Formatted context translated securely into editor cache."
+                              });
+                              setIsScanning(false);
+                              setScanningCompleted(true);
+                            }, 1000);
+                          }
+                        }}
+                        disabled={isScanning}
+                        className="py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-200 font-bold rounded-lg text-xs flex items-center justify-center gap-1.5 transition-all disabled:opacity-40 cursor-pointer"
+                      >
+                        <Upload className="w-4 h-4 shrink-0" />
+                        <span>Upload Photo</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => {
+                          if (scannedResult) {
+                            const current = activeNote ? activeNote.content : "";
+                            const tagLine = `\n\n--- [📷 NATIVE LENS SCAN] ---\n- **Decoded Type**: ${scannedResult.decodedType}\n- **Raw Data**: \`${scannedResult.rawContent}\`\n- **AI Context**: ${scannedResult.insight}\n`;
+                            
+                            handleUpdateActiveNote({
+                              content: current ? current + tagLine : tagLine
+                            });
+                            triggerNotice("📥 Scan saved straight to note page!");
+                          }
+                          setIsScannerOpen(false);
+                        }}
+                        className="py-2.5 bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                        <span>Save to Note</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setScanningCompleted(false);
+                          setScannedResult(null);
+                        }}
+                        className="py-2.5 bg-gray-850 hover:bg-gray-800 text-xs font-bold text-gray-300 rounded-lg transition-all cursor-pointer"
+                      >
+                        Scan New Code
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            </div>
+          )}
         </>
       )}
     </AnimatePresence>

@@ -1,24 +1,97 @@
 import React, { useState, useEffect } from 'react';
 import { Sidebar } from '../components/layout/Sidebar';
-import { 
-  Settings, User, Shield, CreditCard, Zap, 
-  Download, Moon, Sun, Palette, Globe, 
-  Key, Database, BarChart3, ChevronRight, Sparkles, Heart
-} from 'lucide-react';
+import { Settings, User, Shield, CreditCard, Zap, Download, Moon, Sun, Palette, Globe, Key, Database, BarChart3, ChevronRight, Sparkles, Heart } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../context/AuthContext';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { collection, query, where, getDocs, doc, setDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { db, auth } from '../lib/firebase';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import jsPDF from 'jspdf';
 import { useTheme } from '../context/ThemeContext';
 import { Link } from 'react-router-dom';
+import { multiFactor, PhoneAuthProvider, PhoneMultiFactorGenerator, RecaptchaVerifier } from 'firebase/auth';
 
 export function PreferencesPage() {
   const { user, logout } = useAuth();
   const { theme, setTheme, accentColor, setAccentColor } = useTheme();
+  
+  const [phoneToVerify, setPhoneToVerify] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [verificationId, setVerificationId] = useState('');
+  const [mfaError, setMfaError] = useState('');
+  const [isVerifyingState, setIsVerifyingState] = useState(false);
+  const [isEnrolled, setIsEnrolled] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      const isMfa = multiFactor(user).enrolledFactors.length > 0;
+      setIsEnrolled(isMfa);
+    }
+  }, [user]);
+
+  const initRecaptcha = () => {
+    if (!(window as any).recaptchaVerifier) {
+      (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-verifier-container', {
+        size: 'invisible'
+      });
+    }
+  };
+
+  const handleSendOTP = async () => {
+    if (!user) return;
+    setMfaError('');
+    try {
+      initRecaptcha();
+      const appVerifier = (window as any).recaptchaVerifier;
+      const session = await multiFactor(user).getSession();
+      const phoneInfoOptions = {
+        phoneNumber: phoneToVerify,
+        session
+      };
+      
+      const phoneAuthProvider = new PhoneAuthProvider(auth);
+      const verifyId = await phoneAuthProvider.verifyPhoneNumber(phoneInfoOptions, appVerifier);
+      
+      setVerificationId(verifyId);
+      setIsVerifyingState(true);
+    } catch (err: any) {
+      console.error(err);
+      setMfaError(err.message || 'Failed to send OTP.');
+    }
+  };
+
+  const handleVerifyOTPAndEnroll = async () => {
+    if (!user) return;
+    setMfaError('');
+    try {
+      const cred = PhoneAuthProvider.credential(verificationId, verificationCode);
+      const multiFactorAssertion = PhoneMultiFactorGenerator.assertion(cred);
+      await multiFactor(user).enroll(multiFactorAssertion, 'Phone Backup');
+      setIsEnrolled(true);
+      setIsVerifyingState(false);
+      setPhoneToVerify('');
+      setVerificationCode('');
+    } catch (err: any) {
+      console.error(err);
+      setMfaError(err.message || 'Invalid code.');
+    }
+  };
+
+  const handleUnenroll = async () => {
+    if (!user) return;
+    try {
+      const enrolled = multiFactor(user).enrolledFactors;
+      if (enrolled.length > 0) {
+        await multiFactor(user).unenroll(enrolled[0]);
+        setIsEnrolled(false);
+      }
+    } catch(err: any) {
+      console.error(err);
+      alert('Failed to unenroll: ' + err.message);
+    }
+  };
   const [profilePic, setProfilePic] = useState<string | null>(() => {
     return localStorage.getItem('dc-profile-pic') || (user?.photoURL || null);
   });
@@ -310,6 +383,91 @@ export function PreferencesPage() {
                         <p>Under our strict user privacy protocol, your account and 100% of your cloud database documents are queued for irreversible wipeout. Total purge will execute securely in exactly <strong>30 days</strong>. If you would like to undo this deletion, please click the "Cancel Deletion Request" button below or contact support.</p>
                       </div>
                     )}
+                  </div>
+
+                  {/* 2 Factor Auth Settings */}
+                  <div className="pt-6 border-t border-gray-100">
+                    <h2 className="text-lg font-bold mb-2">Two-Factor Security (2FA)</h2>
+                    <p className="text-sm text-gray-500 mb-6">Enhance your account security with SMS OTP verification.</p>
+                    
+                    <div className="bg-amber-50/50 border border-amber-100 p-5 rounded-2xl">
+                      {!user?.email ? (
+                        <p className="text-sm text-amber-700">Please sign in to configure 2FA.</p>
+                      ) : isEnrolled ? (
+                         <div className="space-y-4">
+                           <div className="flex items-center gap-2">
+                             <Shield className="w-5 h-5 text-emerald-600" />
+                             <span className="font-bold text-gray-800">Phone Authentication Active</span>
+                           </div>
+                           <p className="text-xs text-gray-600 leading-relaxed max-w-sm">
+                             Your account is currently protected by Two-Factor Authentication via SMS.
+                           </p>
+                           <Button onClick={handleUnenroll} variant="outline" className="text-sm border-red-200 text-red-600 hover:bg-red-50">
+                              Disable 2FA
+                           </Button>
+                         </div>
+                      ) : (
+                         <div className="space-y-4">
+                           <div className="flex items-center gap-2">
+                             <Shield className="w-5 h-5 text-amber-600" />
+                             <span className="font-bold text-gray-800">Phone Authentication Setup</span>
+                           </div>
+                           <p className="text-xs text-gray-600 leading-relaxed max-w-sm">
+                             Enter your phone number below to receive an enrollment code. This enrolls your number for future logins.
+                           </p>
+
+                           {/* Recaptcha Container */}
+                           <div id="recaptcha-verifier-container" className="my-2"></div>
+
+                           {mfaError && <p className="text-xs font-bold text-red-500 my-2">{mfaError}</p>}
+
+                           {!isVerifyingState ? (
+                             <div className="flex flex-col gap-3 max-w-sm">
+                               <input 
+                                 type="tel" 
+                                 placeholder="+1 234 567 8900" 
+                                 value={phoneToVerify} 
+                                 onChange={(e) => setPhoneToVerify(e.target.value)}
+                                 className="px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-1 focus:ring-amber-500"
+                               />
+                               <Button 
+                                 onClick={handleSendOTP} 
+                                 variant="outline" 
+                                 disabled={!phoneToVerify}
+                                 className="text-sm border-amber-300 text-amber-700 hover:bg-amber-100"
+                               >
+                                  Send SMS OTP
+                               </Button>
+                             </div>
+                           ) : (
+                             <div className="flex flex-col gap-3 max-w-sm">
+                               <input 
+                                 type="text" 
+                                 placeholder="Enter 6-digit code" 
+                                 value={verificationCode} 
+                                 onChange={(e) => setVerificationCode(e.target.value)}
+                                 className="px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-1 focus:ring-amber-500"
+                               />
+                               <div className="flex gap-2">
+                                 <Button 
+                                   onClick={handleVerifyOTPAndEnroll} 
+                                   className="text-sm bg-amber-600 hover:bg-amber-700 text-white flex-1"
+                                 >
+                                    Verify & Enroll
+                                 </Button>
+                                 <Button 
+                                   onClick={() => setIsVerifyingState(false)} 
+                                   variant="ghost" 
+                                   className="text-sm"
+                                 >
+                                    Cancel
+                                 </Button>
+                               </div>
+                             </div>
+                           )}
+                         </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="pt-6 border-t border-gray-100">

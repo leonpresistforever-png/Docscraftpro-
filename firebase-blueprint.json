@@ -42,6 +42,16 @@
       },
       "required": ["role", "content", "timestamp"]
     },
+    "PrivacyConsent": {
+      "title": "PrivacyConsent",
+      "description": "User consent to privacy policy",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "agreedAt": { "type": "string", "format": "timestamp" }
+      },
+      "required": ["userId"]
+    },
     "User": {
       "title": "User",
       "description": "User profile with credits",
@@ -111,6 +121,10 @@
     "/inputHistory/{historyId}": {
       "schema": { "$ref": "InputHistory" },
       "description": "Input history for a user"
+    },
+    "/privacy_consents/{consentId}": {
+      "schema": { "$ref": "PrivacyConsent" },
+      "description": "Record of user accepting the privacy policy"
     },
     "/users/{userId}": {
       "schema": { "$ref": "User" },

@@ -1,11 +1,70 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
 import { motion } from 'motion/react';
-import { Shield, Eye, Lock, FileText } from 'lucide-react';
+import { Shield, Eye, Lock, FileText, CheckCircle2, ShieldCheck, UserCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { db, auth } from '../lib/firebase';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export function PrivacyPolicyPage() {
+  const [hasAgreed, setHasAgreed] = useState(false);
+  const [isConsented, setIsConsented] = useState<boolean>(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkConsent = async () => {
+      // Wait a moment for auth to initialize
+      await auth.authStateReady();
+      const user = auth.currentUser;
+      if (user) {
+        try {
+          const consentDoc = await getDoc(doc(db, 'privacy_consents', user.uid));
+          if (consentDoc.exists()) {
+            setIsConsented(true);
+          }
+        } catch (e) {
+          console.error("Error reading consent:", e);
+        }
+      } else {
+        // If not logged in, we check local storage just in case
+        const localConsent = localStorage.getItem('dc_privacy_consent_at');
+        if (localConsent) {
+          setIsConsented(true);
+        }
+      }
+      setLoading(false);
+    };
+    checkConsent();
+  }, []);
+
+  const handleRecordConsent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!hasAgreed) {
+      alert('You must check the agreement box indicating you accept these terms.');
+      return;
+    }
+
+    const user = auth.currentUser;
+    if (user) {
+      try {
+        await setDoc(doc(db, 'privacy_consents', user.uid), {
+          userId: user.uid,
+          agreedAt: serverTimestamp()
+        });
+        setIsConsented(true);
+      } catch (e) {
+        alert('Failed to save your consent. Please try again or contact support.');
+        console.error(e);
+      }
+    } else {
+      // Offline fallback
+      const nowStr = new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+      localStorage.setItem('dc_privacy_consent_at', nowStr);
+      setIsConsented(true);
+    }
+  };
+
   const container = {
     hidden: { opacity: 0 },
     show: {
@@ -241,16 +300,52 @@ export function PrivacyPolicyPage() {
                 </p>
               </div>
             </motion.div>
-            <motion.section variants={item} className="hidden">
-              <div>
-                <p>
-                </p>
-              </div>
-            </motion.section>
 
+            {isConsented && (
+               <motion.div variants={item} className="mt-8 text-center">
+                  <div className="inline-flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest text-[#AA7A00] bg-amber-50 px-4 py-2 rounded-full border border-amber-200">
+                     <CheckCircle2 className="w-4 h-4" />
+                     Consent Verified
+                  </div>
+               </motion.div>
+            )}
+            
           </div>
         </motion.div>
       </main>
+
+      {!isConsented && !loading && (
+        <motion.div
+           initial={{ y: 100, opacity: 0 }}
+           animate={{ y: 0, opacity: 1 }}
+           className="fixed bottom-0 left-0 w-full bg-white border-t border-[#E4DBC5] shadow-[0_-10px_40px_rgba(0,0,0,0.08)] z-50 p-4 md:px-8 md:py-4 flex flex-col md:flex-row items-center justify-between gap-4"
+        >
+          <div className="flex-1">
+            <h3 className="font-bold text-gray-900 text-sm mb-1">Terms & Privacy Consent</h3>
+            <p className="text-xs text-gray-600 leading-relaxed max-w-2xl">
+              Before proceeding, please review and accept our updated Privacy Policy. By clicking accept, you verify that you understand our data isolation protocols and standard limited-use API specifications.
+            </p>
+          </div>
+          <form onSubmit={handleRecordConsent} className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto mt-2 md:mt-0">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={hasAgreed}
+                onChange={(e) => setHasAgreed(e.target.checked)}
+                className="accent-[#D4AF37] focus:ring-[#D4AF37] text-[#D4AF37] w-4 h-4 cursor-pointer rounded"
+              />
+              <span className="text-xs text-stone-700 font-medium whitespace-nowrap">I have read & accept the policies.</span>
+            </label>
+            <button
+              type="submit"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#b08d2b] transition-all text-white px-5 py-2.5 rounded-xl font-bold uppercase text-[10px] tracking-widest shadow-sm active:scale-95 cursor-pointer shrink-0"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              Accept
+            </button>
+          </form>
+        </motion.div>
+      )}
 
       <Footer />
     </div>

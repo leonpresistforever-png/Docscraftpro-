@@ -417,7 +417,7 @@ export function LandingPage() {
                  <li><Link to="/docs" className="hover:text-[#D4AF37] transition-colors">Documentation</Link></li>
                  
                  
-                 <li><a href="https://github.com/google/ai-studio" target="_blank" rel="noopener noreferrer" className="hover:text-[#D4AF37] transition-colors">GitHub Repo</a></li>
+
                </ul>
              </div>
 

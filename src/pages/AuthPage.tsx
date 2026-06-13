@@ -1,16 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { VisualCaptcha } from '../components/VisualCaptcha';
+import { getMultiFactorResolver, PhoneAuthProvider, PhoneMultiFactorGenerator, RecaptchaVerifier, sendPasswordResetEmail, MultiFactorResolver } from 'firebase/auth';
+import { auth } from '../lib/firebase';
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '0x4AAAAAADITOkdYnpXv2YLs';
 
 export function AuthPage() {
-  const { user, signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
+  const { user, signInWithGoogle, signInWithFacebook, signInWithMicrosoft, signInWithEmail, signUpWithEmail } = useAuth();
   const navigate = useNavigate();
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   
   // Sign In State
   const [signInEmail, setSignInEmail] = useState('');
@@ -22,10 +25,19 @@ export function AuthPage() {
   const [signUpPassword, setSignUpPassword] = useState('');
   const [signUpConfirm, setSignUpConfirm] = useState('');
   
+  // MFA State
+  const [mfaResolver, setMfaResolver] = useState<MultiFactorResolver | null>(null);
+  const [mfaVerificationId, setMfaVerificationId] = useState('');
+  const [mfaCode, setMfaCode] = useState('');
+  const [showMfaInput, setShowMfaInput] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [isCustomCaptchaVerified, setIsCustomCaptchaVerified] = useState(false);
+  const turnstileRef = React.useRef<any>(null);
+  const turnstileSignUpRef = React.useRef<any>(null);
 
   // If user is already logged in, redirect to landing page
   useEffect(() => {
@@ -33,6 +45,32 @@ export function AuthPage() {
       navigate('/');
     }
   }, [user, navigate]);
+
+  const initRecaptchaForSignIn = () => {
+    if (!(window as any).recaptchaVerifier) {
+      (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'mfa-recaptcha-container', {
+        size: 'invisible'
+      });
+    }
+  };
+
+  const handleMfaSubmission = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!mfaResolver || !mfaCode) return;
+    setLoading(true);
+    setError('');
+    
+    try {
+      const cred = PhoneAuthProvider.credential(mfaVerificationId, mfaCode);
+      const multiFactorAssertion = PhoneMultiFactorGenerator.assertion(cred);
+      await mfaResolver.resolveSignIn(multiFactorAssertion);
+      // Wait for auth state observer to redirect
+    } catch (err: any) {
+      console.error(err);
+      setError('Invalid SMS Code.');
+      setLoading(false);
+    }
+  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,8 +93,41 @@ export function AuthPage() {
       // user effect handles redirect
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'Failed to sign in. Please check your credentials.');
-      setLoading(false);
+      if (err.code === 'auth/multi-factor-auth-required') {
+        const resolver = getMultiFactorResolver(auth, err);
+        setMfaResolver(resolver);
+        
+        // Use the first enrolled phone number
+        const phoneInfoOptions = {
+          multiFactorHint: resolver.hints[0],
+          session: resolver.session
+        };
+        
+        try {
+          initRecaptchaForSignIn();
+          const appVerifier = (window as any).recaptchaVerifier;
+          const phoneAuthProvider = new PhoneAuthProvider(auth);
+          const verificationId = await phoneAuthProvider.verifyPhoneNumber(phoneInfoOptions, appVerifier);
+          setMfaVerificationId(verificationId);
+          setShowMfaInput(true);
+        } catch (mfaErr: any) {
+             setError(mfaErr.message || 'Failed to send SMS OTP.');
+        } finally {
+             setLoading(false);
+        }
+      } else {
+        let msg = 'Failed to sign in. Please check your credentials.';
+        if (err.code === 'auth/invalid-credential') msg = 'Incorrect email or password. Please try again.';
+        else if (err.code === 'auth/user-not-found') msg = 'No account found with this email.';
+        else if (err.code === 'auth/wrong-password') msg = 'Incorrect password. Please try again.';
+        else if (err.code === 'auth/email-already-in-use') msg = 'This email is already registered. Please sign in instead.';
+        else if (err.code === 'auth/weak-password') msg = 'Password must be at least 6 characters long.';
+        else if (err.code === 'auth/invalid-email') msg = 'Please enter a valid email address.';
+        else if (err.code === 'auth/too-many-requests') msg = 'Too many login attempts. Please try again later.';
+        
+        setError(msg);
+        setLoading(false);
+      }
     }
   };
 
@@ -84,7 +155,40 @@ export function AuthPage() {
       // user effect handles redirect
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'Failed to create an account.');
+      let msg = 'Failed to create an account.';
+      if (err.code === 'auth/email-already-in-use') msg = 'This email is already registered. Please sign in instead.';
+      else if (err.code === 'auth/weak-password') msg = 'Password must be at least 6 characters long.';
+      else if (err.code === 'auth/invalid-email') msg = 'Please enter a valid email address.';
+      else if (err.code === 'auth/too-many-requests') msg = 'Too many attempts. Please try again later.';
+      else if (err.message) msg = err.message;
+      
+      setError(msg);
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!signInEmail) {
+      setError('Please type your email in the field to receive a reset link.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    setSuccessMsg('');
+    try {
+      await sendPasswordResetEmail(auth, signInEmail, {
+        url: window.location.origin + '/reset-password',
+        handleCodeInApp: false
+      });
+      setSuccessMsg('Password reset link sent to your email.');
+    } catch (err: any) {
+      let msg = 'Failed to send reset email.';
+      if (err.code === 'auth/invalid-email') msg = 'Please enter a valid email address.';
+      else if (err.code === 'auth/user-not-found') msg = 'No account found with this email.';
+      else if (err.code === 'auth/too-many-requests') msg = 'Too many requests. Please try again later.';
+      else if (err.message) msg = err.message;
+      setError(msg);
+    } finally {
       setLoading(false);
     }
   };
@@ -100,8 +204,43 @@ export function AuthPage() {
       if (captchaToken) sessionStorage.setItem('temp_cf_verified', 'true');
       if (isCustomCaptchaVerified) sessionStorage.setItem('temp_cv_verified', 'true');
       await signInWithGoogle();
-    } catch (error) {
-      console.error("Auth failed:", error);
+    } catch (error: any) {
+      console.error("Google Auth failed:", error);
+      setError(error.message || 'Failed to sign in with Google.');
+    }
+  };
+
+  const handleFacebookAuth = async () => {
+    const cfVerified = TURNSTILE_SITE_KEY ? !!captchaToken : true;
+    const cvVerified = isCustomCaptchaVerified;
+    if (!cfVerified && !cvVerified) {
+      setError('Please verify the Captcha to log in with Facebook.');
+      return;
+    }
+    try {
+      if (captchaToken) sessionStorage.setItem('temp_cf_verified', 'true');
+      if (isCustomCaptchaVerified) sessionStorage.setItem('temp_cv_verified', 'true');
+      await signInWithFacebook();
+    } catch (error: any) {
+      console.error("Facebook Auth failed:", error);
+      setError(error.message || 'Failed to sign in with Facebook.');
+    }
+  };
+
+  const handleMicrosoftAuth = async () => {
+    const cfVerified = TURNSTILE_SITE_KEY ? !!captchaToken : true;
+    const cvVerified = isCustomCaptchaVerified;
+    if (!cfVerified && !cvVerified) {
+      setError('Please verify the Captcha to log in with Microsoft.');
+      return;
+    }
+    try {
+      if (captchaToken) sessionStorage.setItem('temp_cf_verified', 'true');
+      if (isCustomCaptchaVerified) sessionStorage.setItem('temp_cv_verified', 'true');
+      await signInWithMicrosoft();
+    } catch (error: any) {
+      console.error("Microsoft Auth failed:", error);
+      setError(error.message || 'Failed to sign in with Microsoft.');
     }
   };
 
@@ -158,6 +297,11 @@ export function AuthPage() {
              {error}
            </p>
         )}
+        {successMsg && (
+           <p className="text-emerald-600 bg-emerald-50 px-4 py-2 rounded-lg text-sm mb-4 w-full text-center border border-emerald-200">
+             {successMsg}
+           </p>
+        )}
 
         {/* Flipping Form Container */}
         <div className="w-full relative perspective-[1500px]">
@@ -169,51 +313,93 @@ export function AuthPage() {
             <div className={`absolute inset-0 w-full [backface-visibility:hidden] flex flex-col items-center bg-white/80 backdrop-blur-xl border border-white p-8 rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] overflow-y-auto`}>
               <h2 className="text-2xl font-bold mb-5 text-[#1a1a1a]">Welcome Back</h2>
               
-              <form onSubmit={handleSignIn} className="w-full flex flex-col gap-3.5 mb-5">
-                <input 
-                  type="email" 
-                  placeholder="Email address"
-                  className="w-full h-12 bg-white border border-[#E0E0E0] rounded-xl px-5 text-[#1a1a1a] focus:outline-none focus:ring-2 focus:ring-[#D4AF37] transition-shadow shadow-sm text-sm"
-                  value={signInEmail}
-                  onChange={(e) => setSignInEmail(e.target.value)}
-                  required
-                />
-                <input 
-                  type="password" 
-                  placeholder="Password"
-                  className="w-full h-12 bg-white border border-[#E0E0E0] rounded-xl px-5 text-[#1a1a1a] focus:outline-none focus:ring-2 focus:ring-[#D4AF37] transition-shadow shadow-sm text-sm"
-                  value={signInPassword}
-                  onChange={(e) => setSignInPassword(e.target.value)}
-                  required
-                />
-                
-                {/* Captcha Verification */}
-                <VisualCaptcha onVerify={setIsCustomCaptchaVerified} theme="light" />
-
-                {TURNSTILE_SITE_KEY && (
-                  <div className="flex justify-center my-0.5">
-                    <Turnstile 
-                      siteKey={TURNSTILE_SITE_KEY} 
-                      onSuccess={(token) => {
-                        setCaptchaToken(token);
-                        setError('');
-                      }}
-                      onError={() => {
-                        console.warn("Turnstile failed to load or verify. Using visual fallback instead.");
-                      }}
-                      onExpire={() => setCaptchaToken(null)}
-                    />
+              {!showMfaInput ? (
+                <form onSubmit={handleSignIn} className="w-full flex flex-col gap-3.5 mb-5">
+                  <input 
+                    type="email" 
+                    placeholder="Email address"
+                    className="w-full h-12 bg-white border border-[#E0E0E0] rounded-xl px-5 text-[#1a1a1a] focus:outline-none focus:ring-2 focus:ring-[#D4AF37] transition-shadow shadow-sm text-sm"
+                    value={signInEmail}
+                    onChange={(e) => setSignInEmail(e.target.value)}
+                    required
+                  />
+                  <input 
+                    type="password" 
+                    placeholder="Password"
+                    className="w-full h-12 bg-white border border-[#E0E0E0] rounded-xl px-5 text-[#1a1a1a] focus:outline-none focus:ring-2 focus:ring-[#D4AF37] transition-shadow shadow-sm text-sm"
+                    value={signInPassword}
+                    onChange={(e) => setSignInPassword(e.target.value)}
+                    required
+                  />
+                  
+                  <div className="flex justify-end">
+                     <button type="button" onClick={handleForgotPassword} className="text-xs text-[#D4AF37] hover:underline font-bold">Forgot Password?</button>
                   </div>
-                )}
-                
-                <button 
-                  type="submit"
-                  disabled={loading}
-                  className="w-full h-12 mt-1 rounded-xl bg-gradient-to-b from-[#E6C655] to-[#B98F32] shadow-[0_6px_16px_rgba(212,175,55,0.3)] text-white font-bold text-base tracking-wide flex items-center justify-center hover:brightness-110 active:scale-[0.98] transition-all"
-                >
-                  {loading && !isSignUp ? 'Signing In...' : 'Sign In'}
-                </button>
-              </form>
+                  
+                  {/* Captcha Verification */}
+                  <VisualCaptcha onVerify={setIsCustomCaptchaVerified} theme="light" />
+
+                  {TURNSTILE_SITE_KEY && (
+                    <div className="flex justify-center my-0.5">
+                      <Turnstile 
+                        ref={turnstileRef}
+                        siteKey={TURNSTILE_SITE_KEY} 
+                        onSuccess={(token) => {
+                          setCaptchaToken(token);
+                          setError('');
+                        }}
+                        onError={() => {
+                          console.warn("Turnstile failed to load or verify. Using visual fallback instead.");
+                          turnstileRef.current?.reset();
+                        }}
+                        onExpire={() => {
+                          setCaptchaToken(null);
+                          turnstileRef.current?.reset();
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Recaptcha container for MFA */}
+                  <div id="mfa-recaptcha-container"></div>
+                  
+                  <button 
+                    type="submit"
+                    disabled={loading}
+                    className="w-full h-12 mt-1 rounded-xl bg-gradient-to-b from-[#E6C655] to-[#B98F32] shadow-[0_6px_16px_rgba(212,175,55,0.3)] text-white font-bold text-base tracking-wide flex items-center justify-center hover:brightness-110 active:scale-[0.98] transition-all"
+                  >
+                    {loading && !isSignUp ? 'Signing In...' : 'Sign In'}
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleMfaSubmission} className="w-full flex flex-col gap-3.5 mb-5">
+                  <p className="text-sm text-gray-600 text-center mb-2">
+                    Enter the 6-digit SMS verification code sent to your phone.
+                  </p>
+                  <input 
+                    type="text" 
+                    placeholder="6-digit code"
+                    className="w-full h-12 bg-white border border-[#E0E0E0] rounded-xl px-5 text-[#1a1a1a] focus:outline-none focus:ring-2 focus:ring-[#D4AF37] transition-shadow shadow-sm text-sm text-center tracking-widest text-lg font-bold"
+                    value={mfaCode}
+                    onChange={(e) => setMfaCode(e.target.value)}
+                    required
+                  />
+                  <button 
+                    type="submit"
+                    disabled={loading}
+                    className="w-full h-12 mt-1 rounded-xl bg-gradient-to-b from-[#E6C655] to-[#B98F32] shadow-[0_6px_16px_rgba(212,175,55,0.3)] text-white font-bold text-base tracking-wide flex items-center justify-center hover:brightness-110 active:scale-[0.98] transition-all"
+                  >
+                    {loading ? 'Verifying...' : 'Verify SMS Code'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setShowMfaInput(false); setMfaResolver(null); }}
+                    className="text-xs text-center text-gray-500 hover:text-gray-800 underline mt-2"
+                  >
+                     Go Back
+                  </button>
+                </form>
+              )}
 
               <div className="w-full flex items-center gap-4 mb-4">
                 <div className="flex-1 h-px bg-gray-200"></div>
@@ -226,7 +412,7 @@ export function AuthPage() {
                 <button 
                   type="button"
                   onClick={handleGoogleAuth}
-                  className="w-full h-12 bg-white border border-gray-200 rounded-xl flex items-center justify-center gap-3 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 text-sm font-bold text-gray-700"
+                  className="w-full h-11 bg-white border border-gray-200 rounded-xl flex items-center justify-center gap-3 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 text-sm font-bold text-gray-700"
                 >
                   <svg viewBox="0 0 24 24" className="w-4.5 h-4.5">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -235,6 +421,33 @@ export function AuthPage() {
                     <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                   </svg>
                   <span>Google</span>
+                </button>
+                
+                {/* Facebook Button */}
+                <button 
+                  type="button"
+                  onClick={handleFacebookAuth}
+                  className="w-full h-11 bg-[#1877F2] hover:bg-[#166FE5] border border-transparent rounded-xl flex items-center justify-center gap-3 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 text-sm font-bold text-white"
+                >
+                  <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                  </svg>
+                  <span>Facebook</span>
+                </button>
+
+                {/* Microsoft Button */}
+                <button 
+                  type="button"
+                  onClick={handleMicrosoftAuth}
+                  className="w-full h-11 bg-white border border-gray-200 rounded-xl flex items-center justify-center gap-3 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 text-sm font-bold text-gray-700"
+                >
+                  <svg viewBox="0 0 21 21" className="w-4.5 h-4.5">
+                    <path fill="#f35325" d="M1 1h9v9H1z"/>
+                    <path fill="#81bc06" d="M11 1h9v9h-9z"/>
+                    <path fill="#05a6f0" d="M1 11h9v9H1z"/>
+                    <path fill="#ffba08" d="M11 11h9v9h-9z"/>
+                  </svg>
+                  <span>Microsoft</span>
                 </button>
               </div>
 
@@ -299,13 +512,20 @@ export function AuthPage() {
                 {TURNSTILE_SITE_KEY && (
                   <div className="flex justify-center my-0.5">
                     <Turnstile 
+                      ref={turnstileSignUpRef}
                       siteKey={TURNSTILE_SITE_KEY} 
                       onSuccess={(token) => {
                         setCaptchaToken(token);
                         setError('');
                       }}
-                      onError={() => setError('Captcha verification failed.')}
-                      onExpire={() => setCaptchaToken(null)}
+                      onError={() => {
+                        setError('Captcha verification failed.')
+                        turnstileSignUpRef.current?.reset();
+                      }}
+                      onExpire={() => {
+                        setCaptchaToken(null)
+                        turnstileSignUpRef.current?.reset();
+                      }}
                       options={{ theme: 'dark' }}
                     />
                   </div>

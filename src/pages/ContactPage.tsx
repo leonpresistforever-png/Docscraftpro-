@@ -48,15 +48,10 @@ export function ContactPage() {
                   <Mail className="w-5 h-5 text-[#D4AF37]" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-sm text-gray-900">Direct Support Email</h4>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-sm text-gray-700 font-semibold">docscraftpro@gmail.com</span>
-                    <span className="text-gray-300 text-xs">|</span>
-                    <a href="mailto:docscraftpro@gmail.com?subject=DocCraft Support Inquiry" className="text-sm text-indigo-600 font-black hover:underline">
-                      mail here
-                    </a>
-                  </div>
-                  <p className="text-xs text-gray-400 mt-1">Fallback channel for file attachments or legal inquiries.</p>
+                  <h4 className="font-bold text-sm text-gray-900">Digital Support Center</h4>
+                  <p className="text-xs text-gray-500 leading-relaxed mt-1">
+                    Submit file attachments, pictures, and multi-format document packages natively using our internal ticket transmitter below. All files are encrypted up to 2.5MB.
+                  </p>
                 </div>
               </motion.div>
 

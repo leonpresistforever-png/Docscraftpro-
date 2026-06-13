@@ -100,7 +100,7 @@ export default function SavedArchive() {
                  ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                        {savedDocs.map(doc => (
-                         <div onClick={() => navigate(`/editor/${doc.id}`)} key={doc.id} className="relative group bg-white/70 backdrop-blur-md rounded-2xl p-6 border border-white/40 shadow-sm hover:shadow flex flex-col transition-all cursor-pointer">
+                         <div onClick={() => navigate(`/doc/${doc.id}`)} key={doc.id} className="relative group bg-white/70 backdrop-blur-md rounded-2xl p-6 border border-white/40 shadow-sm hover:shadow flex flex-col transition-all cursor-pointer">
                             <button 
                                onClick={(e) => handleDeleteDoc(e, doc.id)}
                                className="absolute top-4 right-4 p-2 bg-red-50 text-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-100"

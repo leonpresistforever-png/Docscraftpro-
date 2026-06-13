@@ -15,7 +15,11 @@ import {
   ArrowRight,
   Bug,
   Lightbulb,
-  ShieldAlert
+  ShieldAlert,
+  Paperclip,
+  X,
+  FileText,
+  UploadCloud
 } from 'lucide-react';
 
 type QueryType = 'bug' | 'feedback' | 'security' | 'general';
@@ -43,6 +47,39 @@ export function SupportFormPage({
     issue: '',
     category: initialType,
   });
+
+  const [attachments, setAttachments] = useState<{ name: string; type: string; size: number; dataUrl: string }[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const processFiles = (files: File[]) => {
+    files.forEach(file => {
+      if (file.size > 2.5 * 1024 * 1024) {
+        alert(`File ${file.name} is larger than 2.5MB and cannot be attached.`);
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAttachments(prev => {
+          // Prevent duplicates
+          if (prev.some(p => p.name === file.name && p.size === file.size)) return prev;
+          return [
+            ...prev,
+            {
+              name: file.name,
+              type: file.type || 'application/octet-stream',
+              size: file.size,
+              dataUrl: reader.result as string
+            }
+          ];
+        });
+      };
+      reader.onerror = () => {
+        console.error("Failed to read file", file.name);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
 
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
@@ -102,6 +139,12 @@ export function SupportFormPage({
           email: formData.email,
           category: formData.category,
           issue: formData.issue,
+          attachments: attachments.map(att => ({
+            name: att.name,
+            type: att.type,
+            size: att.size,
+            dataUrl: att.dataUrl
+          })),
           createdAt: serverTimestamp(),
           userId: user ? user.uid : 'anonymous'
         });
@@ -119,6 +162,7 @@ export function SupportFormPage({
           email: formData.email,
           category: formData.category,
           issue: formData.issue,
+          attachments: attachments.map(att => ({ name: att.name, type: att.type, size: att.size })),
           ticketDatabaseId: docIdFallback
         }),
       }).catch(err => console.warn('Internal server logging route skipped:', err));
@@ -157,11 +201,12 @@ export function SupportFormPage({
 
       setStatus('success');
       
-      // Keep email/username but clear descriptions
+      // Keep email/username but clear descriptions & attachments
       setFormData(prev => ({
         ...prev,
         issue: ''
       }));
+      setAttachments([]);
     } catch (err: any) {
       console.error('Submission error:', err);
       setStatus('error');
@@ -172,6 +217,7 @@ export function SupportFormPage({
   const handleResetForm = () => {
     setStatus('idle');
     setTicketDetails(null);
+    setAttachments([]);
   };
 
   const getPageHeaderDetails = () => {
@@ -400,6 +446,75 @@ export function SupportFormPage({
                   value={formData.issue}
                   onChange={(e) => setFormData({ ...formData, issue: e.target.value })}
                 />
+              </div>
+
+              {/* Dynamic File Attachment Drag-and-Drop Area */}
+              <div className="space-y-3">
+                <label className="block text-xs font-extrabold uppercase tracking-widest text-stone-700 font-sans">
+                  Files & Image Attachments
+                </label>
+                
+                <div
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDragging(true);
+                  }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsDragging(false);
+                    if (e.dataTransfer.files) {
+                      processFiles(Array.from(e.dataTransfer.files));
+                    }
+                  }}
+                  className={`border-2 border-dashed rounded-xl p-6 text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
+                    isDragging 
+                      ? 'border-[#D4AF37] bg-amber-50/20' 
+                      : 'border-stone-200 hover:border-stone-300 bg-[#FAF9F6]'
+                  }`}
+                  onClick={() => document.getElementById('attachments-file-input')?.click()}
+                >
+                  <input
+                    type="file"
+                    id="attachments-file-input"
+                    multiple
+                    accept=".png,.jpg,.jpeg,.gif,.pdf,.txt,.doc,.docx"
+                    className="hidden"
+                    onChange={(e) => {
+                      if (e.target.files) {
+                        processFiles(Array.from(e.target.files));
+                      }
+                    }}
+                  />
+                  <UploadCloud className="w-8 h-8 text-[#D4AF37] mb-0.5" />
+                  <p className="text-xs font-bold text-stone-700">Drag files here or click to browse</p>
+                  <p className="text-[10px] text-stone-400">Supports PNG, JPG, PDF, TXT, DOCX up to 2.5MB per file</p>
+                </div>
+
+                {/* Render Attachments Queue */}
+                {attachments.length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                    {attachments.map((att, i) => (
+                      <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-stone-50 border border-stone-200 text-xs text-stone-700">
+                        <div className="flex items-center gap-2 truncate pr-4">
+                          <Paperclip className="w-3.5 h-3.5 text-[#D4AF37] shrink-0" />
+                          <span className="truncate font-semibold">{att.name}</span>
+                          <span className="text-[10px] text-stone-400 shrink-0">({(att.size / 1024).toFixed(1)} KB)</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setAttachments(prev => prev.filter((_, idx) => idx !== i));
+                          }}
+                          className="p-1 hover:bg-stone-200 text-stone-400 hover:text-stone-600 rounded-full cursor-pointer transition-colors"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <button

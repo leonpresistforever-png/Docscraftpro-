@@ -36,6 +36,7 @@ import { FeaturesPage } from './pages/FeaturesPage';
 
 import { ContactPage } from './pages/ContactPage';
 import { SupportFormPage } from './pages/SupportFormPage';
+import { ResetPasswordPage } from './pages/ResetPasswordPage';
 
 import { DocumentationPage } from './pages/DocumentationPage';
 import { AnimatePresence, motion } from 'motion/react';
@@ -79,6 +80,7 @@ function AnimatedRoutes() {
         <Route path="/features" element={<FeaturesPage />} />
         <Route path="/careers" element={<Navigate to="/" replace />} />
         <Route path="/auth" element={<AuthPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/support-form" element={<SupportFormPage />} />
         <Route path="/api" element={<Navigate to="/" replace />} />

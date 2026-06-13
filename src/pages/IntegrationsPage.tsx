@@ -1,73 +1,251 @@
 import React, { useState, useEffect } from 'react';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
+import { useAuth } from '../context/AuthContext';
 import { 
   HardDrive, Cpu, Check, RefreshCw, Key, 
-  Link2, ExternalLink, Code, AlertTriangle, Play, HelpCircle, Save 
+  Link2, ExternalLink, Code, AlertTriangle, Play, HelpCircle, Save,
+  FolderPlus, FolderDown, FileUp, Sparkles
 } from 'lucide-react';
-
-const Github = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
-    <path d="M9 18c-4.51 2-5-2-7-2" />
-  </svg>
-);
+import { Link } from 'react-router-dom';
 
 export function IntegrationsPage() {
+  const { signInWithGoogle, user } = useAuth();
+  
   // Persistence states
-  const [gitToken, setGitToken] = useState(() => localStorage.getItem('dc_git_token') || '');
-  const [gitRepo, setGitRepo] = useState(() => localStorage.getItem('dc_git_repo') || '');
-  const [gitBranch, setGitBranch] = useState(() => localStorage.getItem('dc_git_branch') || 'main');
-  const [isGitConnected, setIsGitConnected] = useState(() => localStorage.getItem('dc_git_connected') === 'true');
-
   const [gdriveFolder, setGdriveFolder] = useState(() => localStorage.getItem('dc_gdrive_folder') || 'DocCraft-Backups');
   const [isGdriveConnected, setIsGdriveConnected] = useState(() => localStorage.getItem('dc_gdrive_connected') === 'true');
+
+  const [localDrafts, setLocalDrafts] = useState<any[]>([]);
+  const [selectedBackupDraftId, setSelectedBackupDraftId] = useState<string>('');
+  const [pickerLoading, setPickerLoading] = useState(false);
+
+  useEffect(() => {
+    const loadDrafts = async () => {
+      try {
+        const idb = await import('../utils/idb');
+        const docs = await idb.getAllSavedDocsOffline();
+        setLocalDrafts(docs);
+        if (docs.length > 0) {
+          setSelectedBackupDraftId('all-docs');
+        }
+      } catch (err) {
+        console.warn('Failed to load local drafts:', err);
+      }
+    };
+    loadDrafts();
+  }, []);
 
   const [webhookUrl, setWebhookUrl] = useState(() => localStorage.getItem('dc_webhook_url') || '');
   const [webhookSecret, setWebhookSecret] = useState(() => localStorage.getItem('dc_webhook_secret') || '');
   const [isWebhookActive, setIsWebhookActive] = useState(() => localStorage.getItem('dc_webhook_active') === 'true');
 
   // Interactive logs / feedback
-  const [simulatingType, setSimulatingType] = useState<'git' | 'webhook' | 'gdrive' | null>(null);
+  const [simulatingType, setSimulatingType] = useState<'webhook' | 'gdrive' | null>(null);
   const [simulationLog, setSimulationLog] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<'all' | 'connected' | 'security'>('all');
 
-  const handleSaveGit = (e: React.FormEvent) => {
+  const handleSaveGdrive = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!gitRepo.includes('/')) {
-      alert('Please enter repository in owner/repo format.');
-      return;
+    const token = sessionStorage.getItem('google_access_token');
+    
+    if (!token) {
+      addLog('gdrive', 'Establishing secure Google OAuth context...');
+      try {
+        await signInWithGoogle();
+        addLog('gdrive', '✓ Google Account connected securely.');
+      } catch (authErr: any) {
+        const msg = authErr.message || authErr;
+        addLog('gdrive', `❌ Google popup auth failed: ${msg}`);
+        alert(`Google Authentication Failed: ${msg}`);
+        return;
+      }
     }
-    localStorage.setItem('dc_git_token', gitToken);
-    localStorage.setItem('dc_git_repo', gitRepo);
-    localStorage.setItem('dc_git_branch', gitBranch);
-    localStorage.setItem('dc_git_connected', 'true');
-    setIsGitConnected(true);
-    addLog('git', '✓ GitHub Integration parameters saved securely.');
-  };
 
-  const handleDisconnectGit = () => {
-    localStorage.removeItem('dc_git_token');
-    localStorage.removeItem('dc_git_repo');
-    localStorage.setItem('dc_git_connected', 'false');
-    setGitToken('');
-    setGitRepo('');
-    setIsGitConnected(false);
-    addLog('git', '❌ GitHub Integration disconnected.');
-  };
-
-  const handleSaveGdrive = (e: React.FormEvent) => {
-    e.preventDefault();
     localStorage.setItem('dc_gdrive_folder', gdriveFolder);
     localStorage.setItem('dc_gdrive_connected', 'true');
     setIsGdriveConnected(true);
-    addLog('gdrive', '✓ Google Drive Integration parameters activated.');
+    addLog('gdrive', `✓ Custom backup folder mapped to: "${gdriveFolder}"`);
   };
 
   const handleDisconnectGdrive = () => {
-    localStorage.setItem('dc_gdrive_connected', 'false');
+    localStorage.removeItem('dc_gdrive_connected');
     setIsGdriveConnected(false);
-    addLog('gdrive', '❌ Google Drive Integration disconnected.');
+    addLog('gdrive', '❌ Google Drive Connection revoked locally.');
+  };
+
+  const handleRunRealGdriveBackup = async () => {
+    const token = sessionStorage.getItem('google_access_token');
+    if (!token) {
+      addLog('gdrive', '❌ Access Token expired. Re-authorizing Google Account...');
+      try {
+        await signInWithGoogle();
+      } catch (authErr: any) {
+        addLog('gdrive', `❌ Re-authorization failed: ${authErr.message || authErr}`);
+        return;
+      }
+    }
+
+    const activeToken = sessionStorage.getItem('google_access_token') || '';
+    if (!selectedBackupDraftId) {
+      addLog('gdrive', '❌ Real backup aborted: No offline draft selected.');
+      return;
+    }
+
+    setSimulatingType('gdrive');
+
+    try {
+      const gDriveUtils = await import('../utils/googleDrive');
+      addLog('gdrive', `Scanning Google Drive for target directory "${gdriveFolder}"...`);
+      const folderId = await gDriveUtils.findOrCreateBackupFolder(activeToken, gdriveFolder);
+      addLog('gdrive', `✓ remote folder localized with ID: ${folderId}`);
+
+      if (selectedBackupDraftId === 'all-docs') {
+        if (localDrafts.length === 0) {
+          addLog('gdrive', '❌ Real backup aborted: No offline drafts to sync.');
+          return;
+        }
+        addLog('gdrive', `🚀 Initiating batch backup sequence for ${localDrafts.length} documents...`);
+        for (const draft of localDrafts) {
+          addLog('gdrive', `Syncing document "${draft.title}"...`);
+          const fileName = `${draft.title.replace(/[\/\\?%*:|"<>]/g, '-')}.md`;
+          const contentPayload = draft.content || `# ${draft.title}\n\nEmpty offline draft.`;
+          const result = await gDriveUtils.uploadDocumentToDrive(
+            activeToken,
+            folderId,
+            fileName,
+            contentPayload
+          );
+          addLog('gdrive', `✓ Successfully synced "${draft.title}"! (File ID: ${result.id})`);
+        }
+        addLog('gdrive', '🎉 All documents backed up to your Google Drive folder successfully!');
+      } else {
+        const draft = localDrafts.find(d => d.id === selectedBackupDraftId);
+        if (!draft) {
+          addLog('gdrive', '❌ Selected offline draft metadata missing from storage.');
+          return;
+        }
+
+        addLog('gdrive', `Starting Cloud sync sequence for "${draft.title}"...`);
+        const fileName = `${draft.title.replace(/[\/\\?%*:|"<>]/g, '-')}.md`;
+        const contentPayload = draft.content || `# ${draft.title}\n\nEmpty offline draft.`;
+        const result = await gDriveUtils.uploadDocumentToDrive(
+          activeToken,
+          folderId,
+          fileName,
+          contentPayload
+        );
+
+        addLog('gdrive', `✓ Transaction committed successfully! File ID: ${result.id}`);
+        addLog('gdrive', `Backup accessible at: https://drive.google.com/file/d/${result.id}/view`);
+      }
+    } catch (err: any) {
+      addLog('gdrive', `❌ Upload pipeline failed: ${err.message || err}`);
+    } finally {
+      setSimulatingType(null);
+    }
+  };
+
+  const handleTriggerPicker = () => {
+    const token = sessionStorage.getItem('google_access_token');
+    if (!token) {
+      addLog('gdrive', '❌ Requesting active Google Auth token to enable browse...');
+      signInWithGoogle()
+        .then(() => {
+          const freshToken = sessionStorage.getItem('google_access_token');
+          if (freshToken) loadPickerAPI(freshToken);
+        })
+        .catch(err => addLog('gdrive', `❌ Google sign-in failed: ${err.message || err}`));
+      return;
+    }
+
+    loadPickerAPI(token);
+  };
+
+  const loadPickerAPI = (accessToken: string) => {
+    addLog('gdrive', 'Pulling secure Google Web Picker scripts...');
+    setPickerLoading(true);
+
+    const existingScript = document.getElementById('gdrive-picker-loader');
+    if (existingScript) {
+      spawnPickerWidget(accessToken);
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.id = 'gdrive-picker-loader';
+    script.src = 'https://apis.google.com/js/api.js';
+    script.onload = () => {
+      (window as any).gapi.load('auth', () => {
+        (window as any).gapi.load('picker', () => {
+          setPickerLoading(false);
+          spawnPickerWidget(accessToken);
+        });
+      });
+    };
+    script.onerror = () => {
+      setPickerLoading(false);
+      addLog('gdrive', '❌ External resource load failed: gapi.js script error.');
+    };
+    document.body.appendChild(script);
+  };
+
+  const spawnPickerWidget = (accessToken: string) => {
+    addLog('gdrive', 'Mounting Google Picker container viewport...');
+    const developerKey = 'AIzaSyAXQJhdJNTZ9ADfBFY1gwUNS4pg_ZbnV_A';
+
+    try {
+      const view = new (window as any).google.picker.View(
+        (window as any).google.picker.ViewId.DOCS
+      );
+
+      const picker = new (window as any).google.picker.PickerBuilder()
+        .addView(view)
+        .setOAuthToken(accessToken)
+        .setDeveloperKey(developerKey)
+        .setCallback(async (data: any) => {
+          if (data.action === (window as any).google.picker.Action.PICKED) {
+            const file = data.docs[0];
+            const fileId = file.id;
+            const fileName = file.name;
+            addLog('gdrive', `✓ Picker success! Selected: "${fileName}" (${fileId})`);
+            addLog('gdrive', `Streaming document payload directly inside sandbox database...`);
+
+            try {
+              const gDriveUtils = await import('../utils/googleDrive');
+              const rawText = await gDriveUtils.downloadDriveFileContent(accessToken, fileId);
+
+              const idb = await import('../utils/idb');
+              const localId = `gdrive-imported-${Date.now()}`;
+              
+              await idb.saveDocOffline({
+                id: localId,
+                title: fileName.replace(/\.[^/.]+$/, "") || 'Imported Google Doc',
+                content: rawText || `# ${fileName}\n\nNo markup contents extracted.`
+              });
+
+              addLog('gdrive', `✓ Perfect: Added "${fileName}" to offline archive. Navigate to Saved Archive or Editor to access it!`);
+              
+              // reload local list
+              const freshDocs = await idb.getAllSavedDocsOffline();
+              setLocalDrafts(freshDocs);
+              if (freshDocs.length > 0) {
+                setSelectedBackupDraftId(localId);
+              }
+            } catch (dlErr: any) {
+              addLog('gdrive', `❌ Extract stream failed: ${dlErr.message || dlErr}`);
+            }
+          } else if (data.action === (window as any).google.picker.Action.CANCEL) {
+            addLog('gdrive', 'Picker view dismissed by subscriber.');
+          }
+        })
+        .setOrigin(window.location.origin)
+        .build();
+
+      picker.setVisible(true);
+    } catch (err: any) {
+      addLog('gdrive', `❌ Failed to initialize picker: ${err.message || err}`);
+    }
   };
 
   const handleSaveWebhook = (e: React.FormEvent) => {
@@ -83,98 +261,8 @@ export function IntegrationsPage() {
     addLog('webhook', webhookUrl ? '✓ Webhook is configured and active.' : '✓ Webhook cleared.');
   };
 
-  const addLog = (type: 'git' | 'webhook' | 'gdrive', message: string) => {
+  const addLog = (type: 'webhook' | 'gdrive', message: string) => {
     setSimulationLog(prev => [`[${new Date().toLocaleTimeString()}] ${message}`, ...prev]);
-  };
-
-  const simulateGitSync = async () => {
-    setSimulatingType('git');
-    setSimulationLog([]);
-    addLog('git', 'Initializing git bundle processor...');
-    addLog('git', 'Reading document raw metadata catalog...');
-    addLog('git', `Targeting remote: github.com/${gitRepo || 'owner/repo'}`);
-    addLog('git', `Verifying JWT/PAT token permissions for branch: [${gitBranch}]`);
-
-    if (gitToken && gitRepo && gitRepo.includes('/')) {
-      addLog('git', '🔄 Initiating REAL GitHub API handshake...');
-      try {
-        const path = 'doccraft-sync-test.md';
-        const url = `https://api.github.com/repos/${gitRepo}/contents/${path}`;
-        
-        let fileSha = undefined;
-        try {
-          const getRes = await fetch(url, {
-            headers: {
-              'Accept': 'application/vnd.github+json',
-              'Authorization': `Bearer ${gitToken}`,
-              'X-GitHub-Api-Version': '2022-11-28'
-            }
-          });
-          if (getRes.ok) {
-            const fileData = await getRes.json();
-            fileSha = fileData.sha;
-            addLog('git', `✓ Previous sync file identified (SHA: ${fileSha.slice(0, 10)}...). Preparing rewrite...`);
-          }
-        } catch (_) {
-          // File not found or first run
-        }
-
-        const fileContent = `# DocCraft Pro Sync Test
-
-This file is generated automatically via your DocCraft Pro Workspace Integration on a verified device.
-
-- **Timestamp:** ${new Date().toISOString()}
-- **Origin Device:** Secure Browser Local Sandbox
-- **Status:** Integrated Success
-
-DocCraft is the premium distraction-free web editor ensuring absolute client-side data residency.`;
-
-        const base64Content = btoa(unescape(encodeURIComponent(fileContent)));
-
-        const putRes = await fetch(url, {
-          method: 'PUT',
-          headers: {
-            'Accept': 'application/vnd.github+json',
-            'Authorization': `Bearer ${gitToken}`,
-            'Content-Type': 'application/json',
-            'X-GitHub-Api-Version': '2022-11-28'
-          },
-          body: JSON.stringify({
-            message: `DocCraft Sync Backup: doccraft-sync-test.md`,
-            content: base64Content,
-            branch: gitBranch || 'main',
-            sha: fileSha
-          })
-        });
-
-        if (putRes.ok) {
-          const resData = await putRes.json();
-          addLog('git', `✓ Real GitHub Push SUCCESS! Created/updated: ${resData.content.name}`);
-          addLog('git', `✓ Commit executed: ${resData.commit.sha.slice(0, 10)}`);
-          addLog('git', '✓ Target branch syncing complete. Synchronized.');
-        } else {
-          const errData = await putRes.json();
-          addLog('git', `⚠️ GITHUB UPSTREAM ERROR: HTTP/${putRes.status} - ${errData.message || 'Verification Error'}`);
-          addLog('git', `💡 Tip: Check your repository name ("owner/repo") and branch name, and ensure you have write permissions.`);
-        }
-      } catch (err: any) {
-        addLog('git', `❌ Handshake failed: Connection error - ${err.message || err}`);
-      }
-    } else {
-      const logs = [
-        'Compiling dynamic draft into standard markdown schema...',
-        'Serializing cryptographic header signatures...',
-        'Pushing blob to master tree (SHA-512 checks)...',
-        '✓ Commit successfully executed (Simulated): commit ID a9f2bc7d85',
-        '✓ Target branch matching complete. Synchronization complete.'
-      ];
-
-      for (let i = 0; i < logs.length; i++) {
-        await new Promise(resolve => setTimeout(resolve, i === 0 ? 200 : 450));
-        addLog('git', logs[i]);
-      }
-    }
-    setSimulatingType(null);
   };
 
   const simulateGdriveBackup = async () => {
@@ -287,7 +375,7 @@ DocCraft is the premium distraction-free web editor ensuring absolute client-sid
                 : 'border-transparent text-gray-500 hover:text-gray-800'
             }`}
           >
-            All Integrations (4)
+            All Integrations (3)
           </button>
           <button 
             onClick={() => setActiveTab('connected')}
@@ -317,102 +405,6 @@ DocCraft is the premium distraction-free web editor ensuring absolute client-sid
           {/* Main Action Columns */}
           <div className="lg:col-span-2 space-y-8">
             
-            {/* ITEM 1: GitHub Sync Integration */}
-            {(activeTab === 'all' || (activeTab === 'connected' && isGitConnected)) && (
-              <div className="bg-white p-8 rounded-2xl border border-[#E4DBC5] shadow-sm relative overflow-hidden transition-all hover:shadow">
-                <div className="absolute right-0 top-0 h-1.5 w-full bg-[#333]"></div>
-                
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
-                  <div className="flex gap-4">
-                    <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center text-gray-800">
-                      <Github className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-bold text-[#1a1a1a]">GitHub Repository Backups</h2>
-                      <p className="text-xs text-gray-500 uppercase font-mono mt-1 tracking-wider">Markdown Sync Protocol</p>
-                    </div>
-                  </div>
-                  <div className={`self-start inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
-                    isGitConnected ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-gray-50 text-gray-500 border border-gray-200'
-                  }`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${isGitConnected ? 'bg-emerald-600 animate-pulse' : 'bg-gray-400'}`}></span>
-                    {isGitConnected ? 'Connected & Active' : 'Not Configured'}
-                  </div>
-                </div>
-
-                <p className="text-gray-600 text-sm mb-6 leading-relaxed">
-                  Automatically save a robust markdown version of every document changes to an isolated GitHub repository. Ensures redundant storage and absolute freedom from vendor lock-in.
-                </p>
-
-                {!isGitConnected ? (
-                  <form onSubmit={handleSaveGit} className="space-y-4 border-t border-gray-100 pt-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">GitHub Repository</label>
-                        <input 
-                          type="text" 
-                          required
-                          value={gitRepo}
-                          onChange={e => setGitRepo(e.target.value)}
-                          placeholder="e.g. dev_user/doccraft-backups" 
-                          className="w-full bg-[#FAF9F6] border border-[#E4DBC5] rounded-lg px-3 py-2 text-sm outline-none focus:border-[#996A00]"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">Default Branch Name</label>
-                        <input 
-                          type="text" 
-                          required
-                          value={gitBranch}
-                          onChange={e => setGitBranch(e.target.value)}
-                          placeholder="main" 
-                          className="w-full bg-[#FAF9F6] border border-[#E4DBC5] rounded-lg px-3 py-2 text-sm outline-none focus:border-[#996A00]"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">Personal Access Token (with repo scope)</label>
-                      <input 
-                        type="password" 
-                        required
-                        value={gitToken}
-                        onChange={e => setGitToken(e.target.value)}
-                        placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxx" 
-                        className="w-full bg-[#FAF9F6] border border-[#E4DBC5] rounded-lg px-3 py-2 text-sm outline-none focus:border-[#996A00] font-mono"
-                      />
-                    </div>
-                    <button type="submit" className="w-full bg-[#1A1A1A] hover:bg-[#333] text-white text-xs font-bold uppercase tracking-wider py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors">
-                      <Save className="w-4 h-4" /> Save & Enable Sync
-                    </button>
-                  </form>
-                ) : (
-                  <div className="space-y-4 border-t border-gray-100 pt-6">
-                    <div className="bg-[#FAF9F6] p-4 rounded-lg border border-[#E4DBC5] text-xs space-y-2">
-                      <p><strong>Configured Repository:</strong> <span className="font-mono">{gitRepo}</span></p>
-                      <p><strong>Configured Branch:</strong> <span className="font-mono">{gitBranch}</span></p>
-                      <p><strong>Credentials:</strong> <span className="font-mono text-gray-400">•••••••••••••••• (Encrypted in LocalStorage)</span></p>
-                    </div>
-                    <div className="flex gap-4">
-                      <button 
-                        onClick={simulateGitSync} 
-                        disabled={simulatingType !== null}
-                        className="flex-1 bg-[#996A00] hover:bg-[#805900] disabled:bg-gray-200 text-white text-xs font-bold uppercase tracking-wider py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors"
-                      >
-                        {simulatingType === 'git' ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-                        Simulate Push Backup
-                      </button>
-                      <button 
-                        onClick={handleDisconnectGit}
-                        className="bg-white border border-red-200 hover:bg-red-50 text-red-600 text-xs font-bold uppercase tracking-wider px-4 rounded-lg cursor-pointer transition-colors"
-                      >
-                        Disconnect
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
             {/* ITEM 2: Google Drive Workspace Integration */}
             {(activeTab === 'all' || (activeTab === 'connected' && isGdriveConnected)) && (
               <div className="bg-white p-8 rounded-2xl border border-[#E4DBC5] shadow-sm relative overflow-hidden transition-all hover:shadow">
@@ -424,7 +416,7 @@ DocCraft is the premium distraction-free web editor ensuring absolute client-sid
                       <HardDrive className="w-6 h-6" />
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold text-[#1a1a1a]">Google Drive Backups</h2>
+                      <h2 className="text-xl font-bold text-[#1a1a1a]">Google Workspace Cloud Storage</h2>
                       <p className="text-xs text-gray-500 uppercase font-mono mt-1 tracking-wider">Cloud Directory Mounting</p>
                     </div>
                   </div>
@@ -437,7 +429,7 @@ DocCraft is the premium distraction-free web editor ensuring absolute client-sid
                 </div>
 
                 <p className="text-gray-600 text-sm mb-6 leading-relaxed">
-                  Export signed drafts, PDF revisions, and data logs directly to your Google Workspace account folders. Uses standard web storage credentials for background directory uploads.
+                  Export signed drafts directly to any backup folder in your Google Drive, or bring files, markdown, and text documents directly from Google Drive into DocCraft using the official Google Picker.
                 </p>
 
                 {!isGdriveConnected ? (
@@ -453,30 +445,84 @@ DocCraft is the premium distraction-free web editor ensuring absolute client-sid
                         className="w-full bg-[#FAF9F6] border border-[#E4DBC5] rounded-lg px-3 py-2 text-sm outline-none focus:border-[#996A00]"
                       />
                     </div>
-                    <button type="submit" className="w-full bg-[#4285F4] hover:bg-[#357AE8] text-white text-xs font-bold uppercase tracking-wider py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors">
-                      <Link2 className="w-4 h-4" /> Grant Consent & Mount Folder
+                    <button type="submit" className="w-full bg-[#4285F4] hover:bg-[#357AE8] text-white text-xs font-bold uppercase tracking-wider py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-md shadow-blue-500/10">
+                      <Link2 className="w-4 h-4" /> Connect with Google & Map Folder
                     </button>
                   </form>
                 ) : (
-                  <div className="space-y-4 border-t border-gray-100 pt-6">
-                    <div className="bg-[#FAF9F6] p-4 rounded-lg border border-[#E4DBC5] text-xs space-y-1">
-                      <p><strong>Active Drive Path:</strong> <span className="font-mono">Google Drive &gt; {gdriveFolder}</span></p>
-                      <p><strong>System Status:</strong> <span className="text-emerald-600 font-bold font-mono">Synced &amp; Persistent</span></p>
+                  <div className="space-y-6 border-t border-gray-100 pt-6">
+                    <div className="bg-[#FAF9F6] p-4 rounded-xl border border-[#E4DBC5] text-xs space-y-2">
+                      <p><strong>Mounted Directory:</strong> <span className="font-mono text-blue-700">Google Drive &gt; {gdriveFolder}</span></p>
+                      <p><strong>Authentication State:</strong> <span className="text-emerald-600 font-bold font-mono">Real-time OAuth Binding Active</span></p>
                     </div>
-                    <div className="flex gap-4">
-                      <button 
-                        onClick={simulateGdriveBackup} 
-                        disabled={simulatingType !== null}
-                        className="flex-1 bg-[#4285F4] hover:bg-[#357AE8] disabled:bg-gray-200 text-white text-xs font-bold uppercase tracking-wider py-3 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors"
+
+                    {/* Section A: Live Document Backup Exporter */}
+                    <div className="space-y-3 bg-stone-50/50 p-4 rounded-xl border border-stone-200">
+                      <div className="flex items-center gap-2">
+                        <FolderPlus className="w-4 h-4 text-[#4285F4]" />
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-stone-700">Direct Backup Exporter</h4>
+                      </div>
+                      
+                      {localDrafts.length === 0 ? (
+                        <p className="text-xs text-stone-400 font-medium">No offline drafts resolved in the workspace DB. Create items in the editor first.</p>
+                      ) : (
+                        <div className="space-y-3">
+                          <div>
+                            <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-wide mb-1">Select Document to Send</label>
+                            <select
+                              value={selectedBackupDraftId}
+                              onChange={(e) => setSelectedBackupDraftId(e.target.value)}
+                              className="w-full bg-white border border-stone-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-[#4285F4]"
+                            >
+                              <option value="all-docs">⚡ Backup All Documents ({localDrafts.length})</option>
+                              {localDrafts.map(doc => (
+                                <option key={doc.id} value={doc.id}>{doc.title || 'Untitled Document'}</option>
+                              ))}
+                            </select>
+                          </div>
+                          
+                          <button 
+                            type="button"
+                            onClick={handleRunRealGdriveBackup}
+                            disabled={simulatingType !== null || !selectedBackupDraftId}
+                            className="bg-[#4285F4] hover:bg-[#357AE8] disabled:bg-gray-200 text-white text-[10px] font-bold uppercase tracking-widest px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                          >
+                            {simulatingType === 'gdrive' ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <FolderPlus className="w-3.5 h-3.5" />}
+                            Upload Selected Draft
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Section B: Document Puller Picker */}
+                    <div className="space-y-3 bg-stone-50/50 p-4 rounded-xl border border-stone-200">
+                      <div className="flex items-center gap-2">
+                        <FolderDown className="w-4 h-4 text-[#4285F4]" />
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-stone-700">Google Picker Importer</h4>
+                      </div>
+                      
+                      <p className="text-xs text-stone-500 leading-normal">
+                        Leverage Google Picker to browse your complete external Drive catalog. Open PDFs, markdown content, or docs and load them instantly as sandboxed local workspace copies.
+                      </p>
+
+                      <button
+                        type="button"
+                        onClick={handleTriggerPicker}
+                        disabled={pickerLoading}
+                        className="bg-stone-800 hover:bg-stone-900 text-white text-[10px] font-bold uppercase tracking-widest px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 cursor-pointer transition-colors"
                       >
-                        {simulatingType === 'gdrive' ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-                        Trigger Drive Export
+                        {pickerLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <FolderDown className="w-3.5 h-3.5" />}
+                        Open Google Picker
                       </button>
+                    </div>
+
+                    <div className="flex justify-end pt-2">
                       <button 
+                        type="button"
                         onClick={handleDisconnectGdrive}
-                        className="bg-white border border-red-200 hover:bg-red-50 text-red-600 text-xs font-bold uppercase tracking-wider px-4 rounded-lg cursor-pointer transition-colors"
+                        className="text-xs font-bold text-red-600 hover:text-red-700 hover:underline cursor-pointer"
                       >
-                        Disconnect
+                        Disconnect Cloud Mount
                       </button>
                     </div>
                   </div>

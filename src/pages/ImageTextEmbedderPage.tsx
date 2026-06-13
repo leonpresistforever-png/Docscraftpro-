@@ -181,6 +181,12 @@ export function ImageTextEmbedderPage() {
     setDraggingBlockId(null);
   };
 
+  const handleMouseLeave = () => {
+    if (draggingBlockId) {
+      setDraggingBlockId(null);
+    }
+  };
+
   const handleImageClick = (e: React.MouseEvent) => {
     if (draggingBlockId) return;
 
@@ -214,7 +220,7 @@ export function ImageTextEmbedderPage() {
         const blockY = (block.y / 100) * canvas.height;
 
         // Set typography options
-        const fontStyle = `${block.isItalic ? 'italic' : ''} ${block.isBold ? 'bold' : ''} ${block.fontSize}px ${block.fontFamily.replace(/"/g, '')}`;
+        const fontStyle = `${block.isItalic ? 'italic' : 'normal'} ${block.isBold ? 'bold' : 'normal'} ${block.fontSize}px ${block.fontFamily}`;
         ctx.font = fontStyle;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -238,7 +244,7 @@ export function ImageTextEmbedderPage() {
           ctx.globalAlpha = block.bgOpacity;
           
           // Render rounded rect
-          const radius = block.fontSize * 0.25;
+          const radius = Math.min(block.fontSize * 0.25, bgH / 2);
           ctx.beginPath();
           ctx.moveTo(bgX + radius, bgY);
           ctx.lineTo(bgX + bgW - radius, bgY);
@@ -253,31 +259,38 @@ export function ImageTextEmbedderPage() {
           ctx.fill();
         }
 
-        // Draw custom text shadow
-        ctx.shadowColor = 'rgba(0,0,0,0.5)';
-        ctx.shadowBlur = 4;
-        ctx.shadowOffsetX = 1;
-        ctx.shadowOffsetY = 2;
-
         // Write text pixels perfectly
         ctx.restore();
         ctx.save();
         ctx.font = fontStyle;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
+        
+        // Draw custom text shadow
+        ctx.shadowColor = 'rgba(0,0,0,0.5)';
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetX = 1;
+        ctx.shadowOffsetY = 2;
+
         ctx.fillStyle = block.color;
         ctx.fillText(block.text, blockX, blockY);
 
         ctx.restore();
       });
 
-      // Export file
-      const link = document.createElement('a');
-      link.download = `embedded_text_${imageFile?.name || 'document_image.png'}`;
-      link.href = canvas.toDataURL('image/png');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      try {
+        // Export file
+        const dataUrl = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = `embedded_text_${imageFile?.name || 'document_image.png'}`;
+        link.href = dataUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch (err) {
+        console.error("Failed to export image", err);
+        alert("Failed to export image. This may be due to cross-origin security restrictions on the loaded image.");
+      }
     };
     img.src = imageSrc;
   };
@@ -327,6 +340,7 @@ export function ImageTextEmbedderPage() {
             className="flex-1 min-w-0 min-h-0 bg-[#EFEFEF] overflow-auto relative flex items-center justify-center p-8 select-none"
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseLeave}
           >
             {!imageSrc ? (
               <div className="w-full max-w-xl flex flex-col items-center">

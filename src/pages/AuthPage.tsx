@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { Turnstile } from '@marsidev/react-turnstile';
@@ -76,7 +76,7 @@ export function AuthPage() {
     e.preventDefault();
     if (!signInEmail || !signInPassword) return;
     
-    const cfVerified = TURNSTILE_SITE_KEY ? !!captchaToken : true;
+    const cfVerified = TURNSTILE_SITE_KEY ? !!captchaToken : false;
     const cvVerified = isCustomCaptchaVerified;
     if (!cfVerified && !cvVerified) {
       setError('Please verify the Captcha to proceed.');
@@ -90,6 +90,12 @@ export function AuthPage() {
       if (isCustomCaptchaVerified) sessionStorage.setItem('temp_cv_verified', 'true');
       
       await signInWithEmail(signInEmail, signInPassword);
+      if (auth.currentUser && !auth.currentUser.emailVerified) {
+        await auth.signOut();
+        setError('Please verify your email address to sign in. Check your inbox for the verification link.');
+        setLoading(false);
+        return;
+      }
       // user effect handles redirect
     } catch (err: any) {
       console.error(err);
@@ -138,7 +144,7 @@ export function AuthPage() {
       return;
     }
     
-    const cfVerified = TURNSTILE_SITE_KEY ? !!captchaToken : true;
+    const cfVerified = TURNSTILE_SITE_KEY ? !!captchaToken : false;
     const cvVerified = isCustomCaptchaVerified;
     if (!cfVerified && !cvVerified) {
       setError('Please verify the Captcha to proceed.');
@@ -152,6 +158,13 @@ export function AuthPage() {
       if (isCustomCaptchaVerified) sessionStorage.setItem('temp_cv_verified', 'true');
       
       await signUpWithEmail(signUpEmail, signUpPassword, signUpName);
+      if (auth.currentUser && !auth.currentUser.emailVerified) {
+         await auth.signOut();
+         setSuccessMsg('Account created successfully! Please check your email to verify your account.');
+         setIsSignUp(false);
+         setLoading(false);
+         return;
+      }
       // user effect handles redirect
     } catch (err: any) {
       console.error(err);
@@ -263,7 +276,7 @@ export function AuthPage() {
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
-        className="w-full max-w-[460px] flex flex-col items-center relative z-10"
+        className="w-full max-w-[500px] flex flex-col items-center relative z-10"
       >
         {/* Animated SVG Heading */}
         <div className="mb-4 text-center cursor-default shrink-0 w-full flex flex-col items-center select-none">
@@ -306,7 +319,7 @@ export function AuthPage() {
         {/* Flipping Form Container */}
         <div className="w-full relative perspective-[1500px]">
           <div 
-            className="w-full relative transition-transform duration-1000 ease-in-out [transform-style:preserve-3d] min-h-[790px]"
+            className="w-full relative transition-transform duration-1000 ease-in-out [transform-style:preserve-3d] min-h-[880px]"
             style={{ transform: isSignUp ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
           >
             {/* -------------------- SIGN IN FACE (FRONT) -------------------- */}
@@ -422,33 +435,6 @@ export function AuthPage() {
                   </svg>
                   <span>Google</span>
                 </button>
-                
-                {/* Facebook Button */}
-                <button 
-                  type="button"
-                  onClick={handleFacebookAuth}
-                  className="w-full h-11 bg-[#1877F2] hover:bg-[#166FE5] border border-transparent rounded-xl flex items-center justify-center gap-3 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 text-sm font-bold text-white"
-                >
-                  <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current">
-                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                  </svg>
-                  <span>Facebook</span>
-                </button>
-
-                {/* Microsoft Button */}
-                <button 
-                  type="button"
-                  onClick={handleMicrosoftAuth}
-                  className="w-full h-11 bg-white border border-gray-200 rounded-xl flex items-center justify-center gap-3 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 text-sm font-bold text-gray-700"
-                >
-                  <svg viewBox="0 0 21 21" className="w-4.5 h-4.5">
-                    <path fill="#f35325" d="M1 1h9v9H1z"/>
-                    <path fill="#81bc06" d="M11 1h9v9h-9z"/>
-                    <path fill="#05a6f0" d="M1 11h9v9H1z"/>
-                    <path fill="#ffba08" d="M11 11h9v9h-9z"/>
-                  </svg>
-                  <span>Microsoft</span>
-                </button>
               </div>
 
               <div className="mt-6">
@@ -556,6 +542,14 @@ export function AuthPage() {
             
           </div>
         </div>
+
+        <div className="mt-8 text-center text-[11px] text-gray-500 max-w-sm mx-auto font-medium z-10 leading-relaxed">
+          By signing in or creating an account, you agree to our{' '}
+          <Link to="/terms-of-service" className="text-gray-700 underline underline-offset-2 hover:text-[#CA9E3C] transition-colors">Terms of Service</Link>
+          {' '}and{' '}
+          <Link to="/privacy-policy" className="text-gray-700 underline underline-offset-2 hover:text-[#CA9E3C] transition-colors">Privacy Policy</Link>.
+        </div>
+
       </motion.div>
     </div>
   );

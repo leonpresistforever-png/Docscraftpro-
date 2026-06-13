@@ -55,8 +55,11 @@ export function Navbar() {
           </Link>
           <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-[#EAE6DF] shadow-xl rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 py-2">
             <Link to="/compliance" className="block px-4 py-2 hover:bg-gray-50 text-dc-gold hover:text-[#AA7A00] transition-colors font-bold text-xs uppercase tracking-wider">Official Compliance</Link>
+            <Link to="/services" className="block px-4 py-2 hover:bg-gray-50 text-gray-700 hover:text-indigo-600 transition-colors text-xs">Our Services</Link>
+            <Link to="/faq" className="block px-4 py-2 hover:bg-gray-50 text-gray-700 hover:text-indigo-600 transition-colors text-xs">FAQ & Trust</Link>
             <Link to="/privacy-policy" className="block px-4 py-2 hover:bg-gray-50 text-gray-700 hover:text-indigo-600 transition-colors text-xs">Privacy Policy</Link>
             <Link to="/terms-of-service" className="block px-4 py-2 hover:bg-gray-50 text-gray-700 hover:text-indigo-600 transition-colors text-xs">Terms of Service</Link>
+            <Link to="/disclaimer" className="block px-4 py-2 hover:bg-gray-50 text-gray-700 hover:text-indigo-600 transition-colors text-xs">Disclaimer</Link>
             <Link to="/changelog" className="block px-4 py-2 hover:bg-gray-50 text-gray-700 hover:text-indigo-600 transition-colors text-xs">Changelog</Link>
           </div>
         </div>
@@ -128,8 +131,11 @@ export function Navbar() {
               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-3 mb-1">Compliance & Rules</span>
               <Link to="/compliance" onClick={() => setShowMobileMenu(false)} className="px-3 py-1.5 text-gray-700 hover:text-[#AA7A00] hover:bg-stone-50 rounded-lg text-sm font-semibold">Standard Compliance</Link>
               <div className="grid grid-cols-2 gap-1 px-3 py-1">
+                <Link to="/services" onClick={() => setShowMobileMenu(false)} className="text-xs text-gray-500 hover:text-[#AA7A00]">• Our Services</Link>
+                <Link to="/faq" onClick={() => setShowMobileMenu(false)} className="text-xs text-gray-500 hover:text-[#AA7A00]">• FAQ & Trust</Link>
                 <Link to="/privacy-policy" onClick={() => setShowMobileMenu(false)} className="text-xs text-gray-500 hover:text-[#AA7A00]">• Privacy Policy</Link>
                 <Link to="/terms-of-service" onClick={() => setShowMobileMenu(false)} className="text-xs text-gray-500 hover:text-[#AA7A00]">• Terms of Service</Link>
+                <Link to="/disclaimer" onClick={() => setShowMobileMenu(false)} className="text-xs text-gray-500 hover:text-[#AA7A00]">• Disclaimer</Link>
                 <Link to="/changelog" onClick={() => setShowMobileMenu(false)} className="text-xs text-gray-500 hover:text-[#AA7A00] mt-1">• Changelog</Link>
               </div>
             </div>

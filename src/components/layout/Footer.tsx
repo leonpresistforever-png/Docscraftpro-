@@ -5,110 +5,105 @@ export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-[#1A1A1A] text-gray-300 pt-16 pb-12 border-t border-[#333] mt-24 w-full font-sans">
+    <footer className="bg-white text-gray-600 pt-16 pb-12 border-t border-gray-100 mt-24 w-full font-sans">
       <div className="max-w-[1240px] mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 mb-12">
-          {/* Brand/Compliance statement column */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 mb-16">
+          {/* Brand statement column */}
           <div className="lg:col-span-2">
             <div className="flex items-center gap-3 mb-5">
               <div className="w-8 h-8 rounded bg-gradient-to-br from-[#E2BC55] to-[#996A00] flex items-center justify-center shadow-sm">
                 <div className="w-4 h-4 border-2 border-white rounded-[1px] rotate-45 transform"></div>
               </div>
-              <span className="font-serif font-bold text-xl text-white tracking-tight">DocCraft Pro</span>
+              <span className="font-serif font-bold text-xl text-gray-900 tracking-tight">DocCraft Pro</span>
             </div>
-            <p className="text-gray-400 text-sm max-w-sm mb-6 leading-relaxed">
-              Establishing a professional paradigm for document engineering. We weave generative intelligence into seamless and responsive work spaces, optimizing your workflows without limits.
+            <p className="text-gray-500 text-sm max-w-sm leading-relaxed">
+              The intelligent, seamless workspace for high-velocity teams. Write down your ideas, and let our intelligence build the connections.
             </p>
-            {/* Trust badge compliance indication */}
-            <div className="inline-flex items-center gap-2 p-2.5 bg-[#252525] border border-gray-800 rounded-lg text-xs text-dc-gold font-medium">
-              <span className="w-2 h-2 rounded-full bg-[#D4AF37] animate-pulse"></span>
-              <span>100% Private & Locally Secure Environment</span>
-            </div>
           </div>
 
-          {/* Links Column 1: Product info */}
+          {/* PRODUCT */}
           <div>
-            <h4 className="font-bold text-white uppercase text-xs tracking-wider mb-5">Product</h4>
+            <h4 className="font-bold text-gray-900 uppercase text-[11px] tracking-wider mb-5">Product</h4>
             <ul className="space-y-3.5 text-sm">
               <li>
-                <Link to="/features" className="hover:text-[#D4AF37] transition-colors text-gray-400 font-medium">
-                  Workspace Features
+                <Link to="/features" className="hover:text-[#D4AF37] transition-colors text-gray-500 font-medium">
+                  Features
                 </Link>
               </li>
               <li>
-                <Link to="/integrations" className="hover:text-[#D4AF37] transition-colors text-gray-400 font-medium">
-                  Integrations Hub
+                <Link to="/services" className="hover:text-[#D4AF37] transition-colors text-gray-500 font-medium">
+                  Services
                 </Link>
               </li>
               <li>
-                <Link to="/changelog" className="hover:text-[#D4AF37] transition-colors text-gray-400 font-medium">
-                  Changelog & Updates
+                <Link to="/integrations" className="hover:text-[#D4AF37] transition-colors text-gray-500 font-medium">
+                  Integrations
+                </Link>
+              </li>
+              <li>
+                <Link to="/changelog" className="hover:text-[#D4AF37] transition-colors text-gray-500 font-medium">
+                  Changelog
+                </Link>
+              </li>
+              <li>
+                <Link to="/faq" className="hover:text-[#D4AF37] transition-colors text-gray-500 font-medium">
+                  FAQ
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Links Column 2: Resources & Content Strategy */}
+          {/* DEVELOPERS */}
           <div>
-            <h4 className="font-bold text-white uppercase text-xs tracking-wider mb-5">Resources</h4>
+            <h4 className="font-bold text-gray-900 uppercase text-[11px] tracking-wider mb-5">Developers</h4>
             <ul className="space-y-3.5 text-sm">
               <li>
-                <Link to="/contact" className="hover:text-[#D4AF37] transition-colors text-gray-400 font-medium">
-                  Human Help Support
-                </Link>
-              </li>
-              <li>
-                <Link to="/support-form" className="hover:text-[#D4AF37] transition-colors text-gray-400 font-medium">
-                  Escalate an Issue
-                </Link>
-              </li>
-              <li>
-                <Link to="/docs" className="hover:text-[#D4AF37] transition-colors text-gray-400 font-medium">
+                <Link to="/docs" className="hover:text-[#D4AF37] transition-colors text-gray-500 font-medium">
                   Documentation
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Links Column 3: Legal Compliance */}
+          {/* COMPANY */}
           <div>
-            <h4 className="font-bold text-white uppercase text-xs tracking-wider mb-5">Compliance</h4>
+            <h4 className="font-bold text-gray-900 uppercase text-[11px] tracking-wider mb-5">Company</h4>
             <ul className="space-y-3.5 text-sm">
               <li>
-                <Link to="/privacy-policy" className="hover:text-[#D4AF37] transition-colors text-gray-400 font-medium">
-                  Privacy Policy
+                <Link to="/about" className="hover:text-[#D4AF37] transition-colors text-gray-500 font-medium">
+                  About
                 </Link>
               </li>
               <li>
-                <Link to="/terms-of-service" className="hover:text-[#D4AF37] transition-colors text-gray-400 font-medium">
-                  Terms of Service
-                </Link>
-              </li>
-              <li>
-                <Link to="/about" className="hover:text-[#D4AF37] transition-colors text-gray-400 font-medium">
-                  Meet the Team
+                <Link to="/contact" className="hover:text-[#D4AF37] transition-colors text-gray-500 font-medium">
+                  Contact
                 </Link>
               </li>
             </ul>
           </div>
         </div>
 
-        <div className="pt-8 border-t border-gray-800 text-xs text-gray-500">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-            <p>&copy; {currentYear} DocCraft Inc. Hand-crafted with absolute technical rigor. All rights reserved.</p>
-            <div className="flex gap-4">
-              <Link to="/privacy-policy" className="hover:text-[#D4AF37] transition-colors text-gray-500">
-                Privacy
-              </Link>
-              <span className="text-gray-800">|</span>
-              <Link to="/terms-of-service" className="hover:text-[#D4AF37] transition-colors text-gray-500">
-                Terms
-              </Link>
-              <span className="text-gray-800">|</span>
-              <Link to="/about" className="hover:text-[#D4AF37] transition-colors text-gray-500">
-                E-E-A-T Audit
-              </Link>
-            </div>
+        <div className="pt-8 border-t border-gray-100 flex flex-col items-center text-center">
+          <p className="text-xs text-gray-800 font-bold mb-3">&copy; {currentYear} DocCraft Inc. All rights reserved.</p>
+          <p className="text-[11px] text-gray-500 max-w-2xl leading-relaxed mb-6">
+            We believe in transparent, honest privacy policies. You own your data. We don't train our models on your private documents unless you explicitly opt in, and you can delete your account at any time.
+          </p>
+          <div className="flex flex-wrap justify-center gap-4 md:gap-6 text-[11px] font-medium text-gray-500">
+            <Link to="/privacy-policy" className="hover:text-gray-900 transition-colors">
+              Privacy Policy
+            </Link>
+            <Link to="/compliance" className="hover:text-gray-900 transition-colors">
+              Compliance
+            </Link>
+            <Link to="/terms-of-service" className="hover:text-gray-900 transition-colors">
+              Terms of Service
+            </Link>
+            <Link to="/disclaimer" className="hover:text-gray-900 transition-colors">
+              Disclaimer
+            </Link>
+            <Link to="/privacy-policy" className="hover:text-gray-900 transition-colors">
+              Cookie Setting
+            </Link>
           </div>
         </div>
       </div>

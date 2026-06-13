@@ -37,6 +37,9 @@ import { FeaturesPage } from './pages/FeaturesPage';
 import { ContactPage } from './pages/ContactPage';
 import { SupportFormPage } from './pages/SupportFormPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
+import { ServicesPage } from './pages/ServicesPage';
+import { DisclaimerPage } from './pages/DisclaimerPage';
+import { FAQPage } from './pages/FAQPage';
 
 import { DocumentationPage } from './pages/DocumentationPage';
 import { AnimatePresence, motion } from 'motion/react';
@@ -83,6 +86,9 @@ function AnimatedRoutes() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/support-form" element={<SupportFormPage />} />
+        <Route path="/services" element={<ServicesPage />} />
+        <Route path="/disclaimer" element={<DisclaimerPage />} />
+        <Route path="/faq" element={<FAQPage />} />
         <Route path="/api" element={<Navigate to="/" replace />} />
         <Route path="/api-reference" element={<Navigate to="/" replace />} />
         <Route path="/docs" element={<DocumentationPage />} />

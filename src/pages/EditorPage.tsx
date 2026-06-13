@@ -383,11 +383,21 @@ export function EditorPage() {
 
   const handleCustomKeyChange = async (val: string) => {
     setCustomApiKey(val);
+  };
+  
+  const handleSaveAndSyncKey = async () => {
+    const val = customApiKey;
+    localStorage.setItem('AIS_CUSTOM_KEY', val);
     if (val) {
       localStorage.setItem('samba_custom_key', encryptData(val));
+      localStorage.setItem('dictator_reason_key', encryptData(val));
       if (user?.uid) {
         try {
           await setDoc(doc(db, 'users', user.uid, 'config', 'byok'), {
+            key: encryptData(val),
+            updatedAt: serverTimestamp()
+          });
+          await setDoc(doc(db, 'users', user.uid, 'config', 'dictator_key'), {
             key: encryptData(val),
             updatedAt: serverTimestamp()
           });
@@ -395,11 +405,18 @@ export function EditorPage() {
           console.warn("Failed to save secure BYOK key to Firestore cloud:", e);
         }
       }
+      alert('API Key synced across agents successfully!');
     } else {
       localStorage.removeItem('samba_custom_key');
+      localStorage.removeItem('dictator_reason_key');
+      localStorage.removeItem('AIS_CUSTOM_KEY');
       if (user?.uid) {
         try {
           await setDoc(doc(db, 'users', user.uid, 'config', 'byok'), {
+            key: "",
+            updatedAt: serverTimestamp()
+          });
+          await setDoc(doc(db, 'users', user.uid, 'config', 'dictator_key'), {
             key: "",
             updatedAt: serverTimestamp()
           });
@@ -407,6 +424,7 @@ export function EditorPage() {
           console.warn("Failed to clear secure BYOK key from Firestore cloud:", e);
         }
       }
+      alert('Agents API key wiped everywhere.');
     }
   };
 
@@ -2638,15 +2656,21 @@ Requirements:
              <div className="relative flex flex-col items-center z-[100]">
                 {showApiKeySetting && (
                   <div className="absolute top-[120%] right-0 w-64 bg-white shadow-xl border border-gray-100 rounded-md p-3 z-[9999] animate-in fade-in">
-                     <div className="text-[10px] text-gray-500 mb-1.5 font-bold uppercase tracking-wider">Custom API Key</div>
-                     <input 
-                        type="password"
-                        placeholder="Paste your custom API key here"
-                        value={customApiKey}
-                        onChange={(e) => handleCustomKeyChange(e.target.value)}
-                        autoComplete="off"
-                        className="w-full text-xs border border-gray-300 rounded p-1.5 outline-none focus:border-blue-400 bg-gray-50/50"
-                     />
+                     <div className="text-[10px] text-gray-500 mb-1.5 font-bold uppercase tracking-wider flex justify-between items-center">
+                       <span>Custom API Key</span>
+                       {customApiKey && <button onClick={() => { handleCustomKeyChange(''); handleSaveAndSyncKey(); }} className="text-[9px] text-red-500 hover:text-red-700 underline">WIPE</button>}
+                     </div>
+                     <div className="flex gap-2">
+                       <input 
+                          type="password"
+                          placeholder="Paste your custom API key here"
+                          value={customApiKey}
+                          onChange={(e) => handleCustomKeyChange(e.target.value)}
+                          autoComplete="off"
+                          className="flex-1 text-xs border border-gray-300 rounded p-1.5 outline-none focus:border-blue-400 bg-gray-50/50"
+                       />
+                       <button onClick={handleSaveAndSyncKey} className="px-2 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-medium rounded">Save & Sync</button>
+                     </div>
                   </div>
                 )}
                 <div className="flex border border-blue-200 rounded-md shadow-sm divide-x divide-blue-200 bg-white">
@@ -2662,15 +2686,21 @@ Requirements:
              <div className="relative flex flex-col items-center z-[100]">
                 {showAutocompleteApiKeySetting && (
                   <div className="absolute top-[120%] right-0 w-64 bg-white shadow-xl border border-gray-100 rounded-md p-3 z-[9999] animate-in fade-in">
-                     <div className="text-[10px] text-gray-500 mb-1.5 font-bold uppercase tracking-wider text-left w-full">Custom Autocomplete Key</div>
-                     <input 
-                        type="password"
-                        placeholder="Paste your custom API key here"
-                        value={customApiKey}
-                        onChange={(e) => handleCustomKeyChange(e.target.value)}
-                        autoComplete="off"
-                        className="w-full text-xs border border-gray-300 rounded p-1.5 outline-none focus:border-purple-400 bg-gray-50/50 text-black"
-                     />
+                     <div className="text-[10px] text-gray-500 mb-1.5 font-bold uppercase tracking-wider flex justify-between items-center w-full">
+                       <span>Custom Autocomplete Key</span>
+                       {customApiKey && <button onClick={() => { handleCustomKeyChange(''); handleSaveAndSyncKey(); }} className="text-[9px] text-red-500 hover:text-red-700 underline">WIPE</button>}
+                     </div>
+                     <div className="flex gap-2">
+                       <input 
+                          type="password"
+                          placeholder="Paste your custom API key here"
+                          value={customApiKey}
+                          onChange={(e) => handleCustomKeyChange(e.target.value)}
+                          autoComplete="off"
+                          className="flex-1 text-xs border border-gray-300 rounded p-1.5 outline-none focus:border-purple-400 bg-gray-50/50 text-black"
+                       />
+                       <button onClick={handleSaveAndSyncKey} className="px-2 bg-purple-600 hover:bg-purple-700 text-white text-[10px] font-medium rounded">Save & Sync</button>
+                     </div>
                   </div>
                 )}
                 <div className="flex border border-purple-200 rounded-md shadow-sm divide-x divide-purple-200 bg-white items-center h-8">

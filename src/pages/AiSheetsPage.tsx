@@ -11,6 +11,7 @@ import { collection, query, where, getDocs, getDoc, orderBy, setDoc, doc, server
 import { useAuth } from '../context/AuthContext';
 import { ChatHistoryDrawer } from '../components/ChatHistoryDrawer';
 import { usePremium } from '../context/PremiumContext';
+import { encryptData, decryptData } from '../lib/encryption';
 
 interface SheetData {
   headers: string[];
@@ -823,8 +824,37 @@ Remember: Output ONLY valid JSON containing the "headers" and "rows" arrays. No 
                 <div className="pt-4 flex gap-3">
                   <Button 
                     className="flex-1 bg-purple-600 hover:bg-purple-700 text-white rounded-xl py-3"
-                    onClick={() => {
+                    onClick={async () => {
                        localStorage.setItem('AIS_CUSTOM_KEY', customKey);
+                       if (customKey) {
+                         localStorage.setItem('samba_custom_key', encryptData(customKey));
+                         localStorage.setItem('dictator_reason_key', encryptData(customKey));
+                         if (user?.uid) {
+                           try {
+                             await setDoc(doc(db, 'users', user.uid, 'config', 'byok'), {
+                               key: encryptData(customKey),
+                               updatedAt: serverTimestamp()
+                             });
+                             await setDoc(doc(db, 'users', user.uid, 'config', 'dictator_key'), {
+                               key: encryptData(customKey),
+                               updatedAt: serverTimestamp()
+                             });
+                           } catch (e) {
+                             console.warn("Failed to sync secure BYOK key everywhere:", e);
+                           }
+                         }
+                         alert("API Key synced successfully across all agents!");
+                       } else {
+                         localStorage.removeItem('samba_custom_key');
+                         localStorage.removeItem('dictator_reason_key');
+                         if (user?.uid) {
+                           try {
+                             await setDoc(doc(db, 'users', user.uid, 'config', 'byok'), { key: "", updatedAt: serverTimestamp() });
+                             await setDoc(doc(db, 'users', user.uid, 'config', 'dictator_key'), { key: "", updatedAt: serverTimestamp() });
+                           } catch (e) {}
+                         }
+                         alert("API Key wiped everywhere.");
+                       }
                        setShowSettings(false);
                     }}
                   >

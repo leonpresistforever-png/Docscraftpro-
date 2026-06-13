@@ -177,7 +177,8 @@ export function SupportFormPage({
             userEmail: formData.email,
             issue: formData.issue,
             accessToken: token,
-            type: formData.category
+            type: formData.category,
+            attachments
           });
         } catch (gmailErr) {
           console.error('Failed to dispatch secure background email:', gmailErr);

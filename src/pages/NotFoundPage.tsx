@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
 import { motion } from 'motion/react';
-import { HelpCircle, Home, LogIn } from 'lucide-react';
+import { HelpCircle, Home, Mail, PackageSearch } from 'lucide-react';
 
 export function NotFoundPage() {
   return (
@@ -24,26 +24,33 @@ export function NotFoundPage() {
 
           <div className="space-y-2">
             <h1 className="text-6xl font-black text-gray-900 tracking-tight font-serif">404</h1>
-            <h2 className="text-2xl font-bold uppercase text-[#1a1a1a] tracking-wide">Coordinates Lost</h2>
+            <h2 className="text-2xl font-bold text-[#1a1a1a] tracking-wide">Looks like this link is broken</h2>
             <p className="text-gray-500 text-sm max-w-sm mx-auto leading-relaxed">
-              We parsed your requested byte path, but this specific page allocation does not exist across our system nodes.
+              We couldn't find the page you were looking for. Let's get you back on track to exploring our workspace.
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
             <Link
               to="/"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#1A1A1A] hover:bg-[#333] text-white px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-sm uppercase tracking-wider"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#1A1A1A] hover:bg-[#333] text-white px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-sm tracking-wide"
             >
               <Home className="w-4 h-4" />
-              Return Home
+              Homepage
             </Link>
             <Link
-              to="/dashboard"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white border border-gray-200 hover:border-gray-400 text-gray-700 px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-sm uppercase tracking-wider"
+              to="/services"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white border border-gray-200 hover:border-gray-400 text-gray-700 px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-sm tracking-wide"
             >
-              <LogIn className="w-4 h-4 text-dc-gold" />
-              Go to Dashboard
+              <PackageSearch className="w-4 h-4 text-[#D4AF37]" />
+              Our Services
+            </Link>
+            <Link
+              to="/contact"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white border border-gray-200 hover:border-gray-400 text-gray-700 px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-sm tracking-wide"
+            >
+              <Mail className="w-4 h-4 text-[#D4AF37]" />
+              Contact Us
             </Link>
           </div>
         </motion.div>

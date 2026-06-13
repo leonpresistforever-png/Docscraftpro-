@@ -42,8 +42,24 @@ export function disconnectGmail() {
   cachedGmailUser = null;
 }
 
+function chunkBase64(str: string): string {
+  const chunks = [];
+  for (let i = 0; i < str.length; i += 76) {
+    chunks.push(str.substring(i, i + 76));
+  }
+  return chunks.join('\r\n');
+}
+
 function base64UrlEncode(str: string): string {
-  return btoa(unescape(encodeURIComponent(str)))
+  const utf8Bytes = new TextEncoder().encode(str);
+  let binaryString = '';
+  const chunkSize = 8192;
+  for (let i = 0; i < utf8Bytes.length; i += chunkSize) {
+    const chunk = utf8Bytes.subarray(i, i + chunkSize);
+    // Use regular loop if spread operator crashes for some reason, though 8192 is well under limit
+    binaryString += String.fromCharCode(...chunk);
+  }
+  return btoa(binaryString)
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=+$/, '');
@@ -54,13 +70,15 @@ export async function sendGmailSupportTicket({
   userEmail,
   issue,
   accessToken,
-  type = 'general'
+  type = 'general',
+  attachments = []
 }: {
   username: string;
   userEmail: string;
   issue: string;
   accessToken: string;
   type?: 'bug' | 'feedback' | 'security' | 'general';
+  attachments?: { name: string; type: string; size: number; dataUrl: string }[];
 }) {
   const supportEmail = 'docscraftpro@gmail.com';
   
@@ -79,11 +97,16 @@ export async function sendGmailSupportTicket({
     teamGreeting = `Hello Operations & Arch Desk,\r\n\r\nAn enterprise compliance or secure data governance query has been received. Details below:`;
   }
 
-  const supportEmailContent = [
+  const boundary = `----=_Part_${Math.random().toString(36).substring(2)}`;
+  
+  let supportEmailParts = [
     `To: ${supportEmail}`,
     `Subject: =?utf-8?B?${btoa(unescape(encodeURIComponent(teamSubject)))}?=`,
-    `Content-Type: text/plain; charset="UTF-8"`,
     `MIME-Version: 1.0`,
+    `Content-Type: multipart/mixed; boundary="${boundary}"`,
+    '',
+    `--${boundary}`,
+    `Content-Type: text/plain; charset="UTF-8"`,
     '',
     teamGreeting,
     `------------------------------------------------------------`,
@@ -94,8 +117,27 @@ export async function sendGmailSupportTicket({
     issue,
     '',
     `------------------------------------------------------------`,
-    `Processed internally via DocCraft Workplace Desk.`
-  ].join('\r\n');
+    `Processed internally via DocCraft Workplace Desk.`,
+    ''
+  ];
+
+  if (attachments && attachments.length > 0) {
+    attachments.forEach(file => {
+      const base64Data = file.dataUrl.split(',')[1];
+      supportEmailParts.push(
+        `--${boundary}`,
+        `Content-Type: ${file.type}; name="${file.name}"`,
+        `Content-Disposition: attachment; filename="${file.name}"`,
+        `Content-Transfer-Encoding: base64`,
+        '',
+        chunkBase64(base64Data),
+        ''
+      );
+    });
+  }
+
+  supportEmailParts.push(`--${boundary}--`);
+  const supportEmailContent = supportEmailParts.join('\r\n');
 
   const rawSupport = base64UrlEncode(supportEmailContent);
 
@@ -195,4 +237,69 @@ export async function sendGmailSupportTicket({
   });
 
   return Promise.all([supportPromise, confirmationPromise]);
+}
+
+export async function sendWelcomeEmail({
+  userEmail,
+  username,
+  accessToken
+}: {
+  userEmail: string;
+  username: string;
+  accessToken: string;
+}) {
+  const confirmationSubject = `[DocCraft Pro] Welcome to DocCraft Pro!`;
+  const confirmationHeader = `Welcome to DocCraft Pro`;
+  const confirmationMessage = `<p>We are thrilled to welcome you to DocCraft Pro! Your account has been successfully created and you can now start establishing a professional paradigm for document engineering.</p><p>We have received your registration details. Should you have any questions or require support, please feel free to reach out to our team.</p>`;
+
+  const confirmationEmailContent = [
+    `To: ${userEmail}`,
+    `Subject: =?utf-8?B?${btoa(unescape(encodeURIComponent(confirmationSubject)))}?=`,
+    `Content-Type: text/html; charset="UTF-8"`,
+    `MIME-Version: 1.0`,
+    '',
+    `<!DOCTYPE html>`,
+    `<html>`,
+    `<head>`,
+    `  <meta charset="utf-8">`,
+    `  <style>`,
+    `    body { font-family: 'Inter', system-ui, sans-serif; color: #2d2d2d; line-height: 1.6; background-color: #fdfbf7; margin: 0; padding: 24px; }`,
+    `    .container { max-width: 600px; margin: 0 auto; background: #ffffff; padding: 32px; border: 1px solid #eae6df; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }`,
+    `    .header { font-size: 20px; font-weight: bold; color: #1a1a1a; border-bottom: 2px solid #D4AF37; padding-bottom: 12px; margin-bottom: 24px; }`,
+    `    .greeting { font-size: 16px; font-weight: 600; margin-bottom: 12px; }`,
+    `    .section { margin-bottom: 20px; }`,
+    `    .footer { font-size: 12px; color: #7f8c8d; border-top: 1px solid #eae6df; padding-top: 16px; margin-top: 32px; }`,
+    `  </style>`,
+    `</head>`,
+    `<body>`,
+    `  <div class="container">`,
+    `    <div class="header">${confirmationHeader}</div>`,
+    `    <div class="greeting">Hello ${username || 'Crafter'},</div>`,
+    `    <div class="section">`,
+    `      ${confirmationMessage}`,
+    `    </div>`,
+    `    <div class="footer">`,
+    `      <p>This is an automated confirmation sent securely from DocCraft Workspace. Do not reply directly to this mail.</p>`,
+    `      <p>© ${new Date().getFullYear()} DocCraft Pro. All rights reserved.</p>`,
+    `    </div>`,
+    `  </div>`,
+    `</body>`,
+    `</html>`
+  ].join('\r\n');
+
+  const rawConfirmation = base64UrlEncode(confirmationEmailContent);
+
+  return fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ raw: rawConfirmation })
+  }).then(async res => {
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error(`Failed to send welcome receipt: ${errText}`);
+    }
+  });
 }

@@ -71,30 +71,48 @@ export function RobotDictator({ editor, onOpenVoiceDoc, localEngine, useLocalMod
 
   const handleReasoningKeyChange = async (val: string) => {
     setReasoningKey(val);
+  };
+  
+  const handleSaveAndSyncKey = async () => {
+    const val = reasoningKey;
+    localStorage.setItem('AIS_CUSTOM_KEY', val);
     if (val) {
       localStorage.setItem('dictator_reason_key', encryptData(val));
+      localStorage.setItem('samba_custom_key', encryptData(val));
       if (user?.uid) {
         try {
           await setDoc(doc(db, 'users', user.uid, 'config', 'dictator_key'), {
             key: encryptData(val),
             updatedAt: serverTimestamp()
           });
+          await setDoc(doc(db, 'users', user.uid, 'config', 'byok'), {
+            key: encryptData(val),
+            updatedAt: serverTimestamp()
+          });
         } catch (e) {
-          console.warn("Failed to store dictator key to Cloud DB:", e);
+          console.warn("Failed to store unified keys to Cloud DB:", e);
         }
       }
+      alert('API Key synced across agents successfully!');
     } else {
       localStorage.removeItem('dictator_reason_key');
+      localStorage.removeItem('samba_custom_key');
+      localStorage.removeItem('AIS_CUSTOM_KEY');
       if (user?.uid) {
         try {
           await setDoc(doc(db, 'users', user.uid, 'config', 'dictator_key'), {
             key: "",
             updatedAt: serverTimestamp()
           });
+          await setDoc(doc(db, 'users', user.uid, 'config', 'byok'), {
+            key: "",
+            updatedAt: serverTimestamp()
+          });
         } catch (e) {
-          console.warn("Failed to delete dictator key from Cloud DB:", e);
+          console.warn("Failed to delete keys from Cloud DB:", e);
         }
       }
+      alert('Agents API key wiped everywhere.');
     }
   };
 
@@ -438,14 +456,23 @@ Please do the following:
 
               <div className="space-y-1">
                  <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">AI Reasoning API Key (BYOK)</label>
-                 <input 
-                    type="password"
-                    placeholder={reasoningKey ? "••••••••••••••••" : "Provide your custom API key (optional)"}
-                    value={reasoningKey}
-                    onChange={(e) => handleReasoningKeyChange(e.target.value)}
-                    autoComplete="off"
-                    className="w-full text-xs border border-gray-200 rounded p-1.5 focus:border-blue-400 outline-none bg-gray-50/50"
-                 />
+                 <div className="flex gap-2">
+                   <input 
+                      type="password"
+                      placeholder={reasoningKey ? "••••••••••••••••" : "Provide your custom API key"}
+                      value={reasoningKey}
+                      onChange={(e) => handleReasoningKeyChange(e.target.value)}
+                      autoComplete="off"
+                      className="flex-1 text-xs border border-gray-200 rounded p-1.5 focus:border-blue-400 outline-none bg-gray-50/50"
+                   />
+                   <button 
+                      type="button" 
+                      onClick={handleSaveAndSyncKey}
+                      className="px-3 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium rounded transition-colors whitespace-nowrap"
+                   >
+                     Save & Sync
+                   </button>
+                 </div>
                  {reasoningKey && (
                     <div className="flex items-center justify-between bg-blue-50 border border-blue-100 rounded p-1.5 text-[10px] text-blue-700 font-bold mt-1.5">
                        <span className="flex items-center gap-1">
@@ -454,7 +481,10 @@ Please do the following:
                        </span>
                        <button 
                           type="button"
-                          onClick={() => handleReasoningKeyChange('')}
+                          onClick={() => {
+                             handleReasoningKeyChange('');
+                             handleSaveAndSyncKey();
+                          }}
                           className="text-red-500 hover:text-red-700 underline text-[9px] uppercase font-bold focus:outline-none cursor-pointer"
                        >
                           Wipe Key

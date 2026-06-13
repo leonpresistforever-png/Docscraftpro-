@@ -11,7 +11,7 @@ import { saveAs } from 'file-saver';
 import jsPDF from 'jspdf';
 import { useTheme } from '../context/ThemeContext';
 import { Link } from 'react-router-dom';
-import { multiFactor, PhoneAuthProvider, PhoneMultiFactorGenerator, RecaptchaVerifier } from 'firebase/auth';
+import { multiFactor, PhoneAuthProvider, PhoneMultiFactorGenerator, RecaptchaVerifier, sendEmailVerification, verifyBeforeUpdateEmail } from 'firebase/auth';
 
 export function PreferencesPage() {
   const { user, logout } = useAuth();
@@ -23,6 +23,8 @@ export function PreferencesPage() {
   const [mfaError, setMfaError] = useState('');
   const [isVerifyingState, setIsVerifyingState] = useState(false);
   const [isEnrolled, setIsEnrolled] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [emailMsg, setEmailMsg] = useState({ type: '', text: '' });
 
   useEffect(() => {
     if (user) {
@@ -92,6 +94,35 @@ export function PreferencesPage() {
       alert('Failed to unenroll: ' + err.message);
     }
   };
+
+  const handleUpdateEmail = async () => {
+    if (!user || !newEmail) return;
+    setEmailMsg({ type: '', text: '' });
+    try {
+      await verifyBeforeUpdateEmail(user, newEmail);
+      setEmailMsg({ type: 'success', text: 'Verification sent! Please check your new email to complete the update.' });
+      setNewEmail(''); // clears field
+    } catch (error: any) {
+      console.error(error);
+      const msg = error.code === 'auth/requires-recent-login'
+        ? 'Please sign out and sign in again before changing your email for security reasons.'
+        : error.message;
+      setEmailMsg({ type: 'error', text: msg });
+    }
+  };
+
+  const handleSendEmailVerification = async () => {
+    if (!user) return;
+    setEmailMsg({ type: '', text: '' });
+    try {
+      await sendEmailVerification(user);
+      setEmailMsg({ type: 'success', text: 'Verification email sent! Check your inbox.' });
+    } catch (error: any) {
+      console.error(error);
+      setEmailMsg({ type: 'error', text: error.message });
+    }
+  };
+
   const [profilePic, setProfilePic] = useState<string | null>(() => {
     return localStorage.getItem('dc-profile-pic') || (user?.photoURL || null);
   });
@@ -383,6 +414,51 @@ export function PreferencesPage() {
                         <p>Under our strict user privacy protocol, your account and 100% of your cloud database documents are queued for irreversible wipeout. Total purge will execute securely in exactly <strong>30 days</strong>. If you would like to undo this deletion, please click the "Cancel Deletion Request" button below or contact support.</p>
                       </div>
                     )}
+                  </div>
+
+                  {/* Email & Security Settings */}
+                  <div className="pt-6 border-t border-gray-100">
+                    <h2 className="text-lg font-bold mb-2">Email Authentication</h2>
+                    <p className="text-sm text-gray-500 mb-6">Manage your registered email and verification status.</p>
+                    
+                    {emailMsg.text && (
+                      <div className={`p-3 rounded-lg text-sm mb-4 border ${emailMsg.type === 'error' ? 'bg-red-50 text-red-600 border-red-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
+                        {emailMsg.text}
+                      </div>
+                    )}
+
+                    <div className="bg-slate-50 border border-slate-100 p-5 rounded-2xl space-y-4">
+                      {user?.emailVerified ? (
+                        <div className="flex items-center gap-2 text-emerald-600 mb-2">
+                           <Shield className="w-4 h-4" />
+                           <span className="text-sm font-bold">Email Verified</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-2 mb-4">
+                           <div className="flex items-center gap-2 text-amber-600">
+                             <Shield className="w-4 h-4" />
+                             <span className="text-sm font-bold">Email Not Verified</span>
+                           </div>
+                           <p className="text-xs text-gray-500">Unverified accounts have restricted access. Send a verification link to confirm your email.</p>
+                           <Button onClick={handleSendEmailVerification} className="w-fit text-sm">Send Verification Email</Button>
+                        </div>
+                      )}
+                      
+                      <div className="pt-2 border-t border-slate-200">
+                         <label className="block text-sm font-bold text-gray-700 mb-1">Update Email Address</label>
+                         <p className="text-[11px] text-gray-500 mb-3">For security reasons, changing your email requires confirming the new address. A verification link will be sent to the new email. An alert is also sent to your existing email.</p>
+                         <div className="flex flex-col sm:flex-row gap-3">
+                           <input 
+                              type="email" 
+                              placeholder="New Email Address" 
+                              value={newEmail}
+                              onChange={(e) => setNewEmail(e.target.value)}
+                              className="px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-1 focus:ring-blue-500 w-full sm:max-w-[240px]"
+                           />
+                           <Button onClick={handleUpdateEmail} disabled={!newEmail} className="text-sm">Request Change</Button>
+                         </div>
+                      </div>
+                    </div>
                   </div>
 
                   {/* 2 Factor Auth Settings */}

@@ -9,7 +9,9 @@ import {
   createUserWithEmailAndPassword, 
   signOut,
   onAuthStateChanged,
-  updateProfile
+  updateProfile,
+  sendEmailVerification,
+  getAdditionalUserInfo
 } from 'firebase/auth';
 import { doc, onSnapshot, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
@@ -181,8 +183,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const result = await signInWithPopup(auth, provider);
     const credential = GoogleAuthProvider.credentialFromResult(result);
+    // Check if new user
+    const additionalInfo = getAdditionalUserInfo(result);
+    
     if (credential?.accessToken) {
       sessionStorage.setItem('google_access_token', credential.accessToken);
+      
+      // Send welcome email if new user
+      if (additionalInfo?.isNewUser && result.user.email) {
+        try {
+          const { sendWelcomeEmail } = await import('../lib/gmail');
+          await sendWelcomeEmail({
+            userEmail: result.user.email,
+            username: result.user.displayName || 'Crafter',
+            accessToken: credential.accessToken
+          });
+        } catch (err) {
+          console.warn("Failed to send welcome email:", err);
+        }
+      }
+
       try {
         const docsMod = await import('../utils/googleDocs');
         docsMod.setDocsToken(credential.accessToken);
@@ -221,6 +241,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     if (cred.user) {
       await updateProfile(cred.user, { displayName: name });
+      try {
+        await sendEmailVerification(cred.user);
+      } catch(e) {
+        console.warn("Failed to send verification email:", e);
+      }
       // Force user state refresh to let other components know of the displayName update immediately
       setUser({ ...cred.user, displayName: name } as User);
     }

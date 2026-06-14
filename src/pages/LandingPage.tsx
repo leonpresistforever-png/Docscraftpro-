@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Navbar } from '../components/layout/Navbar';
+import { Footer } from '../components/layout/Footer';
 import { FileText, Cpu, CheckCircle, Boxes, Search, Download, Clock } from 'lucide-react';
 import { motion, useAnimation, AnimatePresence } from 'motion/react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
@@ -384,67 +385,7 @@ export function LandingPage() {
       </section>
 
       {/* Section 6: Premium SaaS Footer */}
-      <footer className="relative z-10 bg-white pt-24 pb-12 border-t border-[#E4DBC5]">
-        <div className="max-w-[1400px] mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-16">
-             {/* Brand Column */}
-             <div className="lg:col-span-2">
-               <div className="flex items-center gap-3 mb-6">
-                 <div className="w-8 h-8 rounded bg-gradient-to-br from-[#E2BC55] to-[#996A00] flex items-center justify-center shadow-sm">
-                   <div className="w-4 h-4 border-2 border-white rounded-[1px] rotate-45 transform"></div>
-                 </div>
-                 <span className="font-serif font-bold text-xl text-[#1a1a1a]">DocCraft Pro</span>
-               </div>
-               <p className="text-gray-500 text-sm max-w-xs mb-8 leading-relaxed">
-                 The intelligent, seamless workspace for high-velocity teams. Write down your ideas, and let our intelligence build the connections.
-               </p>
-
-              </div>
-
-              {/* Links Columns */}
-             <div>
-               <h4 className="font-bold text-[#1a1a1a] uppercase text-xs tracking-wider mb-6">Product</h4>
-               <ul className="space-y-4 text-sm text-gray-500">
-                 <li><Link to="/features" className="hover:text-[#D4AF37] transition-colors">Features</Link></li>
-                 <li><Link to="/integrations" className="hover:text-[#D4AF37] transition-colors">Integrations</Link></li>
-                 <li><Link to="/changelog" className="hover:text-[#D4AF37] transition-colors">Changelog</Link></li>
-               </ul>
-             </div>
-             
-             <div>
-               <h4 className="font-bold text-[#1a1a1a] uppercase text-xs tracking-wider mb-6">Developers</h4>
-               <ul className="space-y-4 text-sm text-gray-500">
-                 <li><Link to="/docs" className="hover:text-[#D4AF37] transition-colors">Documentation</Link></li>
-                 
-                 
-
-               </ul>
-             </div>
-
-             <div>
-               <h4 className="font-bold text-[#1a1a1a] uppercase text-xs tracking-wider mb-6">Company</h4>
-               <ul className="space-y-4 text-sm text-gray-500">
-                 <li><Link to="/about" className="hover:text-[#D4AF37] transition-colors">About</Link></li>
-                 
-                 
-                 <li><Link to="/contact" className="hover:text-[#D4AF37] transition-colors">Contact</Link></li>
-               </ul>
-             </div>
-          </div>
-          
-          <div className="pt-8 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-600">
-            <p className="font-medium">&copy; 2026 DocCraft Inc. All rights reserved.</p>
-            <p className="text-center md:text-left text-[#4b5563] text-xs max-w-xl mx-auto leading-relaxed">
-              We believe in transparent, honest privacy policies. You own your data. We don't train our models on your private documents unless you explicitly opt in, and you can delete your account at any time.
-            </p>
-            <div className="flex gap-6 font-medium text-gray-500">
-              <Link to="/privacy-policy" className="hover:text-gray-800 transition-colors">Privacy Policy</Link>
-              <Link to="/terms" className="hover:text-gray-800 transition-colors">Terms of Service</Link>
-              <Link to="/cookies" className="hover:text-gray-800 transition-colors">Cookie Setting</Link>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }

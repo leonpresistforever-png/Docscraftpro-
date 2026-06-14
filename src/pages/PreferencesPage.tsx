@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Sidebar } from '../components/layout/Sidebar';
-import { Settings, User, Shield, CreditCard, Zap, Download, Moon, Sun, Palette, Globe, Key, Database, BarChart3, ChevronRight, Sparkles, Heart } from 'lucide-react';
+import { Settings, User, Shield, CreditCard, Zap, Download, Moon, Sun, Palette, Globe, Key, Database, BarChart3, ChevronRight, Sparkles, Heart, Scan } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
@@ -461,14 +461,14 @@ export function PreferencesPage() {
                     </div>
                   </div>
 
-                  {/* 2 Factor Auth Settings */}
+                  {/* 2 Factor Auth Settings (Phone SMS OTP) */}
                   <div className="pt-6 border-t border-gray-100">
-                    <h2 className="text-lg font-bold mb-2">Two-Factor Security (2FA)</h2>
+                    <h2 className="text-lg font-bold mb-2 flex items-center gap-2">Two-Factor Security (2FA) <Shield className="w-5 h-5 text-indigo-600"/></h2>
                     <p className="text-sm text-gray-500 mb-6">Enhance your account security with SMS OTP verification.</p>
                     
-                    <div className="bg-amber-50/50 border border-amber-100 p-5 rounded-2xl">
+                    <div className="bg-yellow-50/50 border border-yellow-100 p-5 rounded-2xl">
                       {!user?.email ? (
-                        <p className="text-sm text-amber-700">Please sign in to configure 2FA.</p>
+                        <p className="text-sm text-yellow-700">Please sign in to configure Two-Factor Authentication.</p>
                       ) : isEnrolled ? (
                          <div className="space-y-4">
                            <div className="flex items-center gap-2">
@@ -476,7 +476,7 @@ export function PreferencesPage() {
                              <span className="font-bold text-gray-800">Phone Authentication Active</span>
                            </div>
                            <p className="text-xs text-gray-600 leading-relaxed max-w-sm">
-                             Your account is currently protected by Two-Factor Authentication via SMS.
+                             Your account is protected by SMS Two-Factor Authentication.
                            </p>
                            <Button onClick={handleUnenroll} variant="outline" className="text-sm border-red-200 text-red-600 hover:bg-red-50">
                               Disable 2FA
@@ -485,54 +485,81 @@ export function PreferencesPage() {
                       ) : (
                          <div className="space-y-4">
                            <div className="flex items-center gap-2">
-                             <Shield className="w-5 h-5 text-amber-600" />
+                             <Shield className="w-5 h-5 text-yellow-600" />
                              <span className="font-bold text-gray-800">Phone Authentication Setup</span>
                            </div>
                            <p className="text-xs text-gray-600 leading-relaxed max-w-sm">
                              Enter your phone number below to receive an enrollment code. This enrolls your number for future logins.
                            </p>
 
-                           {/* Recaptcha Container */}
-                           <div id="recaptcha-verifier-container" className="my-2"></div>
-
-                           {mfaError && <p className="text-xs font-bold text-red-500 my-2">{mfaError}</p>}
-
                            {!isVerifyingState ? (
                              <div className="flex flex-col gap-3 max-w-sm">
-                               <input 
-                                 type="tel" 
-                                 placeholder="+1 234 567 8900" 
-                                 value={phoneToVerify} 
-                                 onChange={(e) => setPhoneToVerify(e.target.value)}
-                                 className="px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-1 focus:ring-amber-500"
-                               />
+                               <div className="flex gap-2">
+                                 <select 
+                                   className="px-2 py-2 border border-gray-300 rounded-lg text-sm bg-white"
+                                   defaultValue="+1"
+                                   onChange={(e) => {
+                                      const phone = phoneToVerify.replace(/^\+\d+\s*/, '');
+                                      setPhoneToVerify(e.target.value + ' ' + phone);
+                                   }}
+                                 >
+                                    <option value="+1">🇺🇸 +1</option>
+                                    <option value="+44">🇬🇧 +44</option>
+                                    <option value="+91">🇮🇳 +91</option>
+                                    <option value="+61">🇦🇺 +61</option>
+                                    <option value="+86">🇨🇳 +86</option>
+                                    <option value="+81">🇯🇵 +81</option>
+                                    <option value="+49">🇩🇪 +49</option>
+                                    <option value="+33">🇫🇷 +33</option>
+                                    <option value="+39">🇮🇹 +39</option>
+                                    <option value="+55">🇧🇷 +55</option>
+                                    <option value="+52">🇲🇽 +52</option>
+                                    <option value="+34">🇪🇸 +34</option>
+                                 </select>
+                                 <input 
+                                   type="tel" 
+                                   placeholder="e.g. 555-0123" 
+                                   value={phoneToVerify.replace(/^\+\d+\s*/, '')} 
+                                   onChange={(e) => {
+                                      const code = phoneToVerify.match(/^\+(\d+)/)?.[0] || '+1';
+                                      setPhoneToVerify(`${code} ${e.target.value}`);
+                                   }}
+                                   className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm box-border focus:ring-1 focus:ring-yellow-500 w-full"
+                                 />
+                               </div>
+                               {mfaError && <p className="text-xs font-bold text-red-500">{mfaError}</p>}
                                <Button 
-                                 onClick={handleSendOTP} 
-                                 variant="outline" 
-                                 disabled={!phoneToVerify}
-                                 className="text-sm border-amber-300 text-amber-700 hover:bg-amber-100"
+                                 onClick={() => handleSendOTP()} 
+                                 className="text-sm bg-yellow-400 hover:bg-yellow-500 text-yellow-900 w-full"
                                >
                                   Send SMS OTP
                                </Button>
+                               <div id="recaptcha-verifier-container"></div>
                              </div>
                            ) : (
-                             <div className="flex flex-col gap-3 max-w-sm">
+                             <div className="flex flex-col gap-3 max-w-sm bg-white p-4 border border-yellow-200 rounded-xl shadow-sm">
+                               <p className="text-xs font-bold text-yellow-900 mb-1">Enter 6-digit SMS Code sent to {phoneToVerify}</p>
                                <input 
                                  type="text" 
-                                 placeholder="Enter 6-digit code" 
+                                 placeholder="e.g. 123456" 
                                  value={verificationCode} 
                                  onChange={(e) => setVerificationCode(e.target.value)}
-                                 className="px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-1 focus:ring-amber-500"
+                                 className="px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-1 focus:ring-yellow-500 w-full font-mono text-center tracking-widest font-bold"
                                />
-                               <div className="flex gap-2">
+                               {mfaError && <p className="text-xs font-bold text-red-500 my-1 text-center">{mfaError}</p>}
+                               <div className="flex gap-2 mt-2">
                                  <Button 
                                    onClick={handleVerifyOTPAndEnroll} 
-                                   className="text-sm bg-amber-600 hover:bg-amber-700 text-white flex-1"
+                                   className="text-sm bg-yellow-500 hover:bg-yellow-600 text-white flex-1"
                                  >
                                     Verify & Enroll
                                  </Button>
                                  <Button 
-                                   onClick={() => setIsVerifyingState(false)} 
+                                   onClick={() => {
+                                     setIsVerifyingState(false);
+                                     setVerificationCode('');
+                                     setMfaError('');
+                                   }} 
                                    variant="ghost" 
                                    className="text-sm"
                                  >

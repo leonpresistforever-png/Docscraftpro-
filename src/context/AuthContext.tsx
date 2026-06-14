@@ -4,7 +4,6 @@ import {
   signInWithPopup, 
   GoogleAuthProvider, 
   OAuthProvider,
-  FacebookAuthProvider,
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   signOut,
@@ -77,8 +76,6 @@ interface AuthContextType {
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
   signInWithApple: () => Promise<void>;
-  signInWithFacebook: () => Promise<void>;
-  signInWithMicrosoft: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (email: string, password: string, name: string) => Promise<void>;
   signInAsDemo: () => void;
@@ -223,16 +220,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await signInWithPopup(auth, provider);
   };
 
-  const signInWithFacebook = async () => {
-    const provider = new FacebookAuthProvider();
-    await signInWithPopup(auth, provider);
-  };
-
-  const signInWithMicrosoft = async () => {
-    const provider = new OAuthProvider('microsoft.com');
-    await signInWithPopup(auth, provider);
-  };
-
   const signInWithEmail = async (email: string, password: string) => {
     await signInWithEmailAndPassword(auth, email, password);
   };
@@ -257,7 +244,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, userData, loading, signInWithGoogle, signInWithApple, signInWithFacebook, signInWithMicrosoft, signInWithEmail, signUpWithEmail, signInAsDemo, logout, updateUserCredits, consumeCredits }}>
+    <AuthContext.Provider value={{ user, userData, loading, signInWithGoogle, signInWithApple, signInWithEmail, signUpWithEmail, signInAsDemo, logout, updateUserCredits, consumeCredits }}>
       {!loading && children}
     </AuthContext.Provider>
   );

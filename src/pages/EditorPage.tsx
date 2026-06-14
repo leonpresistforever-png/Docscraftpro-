@@ -34,6 +34,7 @@ import { EnhancedImage } from '../lib/extensions/EnhancedImage';
 import { ChartBox } from '../lib/extensions/ChartBox';
 import { FlowchartBox } from '../lib/extensions/FlowchartBox';
 import { MangaPanel } from '../lib/extensions/MangaPanel';
+import { MermaidBox } from '../lib/extensions/MermaidBox';
 import { Table } from '@tiptap/extension-table';
 import { TableRow } from '@tiptap/extension-table-row';
 import { TableCell } from '@tiptap/extension-table-cell';
@@ -51,7 +52,7 @@ import {
   Palette, Highlighter, Sparkles, PenTool, Languages, MousePointer2, Settings, Type, LayoutList, 
   CheckCircle, FileText, Briefcase, FileCode, Search, RefreshCw, Layers, Mail, FileSearch, ListChecks, Mic, Scale, Table as TableIcon, Zap, Plus,
   Trash2, Image as ImageIcon, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Columns, Rows, FileSpreadsheet, Layout, Brain, Puzzle, ChevronDown, Blocks, Printer, X, BarChart3, Star, Share2, Sigma,
-  Maximize, FileX, Scissors, Type as TypeIcon, Globe, MoveDown, BookOpen, Clock, Network, Box, StopCircle, AlertCircle, Loader2, Paperclip, ExternalLink
+  Maximize, FileX, Scissors, Ruler, Type as TypeIcon, Globe, MoveDown, BookOpen, Clock, Network, Box, StopCircle, AlertCircle, Loader2, Paperclip, ExternalLink
 } from 'lucide-react';
 import { askGeminiFlash, askGeminiProComplex, directLlmCall } from '../lib/gemini';
 import { LocalGemmaTerminal } from '../components/LocalGemmaTerminal';
@@ -1095,6 +1096,7 @@ Requirements:
       ChartBox,
       FlowchartBox,
       MangaPanel,
+      MermaidBox,
       Table.configure({
         resizable: true,
         HTMLAttributes: {
@@ -1955,7 +1957,7 @@ Requirements:
              image:        { type: 'jpeg', quality: 0.98 },
              html2canvas:  { scale: 2, useCORS: true, letterRendering: true, windowWidth: 1024, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0 },
              jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-             pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+             pagebreak:    { mode: ['css', 'legacy'] }
            };
            
            // Fix for hidden/blank renders: Mount a wrapper matching the layout viewport scroll offset
@@ -2040,6 +2042,8 @@ Requirements:
             parent.style.opacity = '1'; 
             parent.style.pointerEvents = 'none';
             parent.style.width = '800px';
+            parent.style.height = 'auto';
+            parent.style.overflow = 'visible';
             
             // Set margins based on rulers safely
             parent.style.paddingLeft = `${Math.min(180, Math.max(15, editorLeftMargin))}px`;
@@ -2054,6 +2058,29 @@ Requirements:
             clone.classList.add('prose', 'text-black', 'bg-white');
             clone.style.color = '#000000';
             clone.style.backgroundColor = '#ffffff';
+
+            // IMPORTANT: native `<canvas>` rendering states do not get transferred over cloneNode(true). 
+            // We cast all embedded canvas blocks to native HTMLImageElement proxies matching their dimensions for printer compatibility.
+            const sourceCanvases = element.querySelectorAll('canvas');
+            const clonedCanvases = clone.querySelectorAll('canvas');
+            sourceCanvases.forEach((srcCanvas, index) => {
+              const cloneCanvas = clonedCanvases[index];
+              if (cloneCanvas && srcCanvas instanceof HTMLCanvasElement) {
+                try {
+                  const dataUrl = srcCanvas.toDataURL('image/png');
+                  const img = document.createElement('img');
+                  img.src = dataUrl;
+                  img.style.width = srcCanvas.style.width || `${srcCanvas.width}px`;
+                  img.style.height = srcCanvas.style.height || `${srcCanvas.height}px`;
+                  img.style.maxWidth = '100%';
+                  img.style.objectFit = 'contain';
+                  img.className = cloneCanvas.className;
+                  cloneCanvas.parentNode?.replaceChild(img, cloneCanvas);
+                } catch (canvasErr) {
+                  console.error("Canvas could not be rendered out into image proxy safely:", canvasErr);
+                }
+              }
+            });
 
             clone.querySelectorAll('*').forEach((el: any) => {
               el.classList.remove('text-white', 'text-gray-100', 'text-gray-200', 'text-gray-300', 'prose-invert', 'dark:prose-invert');
@@ -2182,6 +2209,26 @@ Requirements:
                 clone.classList.add('prose', 'text-black', 'bg-white');
                 clone.style.color = '#000000';
                 clone.style.backgroundColor = '#ffffff';
+
+                // Map raw canvases into native image nodes safely for html2canvas
+                const sourceCanvases = element.querySelectorAll('canvas');
+                const clonedCanvases = clone.querySelectorAll('canvas');
+                sourceCanvases.forEach((srcCanvas, index) => {
+                  const cloneCanvas = clonedCanvases[index];
+                  if (cloneCanvas && srcCanvas instanceof HTMLCanvasElement) {
+                    try {
+                      const img = document.createElement('img');
+                      img.src = srcCanvas.toDataURL('image/png');
+                      img.style.width = srcCanvas.style.width || `${srcCanvas.width}px`;
+                      img.style.height = srcCanvas.style.height || `${srcCanvas.height}px`;
+                      img.style.maxWidth = '100%';
+                      img.className = cloneCanvas.className;
+                      cloneCanvas.parentNode?.replaceChild(img, cloneCanvas);
+                    } catch (e) {
+                      console.error("Canvas could not be extracted:", e);
+                    }
+                  }
+                });
 
                 clone.querySelectorAll('*').forEach((el: any) => {
                   el.classList.remove('text-white', 'text-gray-100', 'text-gray-200', 'text-gray-300', 'prose-invert', 'dark:prose-invert');
@@ -3193,6 +3240,12 @@ Requirements:
               <button title="Horizontal Rule" onClick={() => editor?.chain().setHorizontalRule().run()} className="p-1.5 flex-shrink-0 rounded hover:bg-gray-200 text-gray-600">
                 <Minus className="w-4 h-4" />
               </button>
+              <button title="Page Break (Cut Pages)" onClick={() => editor?.chain().setHorizontalRule().run()} className="p-1.5 flex-shrink-0 rounded hover:bg-rose-50 hover:text-rose-600 text-gray-600 transition-colors outline-none cursor-pointer">
+                <Scissors className="w-4 h-4" />
+              </button>
+              <button title="Mermaid Diagram" onClick={() => editor?.chain().focus().insertContent({ type: 'mermaidBox' }).run()} className="p-1.5 flex-shrink-0 rounded hover:bg-purple-50 hover:text-purple-600 text-gray-600 transition-colors flex items-center gap-1 border border-transparent">
+                <Share2 className="w-4 h-4" />
+              </button>
               
               <div className="relative flex items-center">
                  <button 
@@ -3735,7 +3788,7 @@ Requirements:
                }} title="Translate" className="text-gray-500 hover:text-indigo-600 transition-colors flex items-center gap-1.5"><Globe className="w-4 h-4"/> <span className="text-[11px] font-bold hidden md:inline">Translate</span></button>
                <button onMouseDown={(e) => e.preventDefault()} onClick={() => {
                    setShowRuler(!showRuler);
-               }} title="Toggle Margin Ruler" className={cn("transition-colors flex items-center gap-1.5 focus:outline-none", showRuler ? "text-indigo-600 font-bold bg-indigo-50 px-2 py-0.5 rounded animate-pulse" : "text-gray-500 hover:text-indigo-600")}><Scissors className="w-4 h-4"/> <span className="text-[11px] font-bold hidden md:inline">Ruler</span></button>
+               }} title="Toggle Margin Ruler" className={cn("transition-colors flex items-center gap-1.5 focus:outline-none", showRuler ? "text-indigo-600 font-bold bg-indigo-50 px-2 py-0.5 rounded animate-pulse" : "text-gray-500 hover:text-indigo-600")}><Ruler className="w-4 h-4"/> <span className="text-[11px] font-bold hidden md:inline">Ruler</span></button>
 
                 <div className="hidden"></div>
                 

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
 import { motion } from 'motion/react';
-import { HelpCircle, Home, Mail, PackageSearch } from 'lucide-react';
+import { HelpCircle, Home, Mail, PackageSearch, Search } from 'lucide-react';
 
 export function NotFoundPage() {
   return (
@@ -22,12 +22,32 @@ export function NotFoundPage() {
             <HelpCircle className="w-10 h-10 text-[#D4AF37] animate-bounce" />
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 mb-8">
             <h1 className="text-6xl font-black text-gray-900 tracking-tight font-serif">404</h1>
             <h2 className="text-2xl font-bold text-[#1a1a1a] tracking-wide">Looks like this link is broken</h2>
             <p className="text-gray-500 text-sm max-w-sm mx-auto leading-relaxed">
               We couldn't find the page you were looking for. Let's get you back on track to exploring our workspace.
             </p>
+          </div>
+
+          <div className="max-w-md mx-auto mb-8 relative">
+            <div className="relative flex items-center w-full h-12 rounded-xl focus-within:shadow-md bg-white overflow-hidden border border-gray-200">
+              <div className="grid place-items-center h-full w-12 text-gray-300">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                className="peer h-full w-full outline-none text-sm text-gray-700 pr-2"
+                type="text"
+                id="search"
+                placeholder="Search our site..."
+                onChange={(e) => {}}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                     window.location.href = '/features';
+                  }
+                }}
+              /> 
+            </div>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">

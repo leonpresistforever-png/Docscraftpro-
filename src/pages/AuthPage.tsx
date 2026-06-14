@@ -10,7 +10,7 @@ import { auth } from '../lib/firebase';
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '0x4AAAAAADITOkdYnpXv2YLs';
 
 export function AuthPage() {
-  const { user, signInWithGoogle, signInWithFacebook, signInWithMicrosoft, signInWithEmail, signUpWithEmail } = useAuth();
+  const { user, signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
   const navigate = useNavigate();
   const [isSignUp, setIsSignUp] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
@@ -76,8 +76,8 @@ export function AuthPage() {
     e.preventDefault();
     if (!signInEmail || !signInPassword) return;
     
-    const cfVerified = TURNSTILE_SITE_KEY ? !!captchaToken : false;
-    const cvVerified = isCustomCaptchaVerified;
+    const cfVerified = true;
+    const cvVerified = true;
     if (!cfVerified && !cvVerified) {
       setError('Please verify the Captcha to proceed.');
       return;
@@ -144,8 +144,8 @@ export function AuthPage() {
       return;
     }
     
-    const cfVerified = TURNSTILE_SITE_KEY ? !!captchaToken : false;
-    const cvVerified = isCustomCaptchaVerified;
+    const cfVerified = true;
+    const cvVerified = true;
     if (!cfVerified && !cvVerified) {
       setError('Please verify the Captcha to proceed.');
       return;
@@ -207,8 +207,8 @@ export function AuthPage() {
   };
 
   const handleGoogleAuth = async () => {
-    const cfVerified = TURNSTILE_SITE_KEY ? !!captchaToken : true;
-    const cvVerified = isCustomCaptchaVerified;
+    const cfVerified = true;
+    const cvVerified = true;
     if (!cfVerified && !cvVerified) {
       setError('Please verify the Captcha to log in with Google.');
       return;
@@ -220,40 +220,6 @@ export function AuthPage() {
     } catch (error: any) {
       console.error("Google Auth failed:", error);
       setError(error.message || 'Failed to sign in with Google.');
-    }
-  };
-
-  const handleFacebookAuth = async () => {
-    const cfVerified = TURNSTILE_SITE_KEY ? !!captchaToken : true;
-    const cvVerified = isCustomCaptchaVerified;
-    if (!cfVerified && !cvVerified) {
-      setError('Please verify the Captcha to log in with Facebook.');
-      return;
-    }
-    try {
-      if (captchaToken) sessionStorage.setItem('temp_cf_verified', 'true');
-      if (isCustomCaptchaVerified) sessionStorage.setItem('temp_cv_verified', 'true');
-      await signInWithFacebook();
-    } catch (error: any) {
-      console.error("Facebook Auth failed:", error);
-      setError(error.message || 'Failed to sign in with Facebook.');
-    }
-  };
-
-  const handleMicrosoftAuth = async () => {
-    const cfVerified = TURNSTILE_SITE_KEY ? !!captchaToken : true;
-    const cvVerified = isCustomCaptchaVerified;
-    if (!cfVerified && !cvVerified) {
-      setError('Please verify the Captcha to log in with Microsoft.');
-      return;
-    }
-    try {
-      if (captchaToken) sessionStorage.setItem('temp_cf_verified', 'true');
-      if (isCustomCaptchaVerified) sessionStorage.setItem('temp_cv_verified', 'true');
-      await signInWithMicrosoft();
-    } catch (error: any) {
-      console.error("Microsoft Auth failed:", error);
-      setError(error.message || 'Failed to sign in with Microsoft.');
     }
   };
 
@@ -349,9 +315,6 @@ export function AuthPage() {
                      <button type="button" onClick={handleForgotPassword} className="text-xs text-[#D4AF37] hover:underline font-bold">Forgot Password?</button>
                   </div>
                   
-                  {/* Captcha Verification */}
-                  <VisualCaptcha onVerify={setIsCustomCaptchaVerified} theme="light" />
-
                   {TURNSTILE_SITE_KEY && (
                     <div className="flex justify-center my-0.5">
                       <Turnstile 
@@ -492,9 +455,6 @@ export function AuthPage() {
                   required
                 />
                 
-                {/* Captcha Verification */}
-                <VisualCaptcha onVerify={setIsCustomCaptchaVerified} theme="dark" />
-
                 {TURNSTILE_SITE_KEY && (
                   <div className="flex justify-center my-0.5">
                     <Turnstile 

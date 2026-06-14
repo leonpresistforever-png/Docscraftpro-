@@ -70,6 +70,31 @@ export function DocumentationPage() {
           </ul>
         </div>
       )
+    },
+    'mermaid-diagrams': {
+      title: "Mermaid Diagrams & Flowcharts",
+      content: (
+        <div className="space-y-6">
+          <p className="text-sm text-gray-600 leading-relaxed">
+            DocCraft Pro supports natively rendering code-driven diagrams and flowcharts directly inside your document canvas using <strong>Mermaid.js</strong>.
+          </p>
+          <h3 className="font-bold text-gray-900 text-lg mt-4 mb-2">How to Render Diagrams</h3>
+          <p className="text-sm text-gray-600 leading-relaxed">
+            You can insert beautiful schema blueprints and logic flowcharts without leaving your keyboard or drawing manually.
+          </p>
+          <ul className="list-decimal pl-5 text-xs text-gray-600 space-y-3 leading-relaxed">
+            <li>
+              <strong>Direct Button Insert:</strong> Click on the <strong className="text-purple-600">Share/Network icon</strong> inside the floating rich-text toolbar at the top of the editor. This instantly embeds a new Mermaid Box.
+            </li>
+            <li>
+              <strong>Toggling Code:</strong> Inside the rendered diagram block, click the <strong>"Edit Script"</strong> button. The box flips to an embedded code terminal where you can write Mermaid syntax (e.g., <code className="bg-gray-100 px-1 py-0.5 rounded text-gray-800">graph TD</code>).
+            </li>
+            <li>
+              <strong>Render & Verify:</strong> Click <strong>"View Diagram"</strong> on the box header to compile the syntax into a beautifully scaled, interactive SVG flowchart right within the page. If there is a typo, the syntax error will be highlighted gracefully.
+            </li>
+          </ul>
+        </div>
+      )
     }
   };
 
@@ -106,6 +131,12 @@ export function DocumentationPage() {
                 className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2.5 transition-colors cursor-pointer ${activeGuide === 'on-device-ai' ? 'bg-[#1a1a1a] text-white' : 'text-gray-600 hover:bg-gray-50'}`}
               >
                 <Code className="w-4 h-4" /> Local GPU Models
+              </button>
+              <button 
+                onClick={() => setActiveGuide('mermaid-diagrams')}
+                className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2.5 transition-colors cursor-pointer ${activeGuide === 'mermaid-diagrams' ? 'bg-[#1a1a1a] text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+              >
+                <Code className="w-4 h-4" /> Mermaid Diagrams
               </button>
             </nav>
           </aside>

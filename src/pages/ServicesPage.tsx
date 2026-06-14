@@ -126,6 +126,64 @@ export function ServicesPage() {
           </div>
         </div>
 
+        {/* Social Proof */}
+        <div className="mb-24">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-black text-gray-900 font-serif mb-4">Trusted by Industry Leaders</h2>
+            <p className="text-gray-600">See what our clients have to say about their experience.</p>
+          </div>
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
+              <div className="flex gap-1 text-amber-400 mb-4">
+                {"★★★★★"}
+              </div>
+              <p className="text-gray-700 italic mb-6">"Implementation was seamless. We cut our document processing time by 40% in the first quarter alone."</p>
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+                <div>
+                  <h4 className="font-bold text-sm text-gray-900">Sarah Jenkins</h4>
+                  <p className="text-xs text-gray-500">Director of Operations, FinTech Global</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
+              <div className="flex gap-1 text-amber-400 mb-4">
+                {"★★★★★"}
+              </div>
+              <p className="text-gray-700 italic mb-6">"The only platform that successfully mapped our complex compliant workflows without writing custom code."</p>
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+                <div>
+                  <h4 className="font-bold text-sm text-gray-900">Marcus Wright</h4>
+                  <p className="text-xs text-gray-500">CTO, HealthSecure Partners</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* FAQ Section */}
+        <div className="mb-24 max-w-3xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-black text-gray-900 font-serif mb-4">Frequently Asked Questions</h2>
+            <p className="text-gray-600">Common questions about our services and process.</p>
+          </div>
+          <div className="space-y-4">
+            <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+              <h3 className="font-bold text-gray-900 mb-2">How long does implementation take?</h3>
+              <p className="text-sm text-gray-600 leading-relaxed">Typical deployment ranges from 2-4 weeks depending on your current infrastructure and custom logic requirements. We prioritize zero downtime during transition.</p>
+            </div>
+            <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+              <h3 className="font-bold text-gray-900 mb-2">Is pricing custom per enterprise?</h3>
+              <p className="text-sm text-gray-600 leading-relaxed">Yes. After our initial consultation, we provide a customized pricing model based on seat count, storage requirements, and requested integrations.</p>
+            </div>
+            <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+              <h3 className="font-bold text-gray-900 mb-2">Do you provide ongoing support?</h3>
+              <p className="text-sm text-gray-600 leading-relaxed">Absolutely. Every enterprise plan includes a dedicated technical account manager and 24/7 priority support desk to ensure smooth operations.</p>
+            </div>
+          </div>
+        </div>
+
         {/* Clean ending for Services Page */}
         <div className="max-w-3xl mx-auto mb-20 text-center">
             <h2 className="text-3xl font-black text-gray-900 font-serif mb-6">Ready to upgrade your workflow?</h2>

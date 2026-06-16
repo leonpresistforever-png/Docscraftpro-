@@ -105,7 +105,6 @@ export function Dashboard() {
 
   const quickActions = [
     { icon: <FilePlus className="w-5 h-5" />, label: 'New Document', href: '/doc/new' },
-    { icon: <Globe className="w-5 h-5" />, label: 'Translate PDF', href: '/media' },
     { icon: <Upload className="w-5 h-5" />, label: 'Upload & Extract', action: () => {
         setIsDirectUploadMode(true);
         handleSelectFileInputClick();

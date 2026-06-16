@@ -22,16 +22,16 @@ export function EnterprisePlatformPage() {
         </div>
 
         <section className="mb-20">
-            <h2 className="text-3xl font-bold uppercase mb-6 border-b border-gray-200 pb-4">Architected for Scale and Security</h2>
+            <h2 className="text-3xl font-bold uppercase mb-6 border-b border-gray-200 pb-4">Built for Collaboration and Security</h2>
             <div className="prose max-w-none text-gray-700 leading-loose space-y-6">
                <p>
-                 In the modern digital workspace, organizations are burdened with fragmented knowledge silos, slow collaboration cycles, and disconnected tools. Docscraft Pro’s Enterprise Platform bridges these gaps by offering a unified ecosystem that integrates seamlessly with your existing infrastructure. By leveraging cutting-edge Conflict-free Replicated Data Types (CRDTs), we ensure that thousands of simultaneous users can collaborate on a single document without collision, latency, or data loss. Every keystroke is synchronized globally through our distributed edge network, ensuring sub-millisecond latency regardless of geographic location.
+                 In the modern digital workspace, organizations are burdened with fragmented knowledge silos, slow collaboration cycles, and disconnected tools. Docscraft Pro’s Enterprise Platform bridges these gaps by offering a unified ecosystem that integrates seamlessly with your team's workflow. We ensure that your team can collaborate on a single document smoothly, without interrupting each other or losing work. Every keystroke is saved immediately and synchronized globally, ensuring smooth editing regardless of geographic location.
                </p>
                <p>
-                 Security is not an afterthought; it is foundational to our architecture. Our platform employs End-to-End Encryption (E2EE) at rest and in transit, utilizing AES-256 standards. Each enterprise tenant is isolated within a dedicated Virtual Private Cloud (VPC), ensuring that your proprietary data—whether legal contracts, system architecture blueprints, or financial reports—never bleeds across boundaries. We are fully compliant with GDPR, SOC 2 Type II, and HIPAA regulations, undergoing regular penetration testing and third-party audits to maintain our robust defensive posture.
+                 Security is not an afterthought; it is foundational to our approach. Our platform encrypts your documents completely to keep your work safe. Each enterprise account is securely isolated so your proprietary data—whether legal contracts, system architecture blueprints, or financial reports—remains entirely yours. We comply with major data protection standards ensuring that your private information is handled responsibly and securely at all times.
                </p>
                <p>
-                 Furthermore, our intelligent AI augmentation is designed to empower, not replace, human expertise. Our private language models are trained exclusively on your organization's internal knowledge base, operating within a secure sandbox that guarantees your data is never used to train public instances. This allows teams to automate repetitive drafting tasks, extract actionable insights from vast document repositories, and maintain brand voice consistency across all outbound communications. The AI assistant acts as a tireless co-pilot, surfacing relevant information exactly when it is needed, thereby drastically reducing the time spent searching for legacy data.
+                 Furthermore, our intelligent AI features are designed to empower, not replace, human expertise. Our writing tools work privately for your organization, helping your teams draft documents faster and maintain consistency across all communications. The AI assistant acts as a tireless co-pilot, surfacing relevant information exactly when it is needed, thereby drastically reducing the time spent searching for past documents.
                </p>
             </div>
         </section>
@@ -40,27 +40,27 @@ export function EnterprisePlatformPage() {
            <h2 className="text-3xl font-bold uppercase mb-8">Core Enterprise Capabilities</h2>
            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
-                 <h3 className="text-xl font-bold mb-3 flex items-center gap-2"><Blocks className="text-[#D4AF37]" /> Modular Document Architecture</h3>
+                 <h3 className="text-xl font-bold mb-3 flex items-center gap-2"><Blocks className="text-[#D4AF37]" /> Flexible Document Blocks</h3>
                  <p className="text-gray-600 leading-relaxed">
-                   Documents in Docscraft Pro are built from independent blocks—paragraphs, lists, charts, and diagrams. Each block is a discrete node in a graph, allowing for programmatic manipulation, dynamic updates, and complex nested structures that adapt to your workflow.
+                   Documents in Docscraft Pro are built from independent pieces—paragraphs, lists, charts, and diagrams. Simply drag and drop to organize your writing exactly how you want it, making complex formatting easy.
                  </p>
               </div>
               <div>
-                 <h3 className="text-xl font-bold mb-3 flex items-center gap-2"><Globe className="text-[#D4AF37]" /> Global Edge Synchronization</h3>
+                 <h3 className="text-xl font-bold mb-3 flex items-center gap-2"><Globe className="text-[#D4AF37]" /> Smooth Team Collaboration</h3>
                  <p className="text-gray-600 leading-relaxed">
-                   Collaborate in real-time with teams across the globe. Our edge computing network distributes document states to servers nearest to the user, minimizing latency and providing a 'local-first' feel even on unstable internet connections.
+                   Work together in real-time with teams across the globe. Our platform feels fast and responsive even on slow internet connections, ensuring you always see exactly what your colleagues are typing.
                  </p>
               </div>
               <div>
                  <h3 className="text-xl font-bold mb-3 flex items-center gap-2"><Shield className="text-[#D4AF37]" /> Advanced Rights Management</h3>
                  <p className="text-gray-600 leading-relaxed">
-                   Implement granular Access Control Lists (ACLs) and Role-Based Access Control (RBAC). Restrict editing, viewing, or printing at the document, folder, or even block level. Establish secure, read-only auditor views for compliance reviews.
+                   Keep strict control over who can see or edit your work. Easily manage permissions for your team so that sensitive documents remain safe while public files can be shared widely.
                  </p>
               </div>
               <div>
-                 <h3 className="text-xl font-bold mb-3 flex items-center gap-2"><Building2 className="text-[#D4AF37]" /> Seamless Active Directory Integration</h3>
+                 <h3 className="text-xl font-bold mb-3 flex items-center gap-2"><Building2 className="text-[#D4AF37]" /> Seamless Team Login</h3>
                  <p className="text-gray-600 leading-relaxed">
-                   Integrate seamlessly with your existing Identity Providers (IdP) via SAML 2.0 or OIDC. Support for Okta, Azure AD, and Google Workspace ensures standardized identity management and streamlined onboarding/offboarding processes.
+                   Let your team log in securely using the accounts they already have. We support standard login methods, taking the headache out of managing passwords and getting new hires started.
                  </p>
               </div>
            </div>
@@ -70,13 +70,13 @@ export function EnterprisePlatformPage() {
            <h2 className="text-3xl font-bold uppercase mb-6 border-b border-gray-200 pb-4">A Commitment to Uncompromising Quality</h2>
            <div className="prose max-w-none text-gray-700 leading-loose space-y-6">
               <p>
-                We recognize that for enterprises, a document is more than just text—it is a binding agreement, a technical specification, or a critical business plan. Therefore, our rendering engine guarantees pixel-perfect fidelity across screen and print mediums. Our PDF export pipeline resolves complex typography, SVGs, and embedded content natively, ensuring that the final output matches exactly what you see in the editor.
+                We recognize that for enterprises, a document is more than just text—it is a binding agreement, a technical specification, or a critical business plan. Therefore, our rendering engine guarantees that what you see on the screen is exactly what you get when printed. Our PDF export respects your formatting perfectly to create highly professional final copies.
               </p>
               <p>
-                Transitioning to Docscraft Pro is a meticulously managed process. Our dedicated Customer Success Engineers work alongside your IT department to orchestrate zero-downtime migrations, importing legacy document formats (DOCX, PDF, Markdown) with high fidelity while preserving metadata and historical context. We offer custom SLA agreements guaranteeing 99.99% uptime, 24/7 dedicated support channels, and rapid incident response protocols.
+                Transitioning to Docscraft Pro is a smooth and guided experience. Our team works alongside you to bring over your existing documents with high fidelity while keeping everything organized. We provide dedicated support channels to ensure your team has everything they need to start producing incredible work on day one.
               </p>
               <p>
-                As your organization evolves, Docscraft Pro evolves with it. Our extensible API surface allows your internal engineering teams to build custom integrations, automate document lifecycles, and connect Docscraft Pro to ERP, CRM, and bespoke internal systems. The platform is not just a tool; it is a foundational layer for your organization's digital nervous system. By eliminating friction in knowledge creation and sharing, we empower your teams to focus on high-impact strategic initiatives rather than administrative overhead. Start your enterprise transformation today with Docscraft Pro.
+                As your organization evolves, Docscraft Pro evolves with it. Our platform isn't just a tool; it's a new standard for how your team creates and shares knowledge. By removing the frustrating hurdles of typical document software, we free up your time to focus on doing your best, most creative work.
               </p>
            </div>
         </section>

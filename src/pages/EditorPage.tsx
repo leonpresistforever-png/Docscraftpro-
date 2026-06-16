@@ -52,17 +52,19 @@ import {
   Palette, Highlighter, Sparkles, PenTool, Languages, MousePointer2, Settings, Type, LayoutList, 
   CheckCircle, FileText, Briefcase, FileCode, Search, RefreshCw, Layers, Mail, FileSearch, ListChecks, Mic, Scale, Table as TableIcon, Zap, Plus,
   Trash2, Image as ImageIcon, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Columns, Rows, FileSpreadsheet, Layout, Brain, Puzzle, ChevronDown, Blocks, Printer, X, BarChart3, Star, Share2, Sigma,
-  Maximize, FileX, Scissors, Ruler, Type as TypeIcon, Globe, MoveDown, BookOpen, Clock, Network, Box, StopCircle, AlertCircle, Loader2, Paperclip, ExternalLink
+  Maximize, FileX, Scissors, Ruler, Type as TypeIcon, Globe, MoveDown, BookOpen, Clock, Network, Box, StopCircle, AlertCircle, Loader2, Paperclip, ExternalLink, LayoutTemplate
 } from 'lucide-react';
 import { askGeminiFlash, askGeminiProComplex, directLlmCall } from '../lib/gemini';
 import { LocalGemmaTerminal } from '../components/LocalGemmaTerminal';
 import { runLocalChain } from '../utils/langchainLocal';
 import { marked } from 'marked';
 import { HexColorPicker } from 'react-colorful';
+import { AnimatePresence } from 'motion/react';
 
 import { RobotDictator } from '../components/RobotDictator';
 import { OfflineNotepad } from '../components/OfflineNotepad';
 import FrameGridSelectorModal from '../components/FrameGridSelectorModal';
+import { AIComponentMaker } from '../components/AIComponentMaker';
 import { Notebook, Frame, Sliders, FileImage, Grid } from 'lucide-react';
 
 const sanitizeAiError = (err: any): string => {
@@ -1043,6 +1045,7 @@ Requirements:
   const [showDrawModal, setShowDrawModal] = useState(false);
   const [showChatPlusMenu, setShowChatPlusMenu] = useState(false);
   const [showElementPanel, setShowElementPanel] = useState(false);
+  const [showAiComponentMaker, setShowAiComponentMaker] = useState(false);
   const [showSymbolMenu, setShowSymbolMenu] = useState(false);
   const [selectedLang, setSelectedLang] = useState('Spanish');
   const drawCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -3438,6 +3441,20 @@ Requirements:
                      <p className="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider px-4 shrink-0">Structural Elements</p>
                      <div className="grid grid-cols-2 gap-3 px-4 py-2 shrink-0">
                         <button 
+                          className="flex items-center gap-3 p-3 rounded-xl border border-indigo-100 bg-indigo-50/50 shadow-sm hover:border-indigo-300 hover:bg-indigo-100 transition-all text-left"
+                          onClick={() => {
+                             setShowElementPanel(false);
+                             setShowAiComponentMaker(true);
+                          }}
+                        >
+                          <LayoutTemplate className="w-6 h-6 text-indigo-500 shrink-0" />
+                          <div>
+                            <span className="text-[12px] font-bold block text-indigo-900">UI Generator</span>
+                            <span className="text-[10px] text-indigo-600/80">Prompt Tailwind HTML</span>
+                          </div>
+                        </button>
+
+                        <button 
                           className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 shadow-sm hover:border-dc-gold hover:bg-yellow-50 transition-all text-left"
                           onClick={() => {
                              setShowElementPanel(false);
@@ -4198,6 +4215,18 @@ Requirements:
            </div>
         </div>
       )}
+
+      {/* AI Components UI Maker (OpenUI / Llama) */}
+      <AnimatePresence>
+        {showAiComponentMaker && (
+          <AIComponentMaker 
+            onInsert={(htmlContent) => {
+               editor?.chain().insertContent(htmlContent).run();
+            }}
+            onClose={() => setShowAiComponentMaker(false)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* AssemblyAI Robot Dictator */}
       {!focusMode && (

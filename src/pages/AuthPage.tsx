@@ -7,6 +7,8 @@ import { VisualCaptcha } from '../components/VisualCaptcha';
 import { getMultiFactorResolver, PhoneAuthProvider, PhoneMultiFactorGenerator, RecaptchaVerifier, sendPasswordResetEmail, MultiFactorResolver } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 
+import { Footer } from '../components/layout/Footer';
+
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '0x4AAAAAADITOkdYnpXv2YLs';
 
 export function AuthPage() {
@@ -224,7 +226,7 @@ export function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen relative flex flex-col items-center justify-center font-sans px-4 perspective-[1500px]">
+    <div className="min-h-screen relative flex flex-col font-sans">
       
       {/* Background with 30% Transparency Image */}
       <div 
@@ -238,13 +240,14 @@ export function AuthPage() {
         <div className="absolute inset-0 bg-gradient-to-t from-[#FDFCF8] via-[#FDFCF8]/60 to-[#FDFCF8]/90" />
       </div>
 
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.95, y: 10 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-        className="w-full max-w-[500px] flex flex-col items-center relative z-10"
-      >
-        {/* Animated SVG Heading */}
+      <div className="flex-grow flex flex-col items-center justify-center px-4 perspective-[1500px]">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="w-full max-w-[500px] flex flex-col items-center relative z-10 py-12"
+        >
+          {/* Animated SVG Heading */}
         <div className="mb-4 text-center cursor-default shrink-0 w-full flex flex-col items-center select-none">
            <svg className="w-full max-w-[500px] h-auto drop-shadow-[0_12px_24px_rgba(212,175,55,0.3)]" viewBox="0 0 540 120" width="540" height="120">
              <defs>
@@ -510,7 +513,10 @@ export function AuthPage() {
           <Link to="/privacy-policy" className="text-gray-700 underline underline-offset-2 hover:text-[#CA9E3C] transition-colors">Privacy Policy</Link>.
         </div>
 
-      </motion.div>
+        </motion.div>
+      </div>
+
+      <Footer />
     </div>
   );
 }

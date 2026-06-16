@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Sidebar } from '../components/layout/Sidebar';
 import { motion, AnimatePresence } from 'motion/react';
-import { Cpu, Search, Download, CheckCircle, AlertTriangle, ArrowRight, Zap, Target, BookOpen, PenTool, LayoutTemplate, MessageSquare, Database, ArrowLeft, Send, StopCircle, ShieldCheck, Settings2, MessageSquarePlus, Rocket, ChevronDown, Plus, Map, ChefHat, Calculator, Camera, ImageIcon, Mic, FileAudio, History, X, Grid, Edit2, FileText, Check } from 'lucide-react';
+import { Cpu, Search, Download, CheckCircle, AlertTriangle, ArrowRight, Zap, Target, BookOpen, PenTool, LayoutTemplate, MessageSquare, Database, ArrowLeft, Send, StopCircle, ShieldCheck, Settings2, MessageSquarePlus, Rocket, ChevronDown, Plus, Map, ChefHat, Calculator, Camera, ImageIcon, Mic, FileAudio, History, X, Grid, Edit2, FileText, Check, Layout, Blocks, Code } from 'lucide-react';
 import Markdown from 'react-markdown';
 import { collection, query, where, getDocs, doc, addDoc, serverTimestamp, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -350,13 +350,15 @@ export function ModelLibraryPage() {
         },
         {
           id: 'Llama-3.2-1B-Instruct-q4f16_1-MLC',
-          name: 'Llama 3.2 (1B)',
+          name: 'Llama 3.2 (1B Quantized)',
           provider: 'Meta',
           size: '850.0 MB',
-          description: 'A tiny yet highly capable model for real-time mobile and browser environments.',
+          description: 'A tiny yet highly capable model for real-time mobile and browser environments. Runs locally on your hardware unlimited. Can output JSON/Tailwind components directly to document canvas.',
           skills: [
             { name: 'Local Fast Chat', icon: <MessageSquare className="w-3 h-3" /> },
-            { name: 'Summarize Docs', icon: <Target className="w-3 h-3" /> }
+            { name: 'Hardware Acceleration', icon: <Cpu className="w-3 h-3" /> },
+            { name: 'UI Components Generator', icon: <Layout className="w-3 h-3" /> },
+            { name: 'Canvas Layout Builder', icon: <Blocks className="w-3 h-3" /> }
           ],
           supported: memory >= 2,
           recommended: true,
@@ -366,13 +368,63 @@ export function ModelLibraryPage() {
         },
         {
           id: 'Llama-3.2-3B-Instruct-q4f16_1-MLC',
-          name: 'Llama 3.2 (3B)',
+          name: 'Llama 3.2 (3B Quantized)',
           provider: 'Meta',
           size: '2.5 GB',
-          description: 'Solid intermediate Llama model with rich context generation and advanced reasoning.',
+          description: 'Solid intermediate Llama model with rich context generation and advanced reasoning. Runs purely in browser. Generates live, editable UI code directly.',
           skills: [
             { name: 'Summarize Docs', icon: <BookOpen className="w-3 h-3" /> },
-            { name: 'AI Chat', icon: <Target className="w-3 h-3" /> }
+            { name: 'Unlimited Generations', icon: <Cpu className="w-3 h-3" /> },
+            { name: 'UI Components Generator', icon: <Layout className="w-3 h-3" /> },
+            { name: 'JSON/Tailwind Output', icon: <Code className="w-3 h-3" /> }
+          ],
+          supported: memory >= 4,
+          recommended: true,
+          type: 'local',
+          status: 'not_installed',
+          progress: 0
+        },
+        {
+          id: 'Granite-Docling-258M',
+          name: 'Granite-Docling (258M)',
+          provider: 'IBM',
+          size: '258.0 MB',
+          description: 'Ultra-fast specialized document AI for parsing structured PDFs and documents directly on device hardware.',
+          skills: [
+            { name: 'Document Mapping', icon: <FileText className="w-3 h-3" /> },
+            { name: 'Local Intelligence', icon: <Target className="w-3 h-3" /> }
+          ],
+          supported: true,
+          recommended: true,
+          type: 'local',
+          status: 'not_installed',
+          progress: 0
+        },
+        {
+          id: 'Florence-2-base',
+          name: 'Florence-2 (Base)',
+          provider: 'Microsoft',
+          size: '600.0 MB',
+          description: 'Multimodal vision model parsing images into crisp textual representations entirely locally.',
+          skills: [
+            { name: 'Vision Understanding', icon: <ImageIcon className="w-3 h-3" /> },
+            { name: 'Local OCR', icon: <Camera className="w-3 h-3" /> }
+          ],
+          supported: true,
+          recommended: true,
+          type: 'local',
+          status: 'not_installed',
+          progress: 0
+        },
+        {
+          id: 'OpenUI-1B',
+          name: 'OpenUI (V1)',
+          provider: 'WandB',
+          size: '1.2 GB',
+          description: 'Translates screenshots to code locally. Turn your mockups into React code without cloud inference.',
+          skills: [
+            { name: 'UI to Code', icon: <PenTool className="w-3 h-3" /> },
+            { name: 'Secure Execution', icon: <ShieldCheck className="w-3 h-3" /> }
           ],
           supported: memory >= 4,
           recommended: false,

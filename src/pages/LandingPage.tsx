@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
-import { FileText, Cpu, CheckCircle, Boxes, Search, Download, Clock, Shield, Database, UserCheck } from 'lucide-react';
+import { SEOBoost } from '../components/SEOBoost';
+import { FileText, Cpu, CheckCircle, Boxes, Search, Download, Clock, Shield, Database, UserCheck, PenTool } from 'lucide-react';
 import { motion, useAnimation, AnimatePresence } from 'motion/react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -329,10 +330,10 @@ export function LandingPage() {
         <div className="max-w-[1400px] mx-auto px-6 relative z-10">
           <div className="text-center mb-20">
              <span className="text-[#D4AF37] font-bold tracking-widest uppercase text-xs mb-4 block">Platform Capabilities</span>
-             <h2 className="text-4xl md:text-5xl font-black mb-6 uppercase text-[#1a1a1a] tracking-tight">Real-World Use Cases.</h2>
+             <h2 className="text-4xl md:text-5xl font-black mb-6 uppercase tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-green-500 to-blue-500 bg-[length:200%_auto] animate-pulse">Real-World Use Cases.</h2>
              <p className="text-gray-500 font-sans text-lg max-w-2xl mx-auto">Discover how professionals leverage our platform to simplify their workload and accelerate complex writing assignments.</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
             <motion.div 
               whileHover={{ y: -8, scale: 1.02 }}
               transition={{ duration: 0.3, ease: 'easeOut' }}
@@ -381,6 +382,23 @@ export function LandingPage() {
                <ul className="space-y-3 relative z-10">
                  <li className="flex items-center gap-3 text-sm text-gray-700 font-medium"><CheckCircle className="w-5 h-5 text-emerald-500"/> Rich Typography</li>
                  <li className="flex items-center gap-3 text-sm text-gray-700 font-medium"><CheckCircle className="w-5 h-5 text-emerald-500"/> Table Generators</li>
+               </ul>
+            </motion.div>
+
+            <motion.div 
+              whileHover={{ y: -8, scale: 1.02 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+              className="bg-white p-8 rounded-[2rem] border border-[#E4DBC5] shadow-xs hover:shadow-xl hover:border-orange-400/50 transition-all min-h-[340px] flex flex-col relative overflow-hidden group"
+            >
+               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-orange-100 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-bl-full"></div>
+               <div className="w-14 h-14 bg-orange-50 border border-orange-100 rounded-2xl flex items-center justify-center mb-6 text-orange-600 shadow-sm shrink-0 relative z-10">
+                 <PenTool className="w-7 h-7" />
+               </div>
+               <h3 className="text-xl font-black uppercase text-gray-900 mb-4 tracking-tight relative z-10">Creative Content & Strategy</h3>
+               <p className="text-gray-600 text-sm leading-relaxed mb-6 flex-grow relative z-10">Brainstorm marketing campaigns, outline detailed research papers, and maintain structural consistency across massive content projects.</p>
+               <ul className="space-y-3 relative z-10">
+                 <li className="flex items-center gap-3 text-sm text-gray-700 font-medium"><CheckCircle className="w-5 h-5 text-orange-500"/> Interactive Canvases</li>
+                 <li className="flex items-center gap-3 text-sm text-gray-700 font-medium"><CheckCircle className="w-5 h-5 text-orange-500"/> Outline Structuring</li>
                </ul>
             </motion.div>
           </div>
@@ -454,6 +472,7 @@ export function LandingPage() {
         </div>
       </section>
 
+      <SEOBoost />
       {/* Section 6: Premium SaaS Footer */}
       <Footer />
     </div>

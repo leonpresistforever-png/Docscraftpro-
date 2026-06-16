@@ -7,7 +7,6 @@ import { PremiumProvider } from './context/PremiumContext';
 import { LandingPage } from './pages/LandingPage';
 import { AdModal } from './components/AdModal';
 import { Dashboard } from './pages/Dashboard';
-import { MediaLab } from './pages/MediaLab';
 import { AiChat } from './pages/AiChat';
 import { EditorPage } from './pages/EditorPage';
 import { PDFConverter } from './pages/PDFConverter';
@@ -100,8 +99,8 @@ function AnimatedRoutes() {
         <Route path="/careers" element={<Navigate to="/" replace />} />
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/contact" element={<ContactPage />} />
-        <Route path="/support-form" element={<SupportFormPage />} />
+        <Route path="/contact" element={<PageTransition><ProtectedRoute><ContactPage /></ProtectedRoute></PageTransition>} />
+        <Route path="/support-form" element={<PageTransition><ProtectedRoute><SupportFormPage /></ProtectedRoute></PageTransition>} />
         <Route path="/services" element={<ServicesPage />} />
         <Route path="/disclaimer" element={<DisclaimerPage />} />
         <Route path="/faq" element={<FAQPage />} />
@@ -111,7 +110,6 @@ function AnimatedRoutes() {
         <Route path="/documentation" element={<DocumentationPage />} />
         <Route path="/status" element={<Navigate to="/" replace />} />
         <Route path="/dashboard" element={<PageTransition><ProtectedRoute><Dashboard /></ProtectedRoute></PageTransition>} />
-        <Route path="/media" element={<PageTransition><ProtectedRoute><MediaLab /></ProtectedRoute></PageTransition>} />
         <Route path="/chat" element={<PageTransition><ProtectedRoute><AiChat /></ProtectedRoute></PageTransition>} />
         <Route path="/pdf/convert" element={<PageTransition><ProtectedRoute><PDFConverter /></ProtectedRoute></PageTransition>} />
         <Route path="/doc/:id" element={<PageTransition><ProtectedRoute><EditorPage /></ProtectedRoute></PageTransition>} />

@@ -2,8 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Sidebar } from '../components/layout/Sidebar';
 import { 
   Network, Plus, Trash2, Edit3, ArrowRight, Table, Layout, 
-  HelpCircle, Check, ChevronDown, Move, Circle, Layers, Activity, Maximize2, Sparkles, Download, RefreshCw
+  HelpCircle, Check, ChevronDown, Move, Circle, Layers, Activity, Maximize2, Sparkles, Download, RefreshCw, PanelRightClose, PanelRightOpen, Image as ImageIcon, FileJson
 } from 'lucide-react';
+import html2canvas from 'html2canvas';
 
 interface FlowNode {
   id: string;
@@ -107,6 +108,35 @@ export function LogicMapper() {
   const [dragNodeId, setDragNodeId] = useState<string | null>(null);
   const dragOffset = useRef({ x: 0, y: 0 });
   const canvasRef = useRef<HTMLDivElement>(null);
+  
+  const [isInspectorVisible, setIsInspectorVisible] = useState(true);
+
+  // Exporters
+  const exportToPNG = async () => {
+    if (!canvasRef.current) return;
+    try {
+      // Temporarily hide the dot grid pattern to make it clean if desired, or keep it.
+      const canvas = await html2canvas(canvasRef.current, { backgroundColor: '#ffffff', scale: 2 });
+      const url = canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `docscraft_flow_${Date.now()}.png`;
+      a.click();
+    } catch (err) {
+      console.error("Export failed", err);
+    }
+  };
+
+  const exportToJSON = () => {
+    const data = JSON.stringify({ nodes, edges }, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `docscraft_flow_${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   // Auto layout template creator
   const applyPresetTemplate = (type: 'linear' | 'loop' | 'database') => {
@@ -387,6 +417,19 @@ export function LogicMapper() {
 
           <div className="flex items-center gap-2">
             <button 
+              onClick={exportToPNG}
+              className="px-3.5 py-1.5 bg-indigo-50 border border-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-100 text-xs font-bold transition-all flex items-center gap-1.5"
+            >
+              <ImageIcon className="w-3.5 h-3.5" /> Export PNG
+            </button>
+            <button 
+              onClick={exportToJSON}
+              className="px-3.5 py-1.5 bg-indigo-50 border border-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-100 text-xs font-bold transition-all flex items-center gap-1.5"
+            >
+              <FileJson className="w-3.5 h-3.5" /> Export JSON
+            </button>
+            <div className="w-px h-6 bg-gray-200 mx-1 border-r border-white"></div>
+            <button 
               onClick={() => applyPresetTemplate('linear')}
               className="px-3.5 py-1.5 bg-slate-50 border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-100 text-xs font-bold transition-all flex items-center gap-1.5"
             >
@@ -404,6 +447,14 @@ export function LogicMapper() {
             >
               <Table className="w-3.5 h-3.5" /> Data Flow Pipeline
             </button>
+            <div className="w-px h-6 bg-gray-200 mx-1 border-r border-white"></div>
+            <button 
+              onClick={() => setIsInspectorVisible(!isInspectorVisible)}
+              className="px-3.5 py-1.5 bg-white border border-slate-200 text-slate-800 rounded-lg hover:bg-slate-50 text-xs font-bold transition-all flex items-center gap-1.5"
+            >
+              {isInspectorVisible ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
+              {isInspectorVisible ? "Hide Panel" : "Show Panel"}
+            </button>
           </div>
         </header>
 
@@ -411,10 +462,10 @@ export function LogicMapper() {
         <div className="flex-1 flex overflow-hidden">
           
           {/* Main Diagram Area */}
-          <div className="flex-1 p-8 overflow-hidden flex flex-col relative min-w-0">
+          <div className="flex-1 p-4 md:p-8 overflow-auto flex flex-col relative min-w-0">
             
             {/* Shapes Palette Trigger Rail */}
-            <div className="mb-5 flex items-center gap-2 bg-white/70 backdrop-blur-md p-2 rounded-2xl border border-[#EAE6DF] shadow-sm w-fit self-center z-20">
+            <div className="mb-5 flex items-center flex-wrap gap-2 bg-white/70 backdrop-blur-md p-2 rounded-2xl border border-[#EAE6DF] shadow-sm w-fit self-center z-20 sticky top-0">
               <span className="text-[10px] tracking-wider uppercase font-bold text-slate-400 px-2">Inject Shapes:</span>
               <button onClick={() => handleCreateNode('rectangle')} className="flex items-center gap-1 text-[11px] font-bold bg-white hover:bg-gray-50 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm transition-all">
                 <span className="w-3.5 h-2.5 border-2 border-slate-500 rounded bg-slate-100"></span> Process Box
@@ -439,7 +490,7 @@ export function LogicMapper() {
             {/* Canvas Area Container with touch containment and unified pointers */}
             <div 
               ref={canvasRef}
-              className="flex-1 bg-white rounded-3xl border border-[#EAE6DF] relative overflow-hidden select-none cursor-default shadow-sm touch-none"
+              className="flex-1 bg-white rounded-3xl border border-[#EAE6DF] relative overflow-hidden select-none cursor-default shadow-sm touch-none min-h-[1600px] min-w-[2400px]"
               onPointerMove={handleCanvasPointerMove}
               onPointerUp={handleCanvasPointerUp}
               onPointerLeave={handleCanvasPointerUp}
@@ -520,9 +571,10 @@ export function LogicMapper() {
           </div>
 
           {/* Style Customizer Sidebar Panel */}
-          <div className="w-[380px] border-l border-[#EAE6DF] bg-white p-6 shrink-0 flex flex-col gap-6 overflow-y-auto no-scrollbar z-20 shadow-2xl relative">
-            
-            {/* Context title block */}
+          {isInspectorVisible && (
+            <div className="w-[380px] border-l border-[#EAE6DF] bg-white p-6 shrink-0 flex flex-col gap-6 overflow-y-auto no-scrollbar z-20 shadow-2xl relative animate-in slide-in-from-right-16 duration-300">
+              
+              {/* Context title block */}
             <div className="pb-4 border-b border-slate-100 flex items-center justify-between">
               <h2 className="text-xs tracking-[0.25em] font-sans uppercase font-extrabold text-slate-800 flex items-center gap-2">
                 <Layers className="w-4 h-4 text-indigo-600 animate-pulse" /> Element Inspector
@@ -735,6 +787,7 @@ export function LogicMapper() {
               </div>
             )}
           </div>
+          )}
 
         </div>
       </div>

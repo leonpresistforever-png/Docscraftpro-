@@ -90,7 +90,7 @@ function AnimatedRoutes() {
         <Route path="/terms" element={<TermsOfServicePage />} />
         <Route path="/cookies" element={<Navigate to="/privacy-policy" replace />} />
         <Route path="/about" element={<AboutPage />} />
-        <Route path="/integrations" element={<IntegrationsPage />} />
+        <Route path="/integrations" element={<PageTransition><ProtectedRoute><IntegrationsPage /></ProtectedRoute></PageTransition>} />
         <Route path="/changelog" element={<ChangelogPage />} />
         <Route path="/features" element={<FeaturesPage />} />
         <Route path="/enterprise-platform" element={<EnterprisePlatformPage />} />

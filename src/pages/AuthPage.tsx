@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { VisualCaptcha } from '../components/VisualCaptcha';
-import { sendPasswordResetEmail } from 'firebase/auth';
+import { getMultiFactorResolver, PhoneAuthProvider, PhoneMultiFactorGenerator, RecaptchaVerifier, sendPasswordResetEmail, MultiFactorResolver } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 
 import { Footer } from '../components/layout/Footer';
@@ -27,6 +27,12 @@ export function AuthPage() {
   const [signUpPassword, setSignUpPassword] = useState('');
   const [signUpConfirm, setSignUpConfirm] = useState('');
   
+  // MFA State
+  const [mfaResolver, setMfaResolver] = useState<MultiFactorResolver | null>(null);
+  const [mfaVerificationId, setMfaVerificationId] = useState('');
+  const [mfaCode, setMfaCode] = useState('');
+  const [showMfaInput, setShowMfaInput] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -41,6 +47,32 @@ export function AuthPage() {
       navigate('/');
     }
   }, [user, navigate]);
+
+  const initRecaptchaForSignIn = () => {
+    if (!(window as any).recaptchaVerifier) {
+      (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'mfa-recaptcha-container', {
+        size: 'invisible'
+      });
+    }
+  };
+
+  const handleMfaSubmission = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!mfaResolver || !mfaCode) return;
+    setLoading(true);
+    setError('');
+    
+    try {
+      const cred = PhoneAuthProvider.credential(mfaVerificationId, mfaCode);
+      const multiFactorAssertion = PhoneMultiFactorGenerator.assertion(cred);
+      await mfaResolver.resolveSignIn(multiFactorAssertion);
+      // Wait for auth state observer to redirect
+    } catch (err: any) {
+      console.error(err);
+      setError('Invalid SMS Code.');
+      setLoading(false);
+    }
+  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,17 +101,41 @@ export function AuthPage() {
       // user effect handles redirect
     } catch (err: any) {
       console.error(err);
-      let msg = 'Failed to sign in. Please check your credentials.';
-      if (err.code === 'auth/invalid-credential') msg = 'Incorrect email or password. Please try again.';
-      else if (err.code === 'auth/user-not-found') msg = 'No account found with this email.';
-      else if (err.code === 'auth/wrong-password') msg = 'Incorrect password. Please try again.';
-      else if (err.code === 'auth/email-already-in-use') msg = 'This email is already registered. Please sign in instead.';
-      else if (err.code === 'auth/weak-password') msg = 'Password must be at least 6 characters long.';
-      else if (err.code === 'auth/invalid-email') msg = 'Please enter a valid email address.';
-      else if (err.code === 'auth/too-many-requests') msg = 'Too many login attempts. Please try again later.';
-      
-      setError(msg);
-      setLoading(false);
+      if (err.code === 'auth/multi-factor-auth-required') {
+        const resolver = getMultiFactorResolver(auth, err);
+        setMfaResolver(resolver);
+        
+        // Use the first enrolled phone number
+        const phoneInfoOptions = {
+          multiFactorHint: resolver.hints[0],
+          session: resolver.session
+        };
+        
+        try {
+          initRecaptchaForSignIn();
+          const appVerifier = (window as any).recaptchaVerifier;
+          const phoneAuthProvider = new PhoneAuthProvider(auth);
+          const verificationId = await phoneAuthProvider.verifyPhoneNumber(phoneInfoOptions, appVerifier);
+          setMfaVerificationId(verificationId);
+          setShowMfaInput(true);
+        } catch (mfaErr: any) {
+             setError(mfaErr.message || 'Failed to send SMS OTP.');
+        } finally {
+             setLoading(false);
+        }
+      } else {
+        let msg = 'Failed to sign in. Please check your credentials.';
+        if (err.code === 'auth/invalid-credential') msg = 'Incorrect email or password. Please try again.';
+        else if (err.code === 'auth/user-not-found') msg = 'No account found with this email.';
+        else if (err.code === 'auth/wrong-password') msg = 'Incorrect password. Please try again.';
+        else if (err.code === 'auth/email-already-in-use') msg = 'This email is already registered. Please sign in instead.';
+        else if (err.code === 'auth/weak-password') msg = 'Password must be at least 6 characters long.';
+        else if (err.code === 'auth/invalid-email') msg = 'Please enter a valid email address.';
+        else if (err.code === 'auth/too-many-requests') msg = 'Too many login attempts. Please try again later.';
+        
+        setError(msg);
+        setLoading(false);
+      }
     }
   };
 

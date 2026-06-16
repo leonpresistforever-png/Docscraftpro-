@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
-import { CheckCircle2, ArrowRight, ShieldCheck, Mail, FileText, Zap } from 'lucide-react';
+import { CheckCircle2, ArrowRight, ShieldCheck, Mail, FileText, Zap, Database } from 'lucide-react';
 
 export function ServicesPage() {
   const services = [
@@ -126,37 +126,56 @@ export function ServicesPage() {
           </div>
         </div>
 
-        {/* Social Proof */}
+        {/* Security & Infrastructure Breakdown */}
         <div className="mb-24">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-black text-gray-900 font-serif mb-4">Trusted by Industry Leaders</h2>
-            <p className="text-gray-600">See what our clients have to say about their experience.</p>
+            <h2 className="text-3xl font-black text-gray-900 font-serif mb-4">Under The Hood: Enterprise Infrastructure</h2>
+            <p className="text-gray-600">Built from the ground up for scale, compliance, and raw performance.</p>
           </div>
           <div className="grid md:grid-cols-2 gap-8">
             <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
-              <div className="flex gap-1 text-amber-400 mb-4">
-                {"★★★★★"}
+              <div className="flex items-center gap-3 mb-4">
+                <Database className="w-8 h-8 text-emerald-600" />
+                <h3 className="text-xl font-bold text-gray-900">Distributed Data Layer</h3>
               </div>
-              <p className="text-gray-700 italic mb-6">"Implementation was seamless. We cut our document processing time by 40% in the first quarter alone."</p>
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
-                <div>
-                  <h4 className="font-bold text-sm text-gray-900">Sarah Jenkins</h4>
-                  <p className="text-xs text-gray-500">Director of Operations, FinTech Global</p>
-                </div>
-              </div>
+              <p className="text-gray-700 leading-relaxed mb-6">Our databases operate on multi-region, horizontally scaled nodes offering 99.999% availability. All data at rest is encrypted via AES-256 and transitively protected over TLS 1.3.</p>
+              <ul className="space-y-3">
+                 <li className="flex items-center gap-2 text-sm text-gray-600"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Real-time sharding architecture</li>
+                 <li className="flex items-center gap-2 text-sm text-gray-600"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Automated point-in-time recovery (PITR)</li>
+                 <li className="flex items-center gap-2 text-sm text-gray-600"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Zero-downtime schema migrations</li>
+              </ul>
             </div>
+
             <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
-              <div className="flex gap-1 text-amber-400 mb-4">
-                {"★★★★★"}
+              <div className="flex items-center gap-3 mb-4">
+                <ShieldCheck className="w-8 h-8 text-indigo-600" />
+                <h3 className="text-xl font-bold text-gray-900">Identity & Access Management</h3>
               </div>
-              <p className="text-gray-700 italic mb-6">"The only platform that successfully mapped our complex compliant workflows without writing custom code."</p>
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
-                <div>
-                  <h4 className="font-bold text-sm text-gray-900">Marcus Wright</h4>
-                  <p className="text-xs text-gray-500">CTO, HealthSecure Partners</p>
-                </div>
+              <p className="text-gray-700 leading-relaxed mb-6">We implement rigid zero-trust policies inside our boundary. Every microservice communication is authenticated and validated with bounded JSON Web Tokens (JWT).</p>
+               <ul className="space-y-3">
+                 <li className="flex items-center gap-2 text-sm text-gray-600"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Native SSO (Okta, Azure AD, Google)</li>
+                 <li className="flex items-center gap-2 text-sm text-gray-600"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Mandatory MFA on destructive actions</li>
+                 <li className="flex items-center gap-2 text-sm text-gray-600"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Granular Role-Based Access Control (RBAC)</li>
+              </ul>
+            </div>
+            
+            <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm md:col-span-2 flex flex-col md:flex-row gap-8 items-center border-t-4 border-t-[#D4AF37]">
+              <div className="flex-1">
+                 <h3 className="text-xl font-bold text-gray-900 mb-2">Automated Disaster Protocol</h3>
+                 <p className="text-gray-600 text-sm leading-relaxed">Our failover triggers automatically route traffic to secondary availability zones when latency thresholds exceed 1500ms locally, ensuring your workforce is never offline.</p>
+              </div>
+              <div className="shrink-0 flex items-center justify-center p-4 bg-gray-50 rounded-xl border border-gray-200">
+                  <div className="flex gap-4">
+                      <div className="w-16 h-16 rounded shadow flex flex-col items-center justify-center bg-white border border-gray-200">
+                         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">US-EAST</span>
+                         <span className="text-emerald-500 font-bold mt-1 text-sm">ONLINE</span>
+                      </div>
+                      <ArrowRight className="w-6 h-6 text-gray-300 self-center" />
+                      <div className="w-16 h-16 rounded shadow flex flex-col items-center justify-center bg-white border border-gray-200">
+                         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">US-WEST</span>
+                         <span className="text-blue-500 font-bold mt-1 text-sm">STANDBY</span>
+                      </div>
+                  </div>
               </div>
             </div>
           </div>

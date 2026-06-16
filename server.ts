@@ -341,9 +341,16 @@ async function startServer() {
       } else {
           // Gemini
           const ai = new GoogleGenAI({ apiKey: apiKey });
+          
+          let config: any = {};
+          if (isComplex) {
+              config.thinkingConfig = { thinkingLevel: 'HIGH' };
+          }
+          
           const result = await ai.models.generateContent({
               model: customModel || (isComplex ? 'gemini-3.1-pro-preview' : 'gemini-3.5-flash'),
-              contents: prompt
+              contents: prompt,
+              config: Object.keys(config).length > 0 ? config : undefined
           });
           responseText = result.text || "";
       }

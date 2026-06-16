@@ -2059,6 +2059,34 @@ Requirements:
             clone.style.color = '#000000';
             clone.style.backgroundColor = '#ffffff';
 
+            // Preserve input and textarea values over clone boundaries
+            const sourceInputs = element.querySelectorAll('input, textarea, select');
+            const cloneInputs = clone.querySelectorAll('input, textarea, select');
+            sourceInputs.forEach((srcNode, index) => {
+                const cNode = cloneInputs[index] as HTMLElement;
+                if (cNode) {
+                    if (srcNode.tagName === 'TEXTAREA') {
+                        cNode.innerHTML = (srcNode as HTMLTextAreaElement).value;
+                    } else if (srcNode.tagName === 'SELECT') {
+                        cNode.setAttribute('value', (srcNode as HTMLSelectElement).value);
+                        // Also set selected attribute on the right option
+                        const selectedOption = cNode.querySelector(`option[value="${(srcNode as HTMLSelectElement).value}"]`);
+                        if (selectedOption) selectedOption.setAttribute('selected', 'selected');
+                    } else {
+                        const type = srcNode.getAttribute('type');
+                        if (type === 'checkbox' || type === 'radio') {
+                            if ((srcNode as HTMLInputElement).checked) {
+                                cNode.setAttribute('checked', 'checked');
+                            } else {
+                                cNode.removeAttribute('checked');
+                            }
+                        } else {
+                            cNode.setAttribute('value', (srcNode as HTMLInputElement).value || '');
+                        }
+                    }
+                }
+            });
+
             // IMPORTANT: native `<canvas>` rendering states do not get transferred over cloneNode(true). 
             // We cast all embedded canvas blocks to native HTMLImageElement proxies matching their dimensions for printer compatibility.
             const sourceCanvases = element.querySelectorAll('canvas');
@@ -2209,6 +2237,34 @@ Requirements:
                 clone.classList.add('prose', 'text-black', 'bg-white');
                 clone.style.color = '#000000';
                 clone.style.backgroundColor = '#ffffff';
+
+                // Preserve input and textarea values over clone boundaries
+                const sourceInputs = element.querySelectorAll('input, textarea, select');
+                const cloneInputs = clone.querySelectorAll('input, textarea, select');
+                sourceInputs.forEach((srcNode, index) => {
+                    const cNode = cloneInputs[index] as HTMLElement;
+                    if (cNode) {
+                        if (srcNode.tagName === 'TEXTAREA') {
+                            cNode.innerHTML = (srcNode as HTMLTextAreaElement).value;
+                        } else if (srcNode.tagName === 'SELECT') {
+                            cNode.setAttribute('value', (srcNode as HTMLSelectElement).value);
+                            // Also set selected attribute on the right option
+                            const selectedOption = cNode.querySelector(`option[value="${(srcNode as HTMLSelectElement).value}"]`);
+                            if (selectedOption) selectedOption.setAttribute('selected', 'selected');
+                        } else {
+                            const type = srcNode.getAttribute('type');
+                            if (type === 'checkbox' || type === 'radio') {
+                                if ((srcNode as HTMLInputElement).checked) {
+                                    cNode.setAttribute('checked', 'checked');
+                                } else {
+                                    cNode.removeAttribute('checked');
+                                }
+                            } else {
+                                cNode.setAttribute('value', (srcNode as HTMLInputElement).value || '');
+                            }
+                        }
+                    }
+                });
 
                 // Map raw canvases into native image nodes safely for html2canvas
                 const sourceCanvases = element.querySelectorAll('canvas');

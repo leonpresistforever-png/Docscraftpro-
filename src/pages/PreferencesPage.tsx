@@ -12,6 +12,7 @@ import jsPDF from 'jspdf';
 import { useTheme } from '../context/ThemeContext';
 import { Link } from 'react-router-dom';
 import { multiFactor, PhoneAuthProvider, PhoneMultiFactorGenerator, RecaptchaVerifier, sendEmailVerification, verifyBeforeUpdateEmail } from 'firebase/auth';
+import { countries } from '../data/countries';
 
 export function PreferencesPage() {
   const { user, logout } = useAuth();
@@ -44,12 +45,20 @@ export function PreferencesPage() {
   const handleSendOTP = async () => {
     if (!user) return;
     setMfaError('');
+    
+    // Sanitize phone number (remove all non-digits except +)
+    const sanitizedPhone = phoneToVerify.replace(/[^\d+]/g, '');
+    if (!/^\+\d{7,15}$/.test(sanitizedPhone)) {
+      setMfaError('Please enter a valid phone number with country code. e.g. +1234567890');
+      return;
+    }
+
     try {
       initRecaptcha();
       const appVerifier = (window as any).recaptchaVerifier;
       const session = await multiFactor(user).getSession();
       const phoneInfoOptions = {
-        phoneNumber: phoneToVerify,
+        phoneNumber: sanitizedPhone,
         session
       };
       
@@ -60,7 +69,7 @@ export function PreferencesPage() {
       setIsVerifyingState(true);
     } catch (err: any) {
       console.error(err);
-      setMfaError(err.message || 'Failed to send OTP.');
+      setMfaError(err.message || 'Failed to send OTP. Invalid number format or network issue.');
     }
   };
 
@@ -503,18 +512,21 @@ export function PreferencesPage() {
                                       setPhoneToVerify(e.target.value + ' ' + phone);
                                    }}
                                  >
-                                    <option value="+1">🇺🇸 +1</option>
-                                    <option value="+44">🇬🇧 +44</option>
-                                    <option value="+91">🇮🇳 +91</option>
-                                    <option value="+61">🇦🇺 +61</option>
-                                    <option value="+86">🇨🇳 +86</option>
-                                    <option value="+81">🇯🇵 +81</option>
-                                    <option value="+49">🇩🇪 +49</option>
-                                    <option value="+33">🇫🇷 +33</option>
-                                    <option value="+39">🇮🇹 +39</option>
-                                    <option value="+55">🇧🇷 +55</option>
-                                    <option value="+52">🇲🇽 +52</option>
-                                    <option value="+34">🇪🇸 +34</option>
+                                    {countries.map((country) => (
+                                      <option key={country.code} value={country.dialCode}>
+                                        {country.code === 'US' ? '🇺🇸' : 
+                                         country.code === 'GB' ? '🇬🇧' : 
+                                         country.code === 'IN' ? '🇮🇳' : 
+                                         country.code === 'AU' ? '🇦🇺' : 
+                                         country.code === 'CN' ? '🇨🇳' : 
+                                         country.code === 'JP' ? '🇯🇵' : 
+                                         country.code === 'DE' ? '🇩🇪' : 
+                                         country.code === 'FR' ? '🇫🇷' : 
+                                         country.code === 'IT' ? '🇮🇹' : 
+                                         country.code === 'BR' ? '🇧🇷' : 
+                                         country.code === 'MX' ? '🇲🇽' : '🌐'} {country.name} ({country.dialCode})
+                                      </option>
+                                    ))}
                                  </select>
                                  <input 
                                    type="tel" 

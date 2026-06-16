@@ -29,6 +29,9 @@ import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
 import { TermsOfServicePage } from './pages/TermsOfServicePage';
 import { CompliancePage } from './pages/CompliancePage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { EnterprisePlatformPage } from './pages/EnterprisePlatformPage';
+import { AiDocumentAutomationPage } from './pages/AiDocumentAutomationPage';
+import { SecurityAndInfrastructurePage } from './pages/SecurityAndInfrastructurePage';
 import { AboutPage } from './pages/AboutPage';
 import { IntegrationsPage } from './pages/IntegrationsPage';
 import { ChangelogPage } from './pages/ChangelogPage';
@@ -81,6 +84,9 @@ function AnimatedRoutes() {
         <Route path="/integrations" element={<IntegrationsPage />} />
         <Route path="/changelog" element={<ChangelogPage />} />
         <Route path="/features" element={<FeaturesPage />} />
+        <Route path="/enterprise-platform" element={<EnterprisePlatformPage />} />
+        <Route path="/ai-document-automation" element={<AiDocumentAutomationPage />} />
+        <Route path="/security-infrastructure" element={<SecurityAndInfrastructurePage />} />
         <Route path="/careers" element={<Navigate to="/" replace />} />
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />

@@ -317,6 +317,45 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* Section 2.5: Use Cases */}
+      <section className="py-32 bg-[#FDFBF7] relative z-10 border-b border-[#E4DBC5]">
+        <div className="max-w-[1400px] mx-auto px-6">
+          <div className="text-center mb-20">
+             <span className="text-[#D4AF37] font-bold tracking-widest uppercase text-xs mb-4 block">Platform Capabilities</span>
+             <h2 className="text-4xl md:text-5xl font-black mb-6 uppercase text-[#1a1a1a] tracking-tight">Real-World Use Cases.</h2>
+             <p className="text-gray-500 font-sans text-lg max-w-2xl mx-auto">Discover how enterprises and professionals leverage DocCraft Pro to eliminate bottlenecks and accelerate workflows.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="bg-white p-8 rounded-[2rem] border border-[#E4DBC5] shadow-sm hover:shadow-[0_20px_40px_-10px_rgba(212,175,55,0.15)] transition-all min-h-[300px] flex flex-col">
+               <h3 className="text-xl font-black uppercase text-gray-900 mb-4 tracking-tight">Legal & Compliance</h3>
+               <p className="text-gray-500 text-sm leading-relaxed mb-6 flex-grow">Automate the generation of NDAs, vendor agreements, and compliance audits with strict access controls and digital signature tracing.</p>
+               <ul className="space-y-3">
+                 <li className="flex items-center gap-3 text-sm text-gray-600 font-medium"><CheckCircle className="w-5 h-5 text-[#D4AF37]"/> Vault Storage Isolation</li>
+                 <li className="flex items-center gap-3 text-sm text-gray-600 font-medium"><CheckCircle className="w-5 h-5 text-[#D4AF37]"/> Immutable Version Logs</li>
+               </ul>
+            </div>
+            
+            <div className="bg-white p-8 rounded-[2rem] border border-[#E4DBC5] shadow-sm hover:shadow-[0_20px_40px_-10px_rgba(212,175,55,0.15)] transition-all min-h-[300px] flex flex-col">
+               <h3 className="text-xl font-black uppercase text-gray-900 mb-4 tracking-tight">Technical Documentation</h3>
+               <p className="text-gray-500 text-sm leading-relaxed mb-6 flex-grow">Build developer docs, API references, and system architecture blueprints right next to your codebase with embedded diagram mapping.</p>
+               <ul className="space-y-3">
+                 <li className="flex items-center gap-3 text-sm text-gray-600 font-medium"><CheckCircle className="w-5 h-5 text-[#D4AF37]"/> Synchronized Blocks</li>
+                 <li className="flex items-center gap-3 text-sm text-gray-600 font-medium"><CheckCircle className="w-5 h-5 text-[#D4AF37]"/> Markdown Integration</li>
+               </ul>
+            </div>
+            
+            <div className="bg-white p-8 rounded-[2rem] border border-[#E4DBC5] shadow-sm hover:shadow-[0_20px_40px_-10px_rgba(212,175,55,0.15)] transition-all min-h-[300px] flex flex-col">
+               <h3 className="text-xl font-black uppercase text-gray-900 mb-4 tracking-tight">HR & Onboarding</h3>
+               <p className="text-gray-500 text-sm leading-relaxed mb-6 flex-grow">Standardize offer letters, employee handbooks, and performance reviews with dynamic templates that populate via secure forms.</p>
+               <ul className="space-y-3">
+                 <li className="flex items-center gap-3 text-sm text-gray-600 font-medium"><CheckCircle className="w-5 h-5 text-[#D4AF37]"/> Dynamic Form Variables</li>
+                 <li className="flex items-center gap-3 text-sm text-gray-600 font-medium"><CheckCircle className="w-5 h-5 text-[#D4AF37]"/> One-Click Generation</li>
+               </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Section 3: Bento Box Value Proposition */}
       <section className="py-32 bg-[#FDFBF7] relative z-10 border-b border-[#E4DBC5]">
         <div className="max-w-[1400px] mx-auto px-6">

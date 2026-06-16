@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
-import { FileText, Cpu, CheckCircle, Boxes, Search, Download, Clock } from 'lucide-react';
+import { FileText, Cpu, CheckCircle, Boxes, Search, Download, Clock, Shield, Database, UserCheck } from 'lucide-react';
 import { motion, useAnimation, AnimatePresence } from 'motion/react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -9,6 +9,7 @@ import { RobotCompanion } from '../components/ui/RobotCompanion';
 import { Sparkles } from 'lucide-react'; // if not already imported
 import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { DetailedFeatures } from '../components/DetailedFeatures';
 
 import { getLocalCurrencyInfo } from '../utils/currency';
 
@@ -317,41 +318,71 @@ export function LandingPage() {
         </div>
       </section>
 
+      <DetailedFeatures />
+
       {/* Section 2.5: Use Cases */}
-      <section className="py-32 bg-[#FDFBF7] relative z-10 border-b border-[#E4DBC5]">
-        <div className="max-w-[1400px] mx-auto px-6">
+      <section className="py-32 bg-[#FDFBF7] relative z-10 border-b border-[#E4DBC5] overflow-hidden">
+        {/* Animated background elements */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-[#D4AF37] opacity-[0.03] rounded-full blur-[100px]"></div>
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-600 opacity-[0.02] rounded-full blur-[120px]"></div>
+        
+        <div className="max-w-[1400px] mx-auto px-6 relative z-10">
           <div className="text-center mb-20">
              <span className="text-[#D4AF37] font-bold tracking-widest uppercase text-xs mb-4 block">Platform Capabilities</span>
              <h2 className="text-4xl md:text-5xl font-black mb-6 uppercase text-[#1a1a1a] tracking-tight">Real-World Use Cases.</h2>
-             <p className="text-gray-500 font-sans text-lg max-w-2xl mx-auto">Discover how enterprises and professionals leverage DocCraft Pro to eliminate bottlenecks and accelerate workflows.</p>
+             <p className="text-gray-500 font-sans text-lg max-w-2xl mx-auto">Discover how professionals leverage our platform to simplify their workload and accelerate complex writing assignments.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="bg-white p-8 rounded-[2rem] border border-[#E4DBC5] shadow-sm hover:shadow-[0_20px_40px_-10px_rgba(212,175,55,0.15)] transition-all min-h-[300px] flex flex-col">
-               <h3 className="text-xl font-black uppercase text-gray-900 mb-4 tracking-tight">Legal & Compliance</h3>
-               <p className="text-gray-500 text-sm leading-relaxed mb-6 flex-grow">Automate the generation of NDAs, vendor agreements, and compliance audits with strict access controls and digital signature tracing.</p>
-               <ul className="space-y-3">
-                 <li className="flex items-center gap-3 text-sm text-gray-600 font-medium"><CheckCircle className="w-5 h-5 text-[#D4AF37]"/> Vault Storage Isolation</li>
-                 <li className="flex items-center gap-3 text-sm text-gray-600 font-medium"><CheckCircle className="w-5 h-5 text-[#D4AF37]"/> Immutable Version Logs</li>
+            <motion.div 
+              whileHover={{ y: -8, scale: 1.02 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+              className="bg-white p-8 rounded-[2rem] border border-[#E4DBC5] shadow-xs hover:shadow-xl hover:border-[#D4AF37]/50 transition-all min-h-[340px] flex flex-col relative overflow-hidden group"
+            >
+               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-amber-100 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-bl-full"></div>
+               <div className="w-14 h-14 bg-amber-50 border border-amber-100 rounded-2xl flex items-center justify-center mb-6 text-amber-600 shadow-sm shrink-0 relative z-10">
+                 <Shield className="w-7 h-7" />
+               </div>
+               <h3 className="text-xl font-black uppercase text-gray-900 mb-4 tracking-tight relative z-10">Legal & Contracts</h3>
+               <p className="text-gray-600 text-sm leading-relaxed mb-6 flex-grow relative z-10">Generate NDAs, vendor agreements, and essential contracts confidently. Apply offline editing controls and review historical versions effortlessly.</p>
+               <ul className="space-y-3 relative z-10">
+                 <li className="flex items-center gap-3 text-sm text-gray-700 font-medium"><CheckCircle className="w-5 h-5 text-[#D4AF37]"/> Deep Offline Privacy</li>
+                 <li className="flex items-center gap-3 text-sm text-gray-700 font-medium"><CheckCircle className="w-5 h-5 text-[#D4AF37]"/> PDF Archiving Output</li>
                </ul>
-            </div>
+            </motion.div>
             
-            <div className="bg-white p-8 rounded-[2rem] border border-[#E4DBC5] shadow-sm hover:shadow-[0_20px_40px_-10px_rgba(212,175,55,0.15)] transition-all min-h-[300px] flex flex-col">
-               <h3 className="text-xl font-black uppercase text-gray-900 mb-4 tracking-tight">Technical Documentation</h3>
-               <p className="text-gray-500 text-sm leading-relaxed mb-6 flex-grow">Build developer docs, API references, and system architecture blueprints right next to your codebase with embedded diagram mapping.</p>
-               <ul className="space-y-3">
-                 <li className="flex items-center gap-3 text-sm text-gray-600 font-medium"><CheckCircle className="w-5 h-5 text-[#D4AF37]"/> Synchronized Blocks</li>
-                 <li className="flex items-center gap-3 text-sm text-gray-600 font-medium"><CheckCircle className="w-5 h-5 text-[#D4AF37]"/> Markdown Integration</li>
+            <motion.div 
+              whileHover={{ y: -8, scale: 1.02 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+              className="bg-white p-8 rounded-[2rem] border border-[#E4DBC5] shadow-xs hover:shadow-xl hover:border-blue-400/50 transition-all min-h-[340px] flex flex-col relative overflow-hidden group"
+            >
+               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-blue-100 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-bl-full"></div>
+               <div className="w-14 h-14 bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-center mb-6 text-blue-600 shadow-sm shrink-0 relative z-10">
+                 <Database className="w-7 h-7" />
+               </div>
+               <h3 className="text-xl font-black uppercase text-gray-900 mb-4 tracking-tight relative z-10">Technical Documentation</h3>
+               <p className="text-gray-600 text-sm leading-relaxed mb-6 flex-grow relative z-10">Build developer manuals, structural references, and engineering blueprints right next to your codebase with embedded diagram tools.</p>
+               <ul className="space-y-3 relative z-10">
+                 <li className="flex items-center gap-3 text-sm text-gray-700 font-medium"><CheckCircle className="w-5 h-5 text-blue-500"/> Synchronized Blocks</li>
+                 <li className="flex items-center gap-3 text-sm text-gray-700 font-medium"><CheckCircle className="w-5 h-5 text-blue-500"/> Mermaid Diagrams</li>
                </ul>
-            </div>
+            </motion.div>
             
-            <div className="bg-white p-8 rounded-[2rem] border border-[#E4DBC5] shadow-sm hover:shadow-[0_20px_40px_-10px_rgba(212,175,55,0.15)] transition-all min-h-[300px] flex flex-col">
-               <h3 className="text-xl font-black uppercase text-gray-900 mb-4 tracking-tight">HR & Onboarding</h3>
-               <p className="text-gray-500 text-sm leading-relaxed mb-6 flex-grow">Standardize offer letters, employee handbooks, and performance reviews with dynamic templates that populate via secure forms.</p>
-               <ul className="space-y-3">
-                 <li className="flex items-center gap-3 text-sm text-gray-600 font-medium"><CheckCircle className="w-5 h-5 text-[#D4AF37]"/> Dynamic Form Variables</li>
-                 <li className="flex items-center gap-3 text-sm text-gray-600 font-medium"><CheckCircle className="w-5 h-5 text-[#D4AF37]"/> One-Click Generation</li>
+            <motion.div 
+              whileHover={{ y: -8, scale: 1.02 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+              className="bg-white p-8 rounded-[2rem] border border-[#E4DBC5] shadow-xs hover:shadow-xl hover:border-emerald-400/50 transition-all min-h-[340px] flex flex-col relative overflow-hidden group"
+            >
+               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-emerald-100 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-bl-full"></div>
+               <div className="w-14 h-14 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center justify-center mb-6 text-emerald-600 shadow-sm shrink-0 relative z-10">
+                 <UserCheck className="w-7 h-7" />
+               </div>
+               <h3 className="text-xl font-black uppercase text-gray-900 mb-4 tracking-tight relative z-10">HR & Onboarding</h3>
+               <p className="text-gray-600 text-sm leading-relaxed mb-6 flex-grow relative z-10">Draft offer letters, employee directories, and performance schedules with rich formatting options that print beautifully.</p>
+               <ul className="space-y-3 relative z-10">
+                 <li className="flex items-center gap-3 text-sm text-gray-700 font-medium"><CheckCircle className="w-5 h-5 text-emerald-500"/> Rich Typography</li>
+                 <li className="flex items-center gap-3 text-sm text-gray-700 font-medium"><CheckCircle className="w-5 h-5 text-emerald-500"/> Table Generators</li>
                </ul>
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>

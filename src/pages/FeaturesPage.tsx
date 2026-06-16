@@ -2,6 +2,7 @@ import React from 'react';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
 import { motion } from 'motion/react';
+import { DetailedFeatures } from '../components/DetailedFeatures';
 import { 
   PenTool, 
   BrainCircuit, 
@@ -159,6 +160,8 @@ export function FeaturesPage() {
           ))}
         </motion.div>
       </main>
+
+      <DetailedFeatures />
 
       <Footer />
     </div>

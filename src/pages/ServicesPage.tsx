@@ -129,51 +129,51 @@ export function ServicesPage() {
         {/* Security & Infrastructure Breakdown */}
         <div className="mb-24">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-black text-gray-900 font-serif mb-4">Under The Hood: Enterprise Infrastructure</h2>
-            <p className="text-gray-600">Built from the ground up for scale, compliance, and raw performance.</p>
+            <h2 className="text-3xl font-black text-gray-900 font-serif mb-4">Under The Hood: Document Reliability</h2>
+            <p className="text-gray-600">Built securely and thoughtfully to make your writing process safe and reliable.</p>
           </div>
           <div className="grid md:grid-cols-2 gap-8">
             <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
               <div className="flex items-center gap-3 mb-4">
                 <Database className="w-8 h-8 text-emerald-600" />
-                <h3 className="text-xl font-bold text-gray-900">Distributed Data Layer</h3>
+                <h3 className="text-xl font-bold text-gray-900">Safe Document Storage</h3>
               </div>
-              <p className="text-gray-700 leading-relaxed mb-6">Our databases operate on multi-region, horizontally scaled nodes offering 99.999% availability. All data at rest is encrypted via AES-256 and transitively protected over TLS 1.3.</p>
+              <p className="text-gray-700 leading-relaxed mb-6">Your work is incredibly important. That’s why we securely encrypt your files when they are stored in the cloud. We make sure that your content is locked away from prying eyes so only you, and who you authorize, can read it.</p>
               <ul className="space-y-3">
-                 <li className="flex items-center gap-2 text-sm text-gray-600"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Real-time sharding architecture</li>
-                 <li className="flex items-center gap-2 text-sm text-gray-600"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Automated point-in-time recovery (PITR)</li>
-                 <li className="flex items-center gap-2 text-sm text-gray-600"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Zero-downtime schema migrations</li>
+                 <li className="flex items-center gap-2 text-sm text-gray-600"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Strong data encryption techniques</li>
+                 <li className="flex items-center gap-2 text-sm text-gray-600"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Automatic routine backups</li>
+                 <li className="flex items-center gap-2 text-sm text-gray-600"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Safe document processing</li>
               </ul>
             </div>
 
             <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
               <div className="flex items-center gap-3 mb-4">
                 <ShieldCheck className="w-8 h-8 text-indigo-600" />
-                <h3 className="text-xl font-bold text-gray-900">Identity & Access Management</h3>
+                <h3 className="text-xl font-bold text-gray-900">Easy Account Access</h3>
               </div>
-              <p className="text-gray-700 leading-relaxed mb-6">We implement rigid zero-trust policies inside our boundary. Every microservice communication is authenticated and validated with bounded JSON Web Tokens (JWT).</p>
+              <p className="text-gray-700 leading-relaxed mb-6">We ensure you stay in complete control of your account. Access your workspace quickly and securely using standard sign-in providers you already trust, preventing unauthorized changes.</p>
                <ul className="space-y-3">
-                 <li className="flex items-center gap-2 text-sm text-gray-600"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Native SSO (Okta, Azure AD, Google)</li>
-                 <li className="flex items-center gap-2 text-sm text-gray-600"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Mandatory MFA on destructive actions</li>
-                 <li className="flex items-center gap-2 text-sm text-gray-600"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Granular Role-Based Access Control (RBAC)</li>
+                 <li className="flex items-center gap-2 text-sm text-gray-600"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Easy sign-in with Google or Microsoft</li>
+                 <li className="flex items-center gap-2 text-sm text-gray-600"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Extra security for important actions</li>
+                 <li className="flex items-center gap-2 text-sm text-gray-600"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Team member management features</li>
               </ul>
             </div>
             
             <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm md:col-span-2 flex flex-col md:flex-row gap-8 items-center border-t-4 border-t-[#D4AF37]">
               <div className="flex-1">
-                 <h3 className="text-xl font-bold text-gray-900 mb-2">Automated Disaster Protocol</h3>
-                 <p className="text-gray-600 text-sm leading-relaxed">Our failover triggers automatically route traffic to secondary availability zones when latency thresholds exceed 1500ms locally, ensuring your workforce is never offline.</p>
+                 <h3 className="text-xl font-bold text-gray-900 mb-2">Steady Offline Connections</h3>
+                 <p className="text-gray-600 text-sm leading-relaxed">If your internet connection drops suddenly or runs extremely slow, you won't lose your work. Your writing is caught immediately and saved to your device. Once your internet returns, your pages quietly sync with our secure cloud automatically.</p>
               </div>
               <div className="shrink-0 flex items-center justify-center p-4 bg-gray-50 rounded-xl border border-gray-200">
                   <div className="flex gap-4">
                       <div className="w-16 h-16 rounded shadow flex flex-col items-center justify-center bg-white border border-gray-200">
-                         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">US-EAST</span>
-                         <span className="text-emerald-500 font-bold mt-1 text-sm">ONLINE</span>
+                         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">DEVICE</span>
+                         <span className="text-emerald-500 font-bold mt-1 text-sm">SAVED</span>
                       </div>
                       <ArrowRight className="w-6 h-6 text-gray-300 self-center" />
                       <div className="w-16 h-16 rounded shadow flex flex-col items-center justify-center bg-white border border-gray-200">
-                         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">US-WEST</span>
-                         <span className="text-blue-500 font-bold mt-1 text-sm">STANDBY</span>
+                         <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">CLOUD</span>
+                         <span className="text-blue-500 font-bold mt-1 text-sm">SYNCED</span>
                       </div>
                   </div>
               </div>

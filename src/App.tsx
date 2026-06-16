@@ -1,4 +1,6 @@
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { runSEOAudit } from './utils/seoAudit';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { PremiumProvider } from './context/PremiumContext';
@@ -71,6 +73,14 @@ function PageTransition({ children }: { children: React.ReactNode }) {
 
 function AnimatedRoutes() {
   const location = useLocation();
+
+  useEffect(() => {
+    // Run the SEO audit on path change. Wrapping it slightly so DOM updates first
+    setTimeout(() => {
+       runSEOAudit();
+    }, 500);
+  }, [location.pathname]);
+
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>

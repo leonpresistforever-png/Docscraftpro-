@@ -2032,6 +2032,27 @@ Requirements:
                   a[href]::after {
                     content: "" !important;
                  }
+                 .pdf-export-parent table {
+                    page-break-inside: auto !important;
+                 }
+                 .pdf-export-parent tr {
+                    page-break-inside: avoid !important;
+                    page-break-after: auto !important;
+                 }
+                 .pdf-export-parent td, .pdf-export-parent th {
+                    page-break-inside: avoid !important;
+                    word-wrap: break-word !important;
+                    white-space: pre-wrap !important;
+                 }
+                 .pdf-export-parent canvas, .pdf-export-parent img, .pdf-export-parent .recharts-wrapper {
+                    page-break-inside: avoid !important;
+                    max-width: 100% !important;
+                 }
+                 .pdf-export-parent pre {
+                    white-space: pre-wrap !important;
+                    word-wrap: break-word !important;
+                    page-break-inside: avoid !important;
+                 }
               }
             `;
             parent.appendChild(styleTag);

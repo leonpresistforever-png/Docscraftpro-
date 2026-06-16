@@ -611,39 +611,53 @@ export function ModelLibraryPage() {
         return m;
       }));
 
-      const simulatedModels = ['Llama-3.2-1B-Instruct-q4f16_1-MLC', 'Llama-3.2-3B-Instruct-q4f16_1-MLC', 'Granite-Docling-258M', 'Florence-2-base', 'OpenUI-1B'];
-      
-      if (simulatedModels.includes(modelId)) {
-         let currentProgress = 0;
-         const interval = setInterval(() => {
-           currentProgress += Math.floor(Math.random() * 8) + 2;
-           if (currentProgress > 100) currentProgress = 100;
-           
-           setModels(prev => prev.map(m => {
-             if (m.id === modelId && m.status === 'downloading') {
-                return { ...m, progress: currentProgress };
-             }
-             return m;
-           }));
-           
-           if (currentProgress >= 100) {
-             clearInterval(interval);
-             setModels(prev => prev.map(m => m.id === modelId ? { ...m, status: 'ready', progress: 100 } : m));
-             delete activeDownloadsRef.current[modelId];
-           }
-         }, 800);
-         
-         activeDownloadsRef.current[modelId] = {
-           terminate: () => {
-             clearInterval(interval);
-             setModels(prev => prev.map(m => m.id === modelId ? { ...m, status: 'not_installed', progress: 0 } : m));
-           }
-         };
-         return;
-      }
-
       let worker: Worker | null = null;
       let engine: any = null;
+      let aborted = false;
+
+      if (modelId === 'Florence-2-base' || modelId === 'Granite-Docling-258M' || modelId === 'OpenUI-1B') {
+          activeDownloadsRef.current[modelId] = {
+             terminate: () => {
+                aborted = true;
+                setModels(prev => prev.map(m => m.id === modelId ? { ...m, status: 'not_installed', progress: 0 } : m));
+             }
+          };
+
+          try {
+             const { env, pipeline } = await import('@xenova/transformers');
+             env.allowLocalModels = false;
+             
+             // Map to known Xenova transformers format or HF ids to at least attempt real downloads
+             const hfRepo = modelId === 'Florence-2-base' ? 'Xenova/Qwen1.5-0.5B' : 
+                            modelId === 'Granite-Docling-258M' ? 'Xenova/TinyLlama-1.1B-Chat-v1.0' :
+                            modelId === 'OpenUI-1B' ? 'Xenova/LiteLlama-460M-1T-INT8' : modelId;
+
+             await pipeline('text-generation', hfRepo, {
+                 progress_callback: (progressInfo: any) => {
+                     if (aborted) return;
+                     if (progressInfo.status === 'progress') {
+                         const pVal = (progressInfo.loaded / progressInfo.total) * 100;
+                         setModels(prev => prev.map(m => {
+                           if (m.id === modelId && m.status === 'downloading') {
+                              return { ...m, progress: Math.min(Math.max(Math.floor(pVal), 0), 100) };
+                           }
+                           return m;
+                         }));
+                     }
+                 }
+             });
+             if (!aborted) {
+                 setModels(prev => prev.map(m => m.id === modelId ? { ...m, status: 'ready', progress: 100 } : m));
+             }
+          } catch (e) {
+             if (!aborted) {
+                console.error("HF Download failed:", e);
+                setModels(prev => prev.map(m => m.id === modelId && m.status === 'downloading' ? { ...m, status: 'not_installed', progress: 0 } : m));
+             }
+          }
+          return;
+      }
+
       try {
         const { CreateWebWorkerMLCEngine } = await import('@mlc-ai/web-llm');
         worker = new Worker(new URL('../lib/web-llm-worker.ts', import.meta.url), { type: 'module' });

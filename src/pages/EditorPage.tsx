@@ -1962,79 +1962,60 @@ Requirements:
              jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
              pagebreak:    { mode: ['css', 'legacy'] }
            };
-           
            // Fix for hidden/blank renders: Mount a wrapper matching the layout viewport scroll offset
-            const parent = document.createElement('div');
-            parent.className = 'light pdf-export-parent';
-            const styleTag = document.createElement('style');
-            styleTag.innerHTML = `
-              .pdf-export-parent { 
-                 background-color: #ffffff !important; 
-                 color: #111111 !important;
-              } 
-              .pdf-export-parent * { 
-                 text-shadow: none !important; 
-                 box-shadow: none !important; 
-              } 
-              .pdf-export-parent h1, .pdf-export-parent h2, .pdf-export-parent h3, .pdf-export-parent h4 { 
-                 color: #111111 !important; 
-                 font-weight: bold !important;
-                 margin-top: 12px !important;
-                 margin-bottom: 8px !important;
-              }
-              .pdf-export-parent p, .pdf-export-parent li, .pdf-export-parent span, .pdf-export-parent strong, .pdf-export-parent div, .pdf-export-parent pre, .pdf-export-parent code { 
-                 color: #222222 !important; 
-              } 
-              .pdf-export-parent table {
-                 width: 100% !important;
-                 border-collapse: collapse !important;
-                 margin-top: 15px !important;
-                 margin-bottom: 15px !important;
-                 page-break-inside: avoid !important;
-              }
-              .pdf-export-parent th, .pdf-export-parent td { 
-                 border: 1px solid #cccccc !important; 
-                 color: #111111 !important; 
-                 background-color: #ffffff !important; 
-                 padding: 8px !important;
-              } 
-              .pdf-export-parent a { 
-                 color: #2563eb !important; 
-                 text-decoration: underline !important; 
-              } 
-              .pdf-export-parent hr {
-                 border: none !important;
-                 border-top: 2px dashed #94a3b8 !important;
-                 margin: 40px 0 !important;
-                 page-break-after: always !important;
-              }
-              .pdf-export-parent img {
-                 max-width: 100% !important;
-                 height: auto !important;
-              }
-              .pdf-export-parent .freestyle-wrapper {
-                 transform-style: preserve-3d !important;
-              }
-              .pdf-export-parent .page-break-divider { 
-                 page-break-after: always !important; 
-                 page-break-inside: avoid !important; 
-                 height: 0 !important; 
-                 border: none !important; 
-                 margin: 0 !important; 
-                 padding: 0 !important; 
-                 visibility: hidden !important; 
-              }`;
-            styleTag.innerHTML += `
-              .pdf-export-parent a::after {
-                 content: "" !important;
-              }
-              @media print {
-                 .pdf-export-parent a::after {
-                    content: "" !important;
-                  }
-                  a[href]::after {
-                    content: "" !important;
+           const parent = document.createElement('div');
+           parent.className = 'light pdf-export-parent';
+           const styleTag = document.createElement('style');
+           styleTag.innerHTML = `
+             .pdf-export-parent { 
+                background-color: #ffffff !important; 
+             } 
+             .pdf-export-parent * { 
+                text-shadow: none !important; 
+                box-shadow: none !important; 
+             } 
+             .pdf-export-parent table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+                margin-top: 15px !important;
+                margin-bottom: 15px !important;
+                page-break-inside: avoid !important;
+             }
+             .pdf-export-parent a { 
+                text-decoration: underline !important; 
+             } 
+             .pdf-export-parent hr {
+                border: none !important;
+                border-top: 2px dashed #94a3b8 !important;
+                margin: 40px 0 !important;
+                page-break-after: always !important;
+             }
+             .pdf-export-parent img {
+                max-width: 100% !important;
+                height: auto !important;
+             }
+             .pdf-export-parent .freestyle-wrapper {
+                transform-style: preserve-3d !important;
+             }
+             .pdf-export-parent .page-break-divider { 
+                page-break-after: always !important; 
+                page-break-inside: avoid !important; 
+                height: 0 !important; 
+                border: none !important; 
+                margin: 0 !important; 
+                padding: 0 !important; 
+                visibility: hidden !important; 
+             }
+             .pdf-export-parent a::after {
+                content: "" !important;
+             }
+             @media print {
+                .pdf-export-parent a::after {
+                   content: "" !important;
                  }
+                 a[href]::after {
+                   content: "" !important;
+                }
                  .pdf-export-parent table {
                     page-break-inside: auto !important;
                  }
@@ -2060,8 +2041,8 @@ Requirements:
             `;
             parent.appendChild(styleTag);
             parent.style.position = 'absolute';
-            parent.style.left = '-12000px';
-            parent.style.top = '-12000px';
+            parent.style.left = '0px';
+            parent.style.top = '0px';
             parent.style.zIndex = '-99999'; 
             parent.style.opacity = '1'; 
             parent.style.pointerEvents = 'none';
@@ -2244,16 +2225,15 @@ Requirements:
                 const parent = document.createElement('div');
                 parent.className = 'light pdf-export-parent';
             const styleTag = document.createElement('style');
-            styleTag.innerHTML = `.pdf-export-parent, .pdf-export-parent * { color: #000000 !important; background-color: transparent !important; text-shadow: none !important; box-shadow: none !important; } .pdf-export-parent h1, .pdf-export-parent h2, .pdf-export-parent h3, .pdf-export-parent h4, .pdf-export-parent p, .pdf-export-parent li, .pdf-export-parent span, .pdf-export-parent strong, .pdf-export-parent label, .pdf-export-parent div, .pdf-export-parent pre, .pdf-export-parent code { color: #111111 !important; } .pdf-export-parent table, .pdf-export-parent th, .pdf-export-parent td { border: 1px solid #cccccc !important; color: #111111 !important; background-color: #ffffff !important; } .pdf-export-parent a { color: #2563eb !important; text-decoration: underline !important; } .pdf-export-parent .page-break-divider { page-break-after: always !important; page-break-inside: avoid !important; height: 0 !important; border: none !important; margin: 0 !important; padding: 0 !important; visibility: hidden !important; }`;
+            styleTag.innerHTML = `.pdf-export-parent { background-color: #ffffff !important; } .pdf-export-parent * { text-shadow: none !important; box-shadow: none !important; } .pdf-export-parent .page-break-divider { page-break-after: always !important; page-break-inside: avoid !important; height: 0 !important; border: none !important; margin: 0 !important; padding: 0 !important; visibility: hidden !important; }`;
             parent.appendChild(styleTag);
                 parent.style.position = 'absolute';
-                parent.style.left = '-12000px';
-                parent.style.top = '-12000px';
+                parent.style.left = '0px';
+                parent.style.top = '0px';
                 parent.style.zIndex = '-99999'; parent.style.opacity = '1'; parent.style.pointerEvents = 'none';
                 parent.style.width = '800px';
                 parent.style.padding = '40px';
                 parent.style.backgroundColor = '#ffffff';
-                parent.style.color = '#000000';
 
                 const clone = element.cloneNode(true) as HTMLElement;
                 clone.removeAttribute('contenteditable');
@@ -3076,9 +3056,6 @@ Requirements:
               <button title="Superscript" onMouseDown={(e) => e.preventDefault()} onClick={() => editor?.chain().focus().toggleSuperscript().run()} className={`p-1.5 flex-shrink-0 rounded hover:bg-gray-200 transition-colors ${editor?.isActive('superscript') ? 'bg-gray-200 text-black' : 'text-gray-600'}`}>
                 <SuperIcon className="w-4 h-4" />
               </button>
-              <button title="Clear Formatting" onMouseDown={(e) => e.preventDefault()} onClick={() => editor?.chain().focus().clearNodes().unsetAllMarks().run()} className="p-1.5 flex-shrink-0 rounded hover:bg-gray-200 text-gray-600">
-                <Eraser className="w-4 h-4" />
-              </button>
             </div>
             
             <div className="flex items-center gap-1 border-r border-gray-300 pr-2 mr-1 relative">
@@ -3316,12 +3293,6 @@ Requirements:
                 className="p-1.5 flex-shrink-0 rounded hover:bg-rose-50 text-slate-600 hover:text-red-600 transition-colors"
               >
                 <ImageIcon className="w-4 h-4 text-pink-500 hover:scale-110 active:scale-95 transition-transform" />
-              </button>
-              <button title="Horizontal Rule" onClick={() => editor?.chain().setHorizontalRule().run()} className="p-1.5 flex-shrink-0 rounded hover:bg-gray-200 text-gray-600">
-                <Minus className="w-4 h-4" />
-              </button>
-              <button title="Page Break (Cut Pages)" onClick={() => editor?.chain().setHorizontalRule().run()} className="p-1.5 flex-shrink-0 rounded hover:bg-rose-50 hover:text-rose-600 text-gray-600 transition-colors outline-none cursor-pointer">
-                <Scissors className="w-4 h-4" />
               </button>
               <button title="Mermaid Diagram" onClick={() => editor?.chain().focus().insertContent({ type: 'mermaidBox' }).run()} className="p-1.5 flex-shrink-0 rounded hover:bg-purple-50 hover:text-purple-600 text-gray-600 transition-colors flex items-center gap-1 border border-transparent">
                 <Share2 className="w-4 h-4" />
@@ -3663,7 +3634,7 @@ Requirements:
              {showRuler && (
                <>
                  {/* Horizontal Margin Ruler */}
-                 <div className="w-full h-10 border-b border-gray-200 bg-gray-50 flex items-center px-4 relative select-none rounded-t-lg mb-6" contentEditable={false}>
+                 <div className="w-full h-10 border-b border-gray-200 bg-gray-50 flex items-center px-4 relative select-none rounded-t-lg mb-6 print:hidden" contentEditable={false}>
                    {/* Ruler notches */}
                    <div className="absolute inset-x-0 h-4 top-2 flex justify-between px-10 text-[9px] text-gray-400 font-mono">
                      {Array.from({ length: 11 }).map((_, i) => (
@@ -3710,7 +3681,7 @@ Requirements:
                  </div>
 
                  {/* Vertical Margin Ruler (Left side margin controller) */}
-                 <div className="absolute left-[-40px] top-10 bottom-10 w-8 border-r border-gray-200 bg-gray-50 flex flex-col items-center py-6 select-none rounded-l-lg z-30" contentEditable={false}>
+                 <div className="absolute left-[-40px] top-10 bottom-10 w-8 border-r border-gray-200 bg-gray-50 flex flex-col items-center py-6 select-none rounded-l-lg z-30 print:hidden" contentEditable={false}>
                    {/* Ruler notches going down */}
                    <div className="absolute inset-y-0 w-4 left-2 flex flex-col justify-between py-10 text-[9px] text-gray-400 font-mono">
                      {Array.from({ length: 11 }).map((_, i) => (

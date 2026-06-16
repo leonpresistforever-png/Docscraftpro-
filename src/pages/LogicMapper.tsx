@@ -490,7 +490,7 @@ export function LogicMapper() {
             {/* Canvas Area Container with touch containment and unified pointers */}
             <div 
               ref={canvasRef}
-              className="flex-1 bg-white rounded-3xl border border-[#EAE6DF] relative overflow-hidden select-none cursor-default shadow-sm touch-none min-h-[1600px] min-w-[2400px]"
+              className="flex-1 bg-white rounded-3xl border border-[#EAE6DF] relative overflow-hidden select-none cursor-default shadow-sm touch-none min-h-[4000px] min-w-[4000px]"
               onPointerMove={handleCanvasPointerMove}
               onPointerUp={handleCanvasPointerUp}
               onPointerLeave={handleCanvasPointerUp}

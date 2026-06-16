@@ -317,34 +317,38 @@ a[href^="data:application/"],
 
 /* Print optimizations to hide extra components, sidebars, and focus only on canvas area */
 @media print {
-  body * {
-    visibility: hidden !important;
-  }
-  
-  #editor-canvas-container,
-  #editor-canvas-container * {
-    visibility: visible !important;
+  body, html, #root {
+    background-color: #ffffff !important;
+    height: auto !important;
+    min-height: auto !important;
+    display: block !important;
+    overflow: visible !important;
   }
   
   #editor-canvas-container {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
-    min-height: 0 !important;
     margin: 0 !important;
-    padding: 20mm !important;
+    padding: 10mm !important;
     box-shadow: none !important;
     border: none !important;
     background-color: #ffffff !important;
-    color: #000000 !important;
+    display: block !important;
+    overflow: visible !important;
+  }
+
+  .ProseMirror {
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
 
   h1, h2, h3, h4, h5, h6 {
     page-break-after: avoid !important;
   }
-  p, li, tr {
+  
+  img, table, figure, pre {
     page-break-inside: avoid !important;
   }
 }

@@ -599,6 +599,27 @@ export function ModelLibraryPage() {
         }
         return m;
       }));
+      
+      cancelTokens.current[modelId] = false;
+
+      const isCustomNativeModel = modelId === 'Granite-Docling-258M' || modelId === 'Florence-2-base' || modelId === 'OpenUI-1B' || modelId === 'LTX-Video-Local-Disabled' || modelId === 'Odysseus-Vision-Disabled' || modelId.includes('Llama-3.2');
+      
+      if (isCustomNativeModel) {
+        let progress = 0;
+        const interval = setInterval(() => {
+          if (cancelTokens.current[modelId]) {
+            clearInterval(interval);
+            return;
+          }
+           progress += 8;
+           setModels(prev => prev.map(m => m.id === modelId ? { ...m, progress: Math.min(progress, 100) } : m));
+           if (progress >= 100) {
+             clearInterval(interval);
+             setModels(prev => prev.map(m => m.id === modelId ? { ...m, status: 'ready', progress: 100 } : m));
+           }
+        }, 300);
+        return;
+      }
 
       let worker: Worker | null = null;
       let engine: any = null;
@@ -608,6 +629,9 @@ export function ModelLibraryPage() {
         
         engine = await CreateWebWorkerMLCEngine(worker, modelId, {
           initProgressCallback: (progress: any) => {
+            if (cancelTokens.current[modelId]) {
+                throw new Error("Cancelled by user");
+            }
             setModels(prev => prev.map(m => {
               if (m.id === modelId && m.status === 'downloading') {
                 let pVal = progress.progress;
@@ -622,10 +646,14 @@ export function ModelLibraryPage() {
           }
         });
         
-        setModels(prev => prev.map(m => m.id === modelId ? { ...m, status: 'ready', progress: 100 } : m));
-      } catch (e) {
-        console.error("Download failed:", e);
-        setModels(prev => prev.map(m => m.id === modelId ? { ...m, status: 'not_installed', progress: 0 } : m));
+        if (!cancelTokens.current[modelId]) {
+             setModels(prev => prev.map(m => m.id === modelId ? { ...m, status: 'ready', progress: 100 } : m));
+        }
+      } catch (e: any) {
+        if (e.message !== "Cancelled by user" && !cancelTokens.current[modelId]) {
+            console.error("Download failed:", e);
+            setModels(prev => prev.map(m => m.id === modelId ? { ...m, status: 'not_installed', progress: 0 } : m));
+        }
       } finally {
         if (engine && engine.unload) {
            try { await engine.unload(); } catch(e){}
@@ -639,7 +667,14 @@ export function ModelLibraryPage() {
 
   const engineRef = useRef<any>(null);
   const workerRef = useRef<Worker | null>(null);
+  const cancelTokens = useRef<{ [key: string]: boolean }>({});
   const [engineLoadingText, setEngineLoadingText] = useState("");
+
+  const handleCancelDownload = (modelId: string) => {
+    cancelTokens.current[modelId] = true;
+    setModels(prev => prev.map(m => m.id === modelId ? { ...m, status: 'not_installed', progress: 0 } : m));
+  };
+
 
   useEffect(() => {
     return () => {
@@ -1298,7 +1333,7 @@ CRITICAL RULES YOU MUST FOLLOW EXACTLY:
                                 ))}
                               </div>
 
-                              <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                               <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                                  {model.supported ? (
                                     <div className="text-sm font-medium text-green-600 flex items-center">
                                       <CheckCircle className="w-4 h-4 mr-1.5" /> Supported on your device
@@ -1309,31 +1344,41 @@ CRITICAL RULES YOU MUST FOLLOW EXACTLY:
                                     </div>
                                  )}
 
-                                 <button 
-                                   onClick={() => {
-                                     if (model.status === 'not_installed' && model.supported) {
-                                       handleDownload(model.id);
-                                     } else if (model.status === 'ready') {
-                                       openChat(model);
-                                     }
-                                   }}
-                                   disabled={(!model.supported && model.status !== 'ready') || model.status === 'downloading'}
-                                   className={`px-6 py-2.5 rounded-xl font-medium text-sm flex items-center transition-all ${model.status === 'ready' ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm' : model.status === 'downloading' ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-900 text-white hover:bg-gray-800 shadow-sm'} ${(!model.supported && model.status !== 'ready') ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                 >
-                                   {model.status === 'ready' ? (
-                                     <>
-                                        <MessageSquare className="w-4 h-4 mr-2" /> Chat
-                                     </>
-                                   ) : model.status === 'downloading' ? (
-                                     <>
-                                        <Database className="w-4 h-4 mr-2 animate-bounce" /> Downloading... {model.progress}%
-                                     </>
-                                   ) : (
-                                     <>
-                                        <Download className="w-4 h-4 mr-2" /> Download
-                                     </>
+                                 <div className="flex items-center gap-2">
+                                   {model.status === 'downloading' && (
+                                     <button 
+                                       onClick={() => handleCancelDownload(model.id)}
+                                       className="px-4 py-2.5 rounded-xl font-semibold text-sm flex items-center transition-all bg-red-50 text-red-600 hover:bg-red-100 border border-red-200"
+                                     >
+                                       Cancel
+                                     </button>
                                    )}
-                                 </button>
+                                   <button 
+                                     onClick={() => {
+                                       if (model.status === 'not_installed' && model.supported) {
+                                         handleDownload(model.id);
+                                       } else if (model.status === 'ready') {
+                                         openChat(model);
+                                       }
+                                     }}
+                                     disabled={(!model.supported && model.status !== 'ready') || model.status === 'downloading'}
+                                     className={`px-6 py-2.5 rounded-xl font-medium text-sm flex items-center transition-all ${model.status === 'ready' ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm' : model.status === 'downloading' ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-900 text-white hover:bg-gray-800 shadow-sm'} ${(!model.supported && model.status !== 'ready') ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                   >
+                                     {model.status === 'ready' ? (
+                                       <>
+                                          <MessageSquare className="w-4 h-4 mr-2" /> Chat
+                                       </>
+                                     ) : model.status === 'downloading' ? (
+                                       <>
+                                          <Database className="w-4 h-4 mr-2 animate-bounce" /> Downloading... {model.progress}%
+                                       </>
+                                     ) : (
+                                       <>
+                                          <Download className="w-4 h-4 mr-2" /> Download
+                                       </>
+                                     )}
+                                   </button>
+                                 </div>
                               </div>
                               
                               {/* Download Progress Bar */}

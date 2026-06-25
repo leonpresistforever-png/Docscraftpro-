@@ -2,8 +2,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
 import { SEOBoost } from '../components/SEOBoost';
-import { FileText, Cpu, CheckCircle, Boxes, Search, Download, Clock, Shield, Database, UserCheck, PenTool } from 'lucide-react';
-import { motion, useAnimation, AnimatePresence } from 'motion/react';
+import { LandingBookSection } from '../components/LandingBookSection';
+import { LandingInteractiveImage } from '../components/LandingInteractiveImage';
+import { LandingAICapabilities } from '../components/LandingAICapabilities';
+import { LandingVideoWorkspace } from '../components/LandingVideoWorkspace';
+import { LandingCalendarTasks } from '../components/LandingCalendarTasks';
+import { LandingPaperDraft } from '../components/LandingPaperDraft';
+import { KeyboardShortcutsHelper } from '../components/KeyboardShortcutsHelper';
+import { FileText, Cpu, CheckCircle, Boxes, Search, Download, Clock, Shield, Database, UserCheck, PenTool, ArrowRight, Folder, Home, Users } from 'lucide-react';
+import { motion, useAnimation, AnimatePresence, useScroll, useTransform } from 'motion/react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { RobotCompanion } from '../components/ui/RobotCompanion';
@@ -17,7 +24,13 @@ import { getLocalCurrencyInfo } from '../utils/currency';
 export function LandingPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, updateUserCredits } = useAuth();
+  const { user, userData, updateUserCredits } = useAuth();
+
+  useEffect(() => {
+    if (user && userData && !userData.profileSetupComplete) {
+      navigate('/welcome-setup');
+    }
+  }, [user, userData, navigate]);
   const [isFlipping, setIsFlipping] = useState(false);
   const [flipDegree, setFlipDegree] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -25,6 +38,68 @@ export function LandingPage() {
   const [examinedCard, setExaminedCard] = useState<{ title: string; description: string; extraDetails?: string[] } | null>(null);
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
+  const [batteryLevel, setBatteryLevel] = useState<number>(100);
+  const [currentTime, setCurrentTime] = useState<string>('9:41');
+  const [isCharging, setIsCharging] = useState<boolean>(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Scroll animations for 3D devices
+  const phoneRef = useRef<HTMLDivElement>(null);
+  const laptopRef = useRef<HTMLDivElement>(null);
+
+  const { scrollYProgress: phoneScroll } = useScroll({
+    target: phoneRef,
+    offset: ["start end", "end start"]
+  });
+  
+  const { scrollYProgress: laptopScroll } = useScroll({
+    target: laptopRef,
+    offset: ["start end", "end start"]
+  });
+
+  const phoneRotateY = useTransform(phoneScroll, [0, 0.5, 1], [-45, 0, 45], { clamp: true });
+  const phoneRotateX = useTransform(phoneScroll, [0, 0.5, 1], [35, 0, -35], { clamp: true });
+  
+  const laptopRotateY = useTransform(laptopScroll, [0, 0.5, 1], [-25, 0, 25], { clamp: true }); // Stunning high-fidelity 3D perspective spin
+  const laptopRotateX = useTransform(laptopScroll, [0, 0.5, 1], [30, 8, -30], { clamp: true });
+  const laptopScale = useTransform(laptopScroll, [0, 0.5, 1], [0.85, 1, 0.9], { clamp: true });
+
+  useEffect(() => {
+    // Battery
+    if ('getBattery' in navigator) {
+      (navigator as any).getBattery().then((battery: any) => {
+        setBatteryLevel(Math.round(battery.level * 100));
+        setIsCharging(battery.charging);
+        battery.addEventListener('levelchange', () => {
+          setBatteryLevel(Math.round(battery.level * 100));
+        });
+        battery.addEventListener('chargingchange', () => {
+          setIsCharging(battery.charging);
+        });
+      });
+    }
+    // Time
+    const updateTime = () => {
+      const now = new Date();
+      let hours = now.getHours();
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      hours = hours % 12;
+      hours = hours ? hours : 12; 
+      setCurrentTime(`${hours}:${minutes}`);
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleExamine = (title: string, description: string, extraDetails?: string[]) => {
     setExaminedCard({ title, description, extraDetails });
@@ -138,7 +213,7 @@ export function LandingPage() {
                  </defs>
                </svg>
              </div>
-             <h2 className="font-serif font-bold text-3xl tracking-tight leading-none text-[#1A1A1A]">DocCraft Pro</h2>
+             <h2 className="font-serif font-bold text-3xl tracking-tight leading-none text-[#1A1A1A]">Docscraft Pro</h2>
              <span className="text-sm font-sans tracking-widest text-[#555] uppercase mt-2">Workspace</span>
           </div>
 
@@ -154,49 +229,546 @@ export function LandingPage() {
           </div>
         </motion.div>
 
-        {/* Outline Text */}
-        <motion.div 
-           initial={{ opacity: 0, scale: 0.95 }}
-           animate={isLoaded ? { opacity: 1, scale: 1 } : {}}
-           transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-           className="flex flex-col items-center justify-center mb-24 relative z-20"
-        >
-           <h2 className="text-center text-3xl md:text-5xl lg:text-[4rem] font-black uppercase text-[#1a1a1a] leading-[1.1] max-w-5xl tracking-tight">
-             <svg viewBox="0 0 450 80" className="inline-block w-[240px] md:w-[320px] lg:w-[420px] -mb-2 align-middle">
-               <defs>
-                 <linearGradient id="neonText" x1="0%" y1="0%" x2="100%" y2="100%">
-                   <stop offset="0%" stopColor="#ff0040" />
-                   <stop offset="25%" stopColor="#ff8c00" />
-                   <stop offset="50%" stopColor="#D4AF37" />
-                   <stop offset="75%" stopColor="#4169e1" />
-                   <stop offset="100%" stopColor="#8a2be2" />
-                 </linearGradient>
-               </defs>
-               <text
-                 x="10" y="65%"
-                 textAnchor="start" dominantBaseline="middle"
-                 className="font-sans text-[65px] md:text-[80px] tracking-tighter font-black animate-text-trace fill-transparent"
-                 stroke="url(#neonText)"
-                 strokeWidth="3"
-                 strokeDasharray="100 200"
-               >
-                 NEXUS DOCS
-               </text>
-             </svg>
-             {" "}IS THE NEXT GENERATION AI-FIRST WORKSPACE.
-           </h2>
 
-           <motion.button className="hidden" style={{ display: 'none' }}
-             onClick={handleInstallClick}
-             whileHover={{ scale: 1.05 }}
-             whileTap={{ scale: 0.95 }}
 
-           >
-             <div className="" />
+        {/* NEW CRAFT-LIKE HERO SECTION */}
+        <div className="py-20 flex flex-col items-center text-center max-w-5xl mx-auto mb-24 relative z-20">
+          <h1 className="text-6xl md:text-[5.5rem] font-serif tracking-tight text-gray-900 mb-8 max-w-4xl leading-[1.1]">
+            Your space for notes, tasks, and big ideas
+          </h1>
+          <button onClick={() => navigate('/dashboard')} className="bg-black text-white px-10 py-5 rounded-full text-xl font-bold hover:scale-105 transition-transform shadow-xl mb-24 z-10 relative">
+            Try Docscraft Pro Free
+          </button>
+        </div>
+        
+        <div ref={phoneRef} className="w-full relative overflow-x-clip overflow-y-visible px-4 md:px-0 mt-32 mb-20 max-w-7xl mx-auto flex justify-center perspective-[2500px] min-h-[80vh] items-center">
+             {/* Spot Light */}
+             <div className="absolute top-[80%] left-1/2 -translate-x-1/2 w-[80%] md:w-[60%] h-48 bg-blue-500/20 blur-[100px] rounded-[100%] pointer-events-none transform -rotate-x-[60deg]"></div>
+
+             {/* Background Desktop App UI Mockup */}
+             <motion.div 
+               style={{ rotateX: isMobile ? 0 : phoneRotateX, rotateY: isMobile ? 0 : phoneRotateY, translateZ: isMobile ? 0 : -100, opacity: 0.95, backfaceVisibility: "hidden", transformStyle: isMobile ? "flat" : "preserve-3d" }}
+               className="hidden lg:flex absolute top-[10%] left-1/2 -translate-x-1/2 w-[1100px] h-[750px] bg-[#fcfcfc] rounded-2xl border border-gray-200/60 shadow-2xl overflow-hidden pointer-events-none z-10"
+             >
+                {/* Sidebar */}
+                <div className="w-[260px] bg-[#F7F7F5] border-r border-[#E4DBC5]/50 p-4 flex flex-col pt-8">
+                   <div className="flex items-center gap-2 mb-8 px-2">
+                      <div className="w-5 h-5 rounded bg-blue-600 shadow border border-blue-700"></div>
+                      <span className="font-bold text-sm">John's Workspace</span>
+                   </div>
+                   <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-gray-500 text-sm px-2 py-1.5 hover:bg-gray-200/50 rounded-md"><Search className="w-4 h-4"/> Search</div>
+                      <div className="flex items-center gap-2 text-gray-900 font-bold bg-white shadow-sm border border-gray-200/50 text-sm px-2 py-1.5 rounded-md"><Home className="w-4 h-4 text-blue-600"/> Home</div>
+                      <div className="flex items-center gap-2 text-gray-500 text-sm px-2 py-1.5 hover:bg-gray-200/50 rounded-md"><Folder className="w-4 h-4"/> All Docs</div>
+                      <div className="flex items-center gap-2 text-gray-500 text-sm px-2 py-1.5 hover:bg-gray-200/50 rounded-md"><Users className="w-4 h-4"/> Shared with Me</div>
+                   </div>
+                   <div className="mt-8 px-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Folders</div>
+                   <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-gray-600 text-sm px-2 py-1.5 hover:bg-gray-200/50 rounded-md"><Folder className="w-3.5 h-3.5"/> Design Specs</div>
+                      <div className="flex items-center gap-2 text-gray-600 text-sm px-2 py-1.5 hover:bg-gray-200/50 rounded-md"><Folder className="w-3.5 h-3.5"/> Marketing 2026</div>
+                      <div className="flex items-center gap-2 text-gray-600 text-sm px-2 py-1.5 hover:bg-gray-200/50 rounded-md"><Folder className="w-3.5 h-3.5"/> Personal Notes</div>
+                   </div>
+                   <img src="https://images.unsplash.com/photo-1618761714954-0b8cd0026356?q=80&w=600&auto=format&fit=crop" className="mt-auto rounded-lg shadow-sm border border-gray-200/50 mix-blend-multiply opacity-80" alt="Sidebar decorative"/>
+                </div>
+                {/* Main Content Area */}
+                <div className="flex-1 bg-white p-12 relative flex justify-end flex-col">
+                   <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-br from-indigo-50 to-rose-50 rounded-bl-[100%] opacity-50 blur-3xl pointer-events-none"></div>
+                   <div className="w-full flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
+                     <h3 className="text-2xl font-serif font-bold text-gray-800">Getting Started <span className="px-2 py-0.5 ml-2 bg-rose-100 text-rose-600 text-[10px] rounded-full uppercase tracking-wider font-bold align-middle">New</span></h3>
+                     <div className="flex gap-2">
+                       <div className="w-8 h-8 rounded-full border border-gray-200 bg-white shadow-sm overflow-hidden">
+                         <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=200&auto=format&fit=crop" className="w-full h-full object-cover" />
+                       </div>
+                       <button className="bg-blue-600 text-white text-xs font-bold px-3 rounded-md shadow flex items-center gap-1">Share</button>
+                     </div>
+                   </div>
+                   <div className="grid grid-cols-2 gap-6 h-[400px]">
+                      <div className="col-span-1 rounded-xl bg-gray-50 border border-gray-100 p-6 flex flex-col shadow-sm relative overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1581287053822-fd7bf4f4bfec?q=80&w=800&auto=format&fit=crop" className="absolute top-0 right-0 w-full h-32 object-cover opacity-30 mix-blend-overlay" />
+                        <h4 className="font-bold mb-2">Beautiful Code Snippets</h4>
+                        <p className="text-xs text-gray-500 mb-4">Paste your code and let our AI format it beautifully with syntax highlighting.</p>
+                        <div className="bg-gray-900 rounded-lg p-4 mt-auto shadow-inner text-blue-300 font-mono text-[10px]">
+                           <div><span className="text-purple-400">const</span> <span className="text-yellow-200">generate</span> = () =&gt; {'{'}</div>
+                           <div className="pl-4">return <span className="text-green-300">"Perfection"</span>;</div>
+                           <div>{'}'}</div>
+                        </div>
+                      </div>
+                      <div className="col-span-1 border border-gray-200/60 rounded-xl overflow-hidden shadow-sm flex items-center justify-center relative">
+                         <img src="https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=800&auto=format&fit=crop" className="w-full h-full object-cover" />
+                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                         <div className="absolute bottom-4 left-4 right-4">
+                            <h4 className="text-white font-bold text-sm mb-1">Collaborative Workspace</h4>
+                            <p className="text-white/70 text-[10px]">Your team, completely in sync.</p>
+                         </div>
+                      </div>
+                   </div>
+                </div>
+             </motion.div>
+
+             {/* Phone Mockup UI */}
+             <motion.div 
+               style={{ rotateX: isMobile ? 0 : phoneRotateX, rotateY: isMobile ? 0 : phoneRotateY, translateZ: isMobile ? 0 : 50, transformStyle: isMobile ? "flat" : "preserve-3d", backfaceVisibility: "hidden", willChange: isMobile ? "auto" : "transform" }}
+               whileInView={{ scale: [0.85, 1], opacity: [0, 1] }}
+               transition={{ duration: 0.8 }}
+               className="w-full max-w-[285px] min-[390px]:max-w-[340px] sm:max-w-[420px] md:max-w-[480px] lg:max-w-[550px] h-[550px] min-[390px]:h-[680px] sm:h-[800px] md:h-[900px] lg:h-[1050px] border-[12px] min-[390px]:border-[16px] md:border-[24px] border-[#0a0a0a] rounded-[2.5rem] min-[390px]:rounded-[3.5rem] md:rounded-[4.5rem] bg-[#fbfbfb] overflow-hidden shadow-[0_45px_100px_-15px_rgba(0,0,0,0.8)] relative ring-2 ring-gray-800/80 mx-auto z-20"
+             >
+                <div className="absolute inset-0 opacity-[0.03] mix-blend-multiply pointer-events-none" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/cubes.png")' }}></div>
+                
+                {/* Dynamic Island / Notch */}
+                <div className="absolute top-0 inset-x-0 h-8 md:h-10 bg-[#0a0a0a] rounded-b-[1.75rem] w-[45%] md:w-1/2 mx-auto z-30 flex items-center justify-end pr-5">
+                  {/* Camera lens */}
+                  <div className="w-4 h-4 rounded-full bg-[#050505] border border-[#1a1a1a] relative shadow-inner">
+                    <div className="w-1.5 h-1.5 bg-blue-500/30 rounded-full absolute top-[1px] right-[1px]"></div>
+                  </div>
+                </div>
+                
+                <div className="px-6 pb-6 h-full overflow-y-auto space-y-6 pt-16 hide-scrollbar relative z-10 bg-gradient-to-b from-gray-50 to-white">
+                   
+                   <div className="absolute top-6 left-6 text-sm font-bold tracking-tight text-gray-800">{currentTime}</div>
+                   <div className="absolute top-6 right-6 flex items-center gap-1.5 opacity-90 text-gray-800">
+                     <div className="flex gap-0.5 justify-end items-end h-[10px]">
+                       <div className="w-1 h-[4px] bg-current rounded-sm" />
+                       <div className="w-1 h-[6px] bg-current rounded-sm" />
+                       <div className="w-1 h-[8px] bg-current rounded-sm" />
+                       <div className="w-1 h-[10px] bg-current opacity-30 rounded-sm" />
+                     </div>
+                     <span className="text-[11px] font-bold tracking-tight">{batteryLevel}%</span>
+                     <div className="w-[22px] h-[11px] outline outline-1 outline-current rounded-[3px] ml-1 relative flex items-center p-[1.5px]">
+                       <div className={`h-full rounded-[1px] ${batteryLevel <= 20 ? 'bg-red-500' : 'bg-current'} transition-all`} style={{ width: `${batteryLevel}%` }} />
+                       <div className="w-0.5 h-1 bg-current absolute -right-[3px] top-1/2 -translate-y-1/2 rounded-r-sm" />
+                       {isCharging && <Sparkles className="w-2.5 h-2.5 text-white absolute inset-x-0 mx-auto fill-current mix-blend-difference" strokeWidth={3} />}
+                     </div>
+                   </div>
+
+                   <div className="mt-8">
+                     <h3 className="text-3xl font-serif font-black text-gray-900 tracking-tight leading-none mb-1">Today</h3>
+                     <p className="text-sm font-medium text-gray-500 mb-6">4 upcoming tasks &amp; ideas</p>
+                   </div>
+
+                   <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden group">
+                     <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-full blur-2xl -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
+                     <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center shadow-sm font-bold mb-3 relative z-10">
+                       <FileText className="w-5 h-5"/>
+                     </div>
+                     <h4 className="font-bold text-gray-900 mb-1 text-lg relative z-10">Museums visit</h4>
+                     <div className="space-y-2 mt-4 relative z-10">
+                       <div className="flex items-center gap-3">
+                         <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
+                         <div>
+                           <p className="font-bold text-gray-800 text-sm">White Cube</p>
+                           <p className="text-[11px] text-gray-500">Bermondsey, London</p>
+                         </div>
+                       </div>
+                       <div className="flex items-center gap-3">
+                         <div className="w-2 h-2 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.5)]"></div>
+                         <div>
+                           <p className="font-bold text-gray-800 text-sm">Victoria and Albert</p>
+                           <p className="text-[11px] text-gray-500">Cromwell Rd, London</p>
+                         </div>
+                       </div>
+                     </div>
+                   </div>
+
+                   <div className="bg-gradient-to-br from-gray-900 to-gray-800 p-5 rounded-3xl border border-gray-700 shadow-lg text-white">
+                     <h4 className="font-bold text-white text-lg mb-1 flex justify-between items-center">
+                        Weekend Trip
+                        <Sparkles className="w-4 h-4 text-yellow-400" />
+                     </h4>
+                     <p className="text-xs text-gray-300 mb-4 line-clamp-3 leading-relaxed mt-2 font-medium">Friday Night: drop off our bags at the hotel, stretch our legs with a stroll around Vienna's historic center to get a feel for the city.</p>
+                     <div className="flex gap-2">
+                       <span className="px-2 py-1 bg-white/10 rounded-md text-[10px] font-bold">TRAVEL</span>
+                       <span className="px-2 py-1 bg-white/10 rounded-md text-[10px] font-bold">PLANS</span>
+                     </div>
+                   </div>
+                   
+                   <div className="bg-white p-5 rounded-3xl border border-gray-100 min-h-[260px] flex flex-col shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative">
+                     <h4 className="font-bold text-gray-900 mb-4 text-lg">Reading list</h4>
+                     <div className="flex items-center gap-3 mb-4 bg-white/60 p-2 rounded-xl">
+                        <div className="w-10 h-10 bg-rose-400/80 rounded-lg shrink-0"></div>
+                        <div>
+                          <p className="text-sm font-bold text-gray-900">about love</p>
+                          <p className="text-xs text-gray-500">Bella Smith</p>
+                        </div>
+                     </div>
+                     <div className="text-[10px] text-gray-400 mb-4 leading-relaxed font-medium">
+                       collection of essays exploring how society understands and practices love
+                     </div>
+                     <div className="flex items-center gap-3 bg-white/60 p-2 rounded-xl">
+                        <div className="w-10 h-10 bg-emerald-400/80 rounded-lg shrink-0"></div>
+                        <div>
+                          <p className="text-sm font-bold text-gray-900">Little Experiments</p>
+                          <p className="text-xs text-gray-500">Lea Cullin</p>
+                        </div>
+                     </div>
+                   </div>
+                </div>
+             </motion.div>
+          </div>
+
+          {/* Laptop Mockup UI */}
+          <div ref={laptopRef} className="w-full relative overflow-x-clip overflow-y-visible px-4 md:px-0 mt-20 mb-20 max-w-6xl mx-auto flex justify-center perspective-[4000px] min-h-[60vh] items-center">
+            <motion.div 
+              style={{ rotateX: isMobile ? 0 : laptopRotateX, rotateY: isMobile ? 0 : laptopRotateY, scale: laptopScale, transformStyle: isMobile ? "flat" : "preserve-3d", backfaceVisibility: "hidden", willChange: isMobile ? "auto" : "transform" }}
+              className="w-full relative block z-20"
+            >
+              {/* Spot Light */}
+              <div className="absolute -bottom-40 left-1/2 -translate-x-1/2 w-[120%] h-64 bg-blue-500/20 blur-[120px] rounded-[100%] transform -rotate-x-[60deg]"></div>
+
+              {/* Front Screen */}
+              <div className="w-full h-[400px] md:h-[650px] border-[12px] md:border-[20px] border-[#0a0a0a] rounded-t-[1.5rem] md:rounded-t-[2.5rem] bg-[#fbfbfb] overflow-hidden shadow-2xl relative block ring-2 ring-gray-800/80" style={{ transform: "translateZ(1px)", backfaceVisibility: "hidden" }}>
+               <div className="absolute inset-0 opacity-[0.03] mix-blend-multiply" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/cubes.png")' }}></div>
+
+               {/* Laptop Camera */}
+               <div className="absolute top-1 md:top-2 inset-x-0 mx-auto w-3 h-3 md:w-4 md:h-4 rounded-full bg-[#050505] border border-gray-900 z-30 flex items-center justify-center shadow-inner">
+                 <div className="w-1 h-1 md:w-1.5 md:h-1.5 bg-blue-500/30 rounded-full"></div>
+               </div>
+
+               <div className="absolute top-3 right-4 flex items-center gap-3 opacity-90 z-20 text-gray-800 text-xs font-medium bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm border border-gray-200">
+                   <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" />{currentTime}</span>
+                   <span className="w-px h-3 bg-gray-300"></span>
+                   <span className="flex items-center gap-1"><CheckCircle className="w-3.5 h-3.5 text-green-600"/> <span className="font-bold tracking-tight">{batteryLevel}%</span></span>
+               </div>
+               
+               <div className="w-full h-12 border-b border-gray-200 flex items-center px-4 bg-gray-50/80 backdrop-blur-md relative z-10 transition-colors pt-2">
+                   <div className="flex gap-2">
+                       <div className="w-3 h-3 rounded-full bg-red-400 border border-red-500/20 shadow-sm"></div>
+                       <div className="w-3 h-3 rounded-full bg-yellow-400 border border-yellow-500/20 shadow-sm"></div>
+                       <div className="w-3 h-3 rounded-full bg-green-400 border border-green-500/20 shadow-sm"></div>
+                   </div>
+                   <div className="mx-auto bg-white border border-gray-200 text-[11px] px-3 md:px-6 py-1.5 rounded-md shadow-sm text-gray-600 font-medium flex items-center gap-2">
+                       <Shield className="w-3 h-3 text-emerald-500" /> docscraft.pro/workspace/launch
+                   </div>
+               </div>
+
+               <div className="flex h-full bg-white relative">
+                   {/* Mockup Sidebar */}
+                   <div className="w-64 border-r border-gray-100 bg-[#FAFAFA] p-5 hidden md:flex flex-col">
+                       <div className="font-bold text-gray-900 mb-8 flex items-center gap-2 text-lg">
+                           <div className="w-7 h-7 bg-gradient-to-br from-yellow-300 to-yellow-500 rounded-lg shadow-sm flex items-center justify-center">
+                             <Sparkles className="w-4 h-4 text-white"/>
+                           </div> 
+                           Docscraft Pro
+                       </div>
+                       <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Workspace</div>
+                       <div className="space-y-1 flex-1">
+                           <div className="px-3 py-2.5 bg-blue-50 text-blue-700 font-medium rounded-xl text-sm flex items-center gap-2 shadow-sm border border-blue-100 transition-all">
+                               <FileText className="w-4 h-4"/> Product Launch
+                           </div>
+                           <div className="px-3 py-2 text-gray-600 font-medium rounded-xl text-sm flex items-center gap-2">
+                               <FileText className="w-4 h-4 opacity-70"/> Design Specs
+                           </div>
+                           <div className="px-3 py-2 text-gray-600 font-medium rounded-xl text-sm flex items-center gap-2">
+                               <Database className="w-4 h-4 opacity-70"/> Q3 Roadmap
+                           </div>
+                       </div>
+                   </div>
+                   {/* Mockup Editor */}
+                   <div className="flex-1 p-8 md:p-14 overflow-y-auto pb-32">
+                        <div className="max-w-2xl mx-auto">
+                            <div className="w-16 h-16 bg-gradient-to-tr from-blue-100 to-indigo-50 rounded-2xl flex items-center justify-center mb-6 text-blue-500 shadow-sm border border-blue-200">
+                                <Sparkles className="w-8 h-8" strokeWidth={1.5}/>
+                            </div>
+                            <h1 className="text-4xl md:text-5xl font-serif font-black text-gray-900 mb-6 tracking-tight leading-[1.1]">Product Launch Strategy</h1>
+                            <p className="text-lg md:text-xl text-gray-600 mb-10 font-serif leading-relaxed">
+                                This document outlines our final go-to-market plan. As we combine Firebase Auth, Firestore real-time collaboration, and deeply integrated AI, the focus remains fiercely aligned on user experience.
+                            </p>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+                                <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border border-yellow-200/60 p-6 rounded-3xl shadow-sm hover:shadow-md transition-all group cursor-pointer">
+                                    <h3 className="font-bold text-xl mb-2 text-gray-900 group-hover:text-yellow-700 transition-colors">Phase 1: Alpha</h3>
+                                    <p className="text-sm text-gray-600 leading-relaxed font-medium">Internal testing & Quality Assurance across all device sizes.</p>
+                                </div>
+                                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200/60 p-6 rounded-3xl relative overflow-hidden shadow-sm hover:shadow-md transition-all group cursor-pointer">
+                                    <div className="absolute top-0 right-0 p-3 opacity-50 transition-transform group-hover:scale-110"><Sparkles className="w-6 h-6 text-blue-400"/></div>
+                                    <h3 className="font-bold text-xl mb-2 text-gray-900 group-hover:text-blue-700 transition-colors">Phase 2: Beta</h3>
+                                    <p className="text-sm text-gray-600 leading-relaxed font-medium">Invite-only access to selected workspace communities.</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-white border border-gray-200 p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-shadow">
+                                <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
+                                    <h4 className="font-bold text-xl text-gray-900 flex items-center gap-2">
+                                      <CheckCircle className="w-5 h-5 text-gray-400"/> Team Tasks
+                                    </h4>
+                                    <div className="flex -space-x-3">
+                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 border-2 border-white shadow-sm flex items-center justify-center text-white text-xs font-black font-sans">TM</div>
+                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-400 to-rose-600 border-2 border-white shadow-sm flex items-center justify-center text-white text-xs font-black font-sans relative z-10">AL</div>
+                                    </div>
+                                </div>
+                                <div className="space-y-4">
+                                    <div className="flex items-start gap-4 p-2 hover:bg-gray-50 rounded-xl transition-colors">
+                                        <input type="checkbox" defaultChecked className="w-5 h-5 mt-0.5 text-blue-600 rounded-md border-gray-300 focus:ring-blue-500 shadow-sm cursor-pointer"/> 
+                                        <span className="line-through text-gray-400 font-medium text-lg">Finalize Landing Page layouts</span>
+                                    </div>
+                                    <div className="flex items-start gap-4 p-2 hover:bg-gray-50 rounded-xl transition-colors">
+                                        <input type="checkbox" className="w-5 h-5 mt-0.5 rounded-md border-gray-300 text-blue-600 focus:ring-blue-500 shadow-sm cursor-pointer"/> 
+                                        <span className="text-gray-800 font-bold text-lg">Integrate Google Keep API support</span>
+                                    </div>
+                                    <div className="flex items-start gap-4 p-2 hover:bg-gray-50 rounded-xl transition-colors">
+                                        <input type="checkbox" defaultChecked className="w-5 h-5 mt-0.5 rounded-md border-gray-300 text-blue-600 focus:ring-blue-500 shadow-sm cursor-pointer"/> 
+                                        <span className="text-gray-400 line-through font-medium text-lg">Verify animated device battery states</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+              </div> {/* Close Laptop Screen */}
+              
+              {/* Screen Edges (Top, Left, Right) to fill gap between front and back */}
+              <div className="absolute top-0 left-0 w-full h-[10px] bg-[#050505] origin-top" style={{ transform: "rotateX(-90deg) translateZ(-1px)" }}></div>
+              <div className="absolute top-0 left-0 w-[10px] h-[400px] md:h-[650px] bg-[#050505] origin-left" style={{ transform: "rotateY(-90deg) translateZ(1px)" }}></div>
+              <div className="absolute top-0 right-0 w-[10px] h-[400px] md:h-[650px] bg-[#050505] origin-right" style={{ transform: "rotateY(90deg) translateZ(1px)" }}></div>
+
+              {/* Back Lid */}
+              <div className="absolute top-0 left-0 w-full h-[400px] md:h-[650px] bg-gradient-to-tr from-[#252525] to-[#121212] rounded-t-[1.5rem] md:rounded-t-[2.5rem] flex items-center justify-center overflow-hidden border-[12px] md:border-[20px] border-[#0a0a0a] ring-2 ring-gray-600 z-10" style={{ transform: "rotateY(180deg) translateZ(1px)", backfaceVisibility: "hidden" }}>
+                 <div className="absolute inset-0 opacity-[0.02] bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+                 <div className="w-24 h-24 md:w-32 md:h-32 bg-white/5 rounded-3xl flex items-center justify-center shadow-[inset_0_0_20px_rgba(255,255,255,0.05)] border border-white/10">
+                    <Sparkles className="w-12 h-12 md:w-16 md:h-16 text-white/40" strokeWidth={1.5} />
+                 </div>
+              </div>
+
+              {/* True 3D Laptop Base / Keyboard Deck */}
+              <div className="absolute top-[100%] inset-x-0 mx-auto w-full h-[280px] md:h-[350px] shadow-[0_50px_100px_rgba(0,0,0,0.6)] z-30 transform-style-[preserve-3d]" style={{ transform: "rotateX(-90deg)", transformOrigin: "top", transformStyle: "preserve-3d" }}>
+                 
+                 {/* SURFACE 1: TOP SURFACE (VISIBLE FROM FRONT / TOP) */}
+                 <div className="absolute inset-0 bg-gradient-to-br from-[#eaeaea] to-[#d4d4d4] rounded-b-[2rem] border-t border-white/50 relative overflow-hidden flex flex-col items-center pt-6 md:pt-10 select-none shadow-[inset_0_2px_10px_rgba(255,255,255,0.9)]" style={{ backfaceVisibility: "hidden", transform: "translateZ(0.5px)" }}>
+                    {/* Keyboard chamfered container */}
+                    <div className="w-[85%] h-[120px] md:h-[160px] bg-[#1c1c1c] rounded-2xl shadow-[inset_0_8px_25px_rgba(0,0,0,0.8)] p-2.5 flex flex-col justify-between border border-white/10 relative z-10 overflow-hidden">
+                        {/* High fidelity silver accents keyboard keys */}
+                        <div className="flex justify-between w-full h-[15%] gap-1">
+                          {Array.from({ length: 14 }).map((_, i) => (
+                            <div key={i} className="flex-1 bg-gradient-to-b from-[#333] to-[#151515] rounded-sm ring-1 ring-black border-t border-white/10 shadow-sm text-[6px] text-gray-500 font-mono flex items-center justify-center font-bold">F{i+1}</div>
+                          ))}
+                        </div>
+                        <div className="flex justify-between w-full h-[15%] gap-1">
+                          <div className="w-[8%] bg-gradient-to-b from-[#333] to-[#151515] rounded-sm ring-1 ring-black border-t border-white/10"></div>
+                          {Array.from({ length: 12 }).map((_, i) => (
+                            <div key={i} className="flex-1 bg-gradient-to-b from-[#333] to-[#151515] rounded-sm ring-1 ring-black border-t border-white/10"></div>
+                          ))}
+                          <div className="w-[10%] bg-gradient-to-b from-[#333] to-[#151515] rounded-sm ring-1 ring-black border-t border-white/10"></div>
+                        </div>
+                        <div className="flex justify-between w-full h-[15%] gap-1">
+                          <div className="w-[12%] bg-gradient-to-b from-[#333] to-[#151515] rounded-sm ring-1 ring-black border-t border-white/10"></div>
+                          {Array.from({ length: 11 }).map((_, i) => (
+                            <div key={i} className="flex-1 bg-gradient-to-b from-[#333] to-[#151515] rounded-sm ring-1 ring-black border-t border-white/10"></div>
+                          ))}
+                          <div className="w-[14%] bg-gradient-to-b from-[#333] to-[#151515] rounded-sm ring-1 ring-black border-t border-white/10"></div>
+                        </div>
+                        <div className="flex justify-between w-full h-[15%] gap-1">
+                          <div className="w-[16%] bg-gradient-to-b from-[#333] to-[#151515] rounded-sm ring-1 ring-black border-t border-white/10"></div>
+                          {Array.from({ length: 10 }).map((_, i) => (
+                            <div key={i} className="flex-1 bg-gradient-to-b from-[#333] to-[#151515] rounded-sm ring-1 ring-black border-t border-white/10"></div>
+                          ))}
+                          <div className="w-[18%] bg-gradient-to-b from-[#333] to-[#151515] rounded-sm ring-1 ring-black border-t border-white/10"></div>
+                        </div>
+                        <div className="flex justify-center w-full h-[15%] gap-2">
+                          <div className="w-[15%] bg-gradient-to-b from-[#333] to-[#151515] rounded-sm ring-1 ring-black border-t border-white/10"></div>
+                          <div className="w-[50%] bg-gradient-to-b from-[#333] to-[#151515] rounded-sm ring-1 ring-black border-t border-white/10 cursor-pointer hover:brightness-110 active:brightness-90 transition-all"></div>
+                          <div className="w-[15%] bg-gradient-to-b from-[#333] to-[#151515] rounded-sm ring-1 ring-black border-t border-white/10"></div>
+                          <div className="flex gap-0.5">
+                            <div className="w-5 bg-[#151515] rounded-sm ring-1 ring-black border-t border-white/10"></div>
+                            <div className="w-5 bg-[#151515] rounded-sm ring-1 ring-black border-t border-white/10"></div>
+                            <div className="w-5 bg-[#151515] rounded-sm ring-1 ring-black border-t border-white/10"></div>
+                          </div>
+                        </div>
+                    </div>
+
+                    {/* Chamfered precision trackpad */}
+                    <div className="absolute bottom-6 md:bottom-8 mx-auto w-[35%] h-[90px] md:h-[130px] bg-gradient-to-b from-[#cfcfcf] to-[#e4e4e4] rounded-xl shadow-[inset_0_3px_8px_rgba(0,0,0,0.15)] border border-gray-400"></div>
+                    <div className="absolute bottom-0 inset-x-0 mx-auto w-[15%] h-[6px] md:h-[8px] bg-[#b8b8b8] rounded-t-lg shadow-inner"></div>
+                 </div>
+
+                 {/* SURFACE 2: UNDERSIDE COVER (REPLACES MIRRORED KEYBOARD FOR STABILITY WHEN IN REVERSE SPIN) */}
+                 <div className="absolute inset-0 bg-gradient-to-br from-[#c0c0c0] to-[#e0e0e0] rounded-b-[2rem] border border-gray-400/80 shadow-[inset_0_4px_15px_rgba(255,255,255,0.7)] p-8 relative overflow-hidden" style={{ backfaceVisibility: "hidden", transform: "rotateX(180deg) translateZ(0.5px)" }}>
+                    <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] pointer-events-none"></div>
+                    
+                    {/* Symmetrical Ventilation Grills */}
+                    <div className="w-[75%] h-[20px] md:h-[30px] bg-black/80 rounded-lg mx-auto shadow-inner flex flex-col justify-around py-1 px-4 border border-white/10 select-none">
+                       <div className="h-[1px] bg-gray-800 w-full"></div>
+                       <div className="h-[1px] bg-gray-800 w-full"></div>
+                       <div className="h-[1px] bg-gray-800 w-full"></div>
+                    </div>
+                    
+                    {/* Metallic Engraved docscraft sign */}
+                    <div className="text-center mt-12 md:mt-20">
+                      <div className="text-[10px] md:text-xs font-mono tracking-widest text-[#777] font-semibold uppercase flex items-center justify-center gap-1">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-500/60" /> DOCSCRAFT PRO • MODEL AI-712
+                      </div>
+                      <p className="text-[8px] text-gray-400 mt-2">Designed in California • Managed under Vault Sovereignty</p>
+                    </div>
+
+                    {/* 4 Rubber grip feet */}
+                    <div className="absolute top-4 left-6 w-4 h-4 rounded-full bg-[#151515] border border-black shadow-[inset_0_2px_4px_rgba(255,255,255,0.2)]"></div>
+                    <div className="absolute top-4 right-6 w-4 h-4 rounded-full bg-[#151515] border border-black shadow-[inset_0_2px_4px_rgba(255,255,255,0.2)]"></div>
+                    <div className="absolute bottom-4 left-6 w-4 h-4 rounded-full bg-[#151515] border border-black shadow-[inset_0_2px_4px_rgba(255,255,255,0.2)]"></div>
+                    <div className="absolute bottom-4 right-6 w-4 h-4 rounded-full bg-[#151515] border border-black shadow-[inset_0_2px_4px_rgba(255,255,255,0.2)]"></div>
+                 </div>
+
+                 {/* Laptop Thickness (Front Lip) */}
+                 <div className="absolute top-[100%] inset-x-0 h-4 md:h-6 bg-gradient-to-b from-[#b0b0b0] to-[#808080] rounded-b-xl border-t border-[#999]" style={{ transform: "rotateX(-90deg)", transformOrigin: "top" }}>
+                    <div className="absolute bottom-0 inset-x-0 h-[2px] bg-white/20"></div>
+                 </div>
+
+                 {/* Laptop Side Lips (Left/Right) for Base thickness */}
+                 <div className="absolute top-0 left-0 w-4 md:w-6 h-full bg-gradient-to-r from-[#e0e0e0] to-[#c2c2c2] origin-left border-y border-[#999]" style={{ transform: "rotateY(-90deg)" }}></div>
+                 <div className="absolute top-0 right-0 w-4 md:w-6 h-full bg-gradient-to-l from-[#e0e0e0] to-[#c2c2c2] origin-right border-y border-[#999]" style={{ transform: "rotateY(90deg)" }}></div>
+              </div>
+             </motion.div>
+          </div>
+
+          <LandingBookSection />
+
+          <LandingPaperDraft />
+
+          <LandingCalendarTasks />
+
+          <LandingVideoWorkspace />
+
+          <LandingInteractiveImage />
+
+          <LandingAICapabilities />
+
+          {/* Quote Section */}
+          <div className="py-24 max-w-4xl mx-auto text-center px-4 mb-20 bg-white/50 backdrop-blur-md rounded-3xl border border-gray-100 shadow-xl">
+             <img src="https://i.pravatar.cc/150?u=tom" alt="Tom" className="w-24 h-24 rounded-full mx-auto mb-6 object-cover shadow-md border-4 border-white" />
+             <p className="font-semibold text-gray-600 mb-8 text-xl">Tom</p>
+             <h2 className="text-3xl md:text-5xl font-serif italic text-gray-900 leading-[1.3] px-10">
+               "Publishing directly from Docscraft Pro just feels natural &mdash; it's where I write, so it makes sense to share from there too."
+             </h2>
+          </div>
+
+          {/* Connect Section */}
+          <div className="w-full bg-gradient-to-br from-[#82D099] to-[#60b077] rounded-[3rem] p-12 md:p-24 text-left shadow-2xl relative overflow-hidden">
              
+             {/* Decorative circles */}
+             <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl transform translate-x-1/3 -translate-y-1/3"></div>
              
-           </motion.button>
-        </motion.div>
+             <span className="font-bold tracking-widest text-[#1a5a3a]/80 uppercase text-sm mb-6 block relative z-10">Imagine</span>
+             <h3 className="text-4xl md:text-6xl lg:text-[4.5rem] font-serif font-medium text-[#043319] mb-8 leading-[1.1] relative z-10">
+               Imagine the possibilities when everything's connected to Docscraft Pro
+             </h3>
+             <p className="text-2xl text-[#11502e] max-w-2xl font-serif leading-relaxed relative z-10 opacity-90">
+               Make Docscraft Pro yours &mdash; connect the tools you love, build what you need.
+             </p>
+          </div>
+          
+          {/* Import / Export Section */}
+          <div className="w-full mt-40 text-center px-4">
+            <h3 className="text-5xl md:text-6xl font-serif font-black text-gray-900 mb-8 tracking-tight">Import & Export</h3>
+            <p className="text-2xl text-gray-600 max-w-3xl mx-auto mb-20 font-serif leading-relaxed">
+              Move your content in and out of Docscraft Pro with support for multiple formats and platforms.
+            </p>
+            
+            <div className="max-w-5xl mx-auto mb-20 relative">
+               <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-gray-200 to-transparent -translate-x-1/2"></div>
+               
+               <div className="space-y-12 md:space-y-24">
+                 {/* Row 1 */}
+                 <div className="flex flex-col md:flex-row items-center justify-between gap-8 md:gap-24 relative group">
+                    <div className="hidden md:flex absolute left-1/2 top-1/2 w-3 h-3 bg-white border-2 border-blue-500 rounded-full -translate-x-1/2 -translate-y-1/2 shadow-[0_0_15px_rgba(59,130,246,0.5)] group-hover:scale-150 transition-transform"></div>
+                    <div className="flex-1 text-center md:text-right">
+                       <h4 className="font-serif font-bold text-3xl mb-2 text-gray-900 group-hover:text-blue-600 transition-colors">Google Docs</h4>
+                       <p className="text-gray-500 text-lg">Import your Google Docs directly with rich formatting preserved.</p>
+                    </div>
+                    <div className="flex-1 flex justify-center md:justify-start">
+                       <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 shadow-sm ring-1 ring-blue-100 group-hover:bg-blue-100 transition-colors">
+                         <FileText className="w-10 h-10" />
+                       </div>
+                    </div>
+                 </div>
+
+                 {/* Row 2 */}
+                 <div className="flex flex-col md:flex-row-reverse items-center justify-between gap-8 md:gap-24 relative group">
+                    <div className="hidden md:flex absolute left-1/2 top-1/2 w-3 h-3 bg-white border-2 border-purple-500 rounded-full -translate-x-1/2 -translate-y-1/2 shadow-[0_0_15px_rgba(168,85,247,0.5)] group-hover:scale-150 transition-transform"></div>
+                    <div className="flex-1 text-center md:text-left">
+                       <h4 className="font-serif font-bold text-3xl mb-2 text-gray-900 group-hover:text-purple-600 transition-colors">Obsidian</h4>
+                       <p className="text-gray-500 text-lg">Preserve your markdown links, tags, and structure flawlessly.</p>
+                    </div>
+                    <div className="flex-1 flex justify-center md:justify-end">
+                       <div className="w-20 h-20 bg-purple-50 rounded-full flex items-center justify-center text-purple-600 shadow-sm ring-1 ring-purple-100 group-hover:bg-purple-100 transition-colors">
+                         <Boxes className="w-10 h-10" />
+                       </div>
+                    </div>
+                 </div>
+
+                 {/* Row 3 */}
+                 <div className="flex flex-col md:flex-row items-center justify-between gap-8 md:gap-24 relative group">
+                    <div className="hidden md:flex absolute left-1/2 top-1/2 w-3 h-3 bg-white border-2 border-rose-500 rounded-full -translate-x-1/2 -translate-y-1/2 shadow-[0_0_15px_rgba(244,63,94,0.5)] group-hover:scale-150 transition-transform"></div>
+                    <div className="flex-1 text-center md:text-right">
+                       <h4 className="font-serif font-bold text-3xl mb-2 text-gray-900 group-hover:text-rose-600 transition-colors">Notion</h4>
+                       <p className="text-gray-500 text-lg">Bring your Notion databases to life in a faster environment.</p>
+                    </div>
+                    <div className="flex-1 flex justify-center md:justify-start">
+                       <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center text-rose-600 shadow-sm ring-1 ring-rose-100 group-hover:bg-rose-100 transition-colors">
+                         <Database className="w-10 h-10" />
+                       </div>
+                    </div>
+                 </div>
+
+                 {/* Row 4 */}
+                 <div className="flex flex-col md:flex-row-reverse items-center justify-between gap-8 md:gap-24 relative group">
+                    <div className="hidden md:flex absolute left-1/2 top-1/2 w-3 h-3 bg-white border-2 border-emerald-500 rounded-full -translate-x-1/2 -translate-y-1/2 shadow-[0_0_15px_rgba(16,185,129,0.5)] group-hover:scale-150 transition-transform"></div>
+                    <div className="flex-1 text-center md:text-left">
+                       <h4 className="font-serif font-bold text-3xl mb-2 text-gray-900 group-hover:text-emerald-600 transition-colors">Evernote</h4>
+                       <p className="text-gray-500 text-lg">Migrate all your Evernote notebooks with a single click.</p>
+                    </div>
+                    <div className="flex-1 flex justify-center md:justify-end">
+                       <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 shadow-sm ring-1 ring-emerald-100 group-hover:bg-emerald-100 transition-colors">
+                         <Search className="w-10 h-10" />
+                       </div>
+                    </div>
+                 </div>
+               </div>
+            </div>
+            
+            <h4 className="text-2xl font-bold mt-20 mb-8 uppercase tracking-widest text-gray-400 text-center text-sm">Multi-Format Compilation Engine</h4>
+            
+            <div className="w-full max-w-5xl mx-auto bg-[#1a1a1a] rounded-[2.5rem] md:rounded-[3rem] p-8 md:p-14 text-white shadow-2xl relative overflow-hidden ring-1 ring-gray-900 mb-10 group">
+               <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/20 rounded-full blur-[80px] -mr-20 -mt-20 mix-blend-screen pointer-events-none transition-opacity duration-700 group-hover:opacity-100 opacity-60"></div>
+               <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/20 rounded-full blur-[80px] -ml-20 -mb-20 mix-blend-screen pointer-events-none transition-opacity duration-700 group-hover:opacity-100 opacity-60"></div>
+               <div className="absolute inset-0 opacity-[0.05]" style={{ backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, #ffffff 10px, #ffffff 11px)' }}></div>
+               
+               <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                 {/* Format 1 */}
+                 <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-md hover:bg-white/10 transition-colors flex flex-col justify-between group/card">
+                    <span className="text-blue-400 font-mono text-xs tracking-widest font-bold mb-6 block group-hover/card:text-blue-300">.MD / .TEXTBUNDLE</span>
+                    <div>
+                      <h5 className="font-serif font-black text-2xl mb-2">Native Web</h5>
+                      <p className="text-gray-400 text-sm leading-relaxed">Full fidelity markdown parsing with metadata tags.</p>
+                    </div>
+                 </div>
+                 {/* Format 2 */}
+                 <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-md hover:bg-white/10 transition-colors flex flex-col justify-between group/card">
+                    <span className="text-emerald-400 font-mono text-xs tracking-widest font-bold mb-6 block group-hover/card:text-emerald-300">.PDF</span>
+                    <div>
+                      <h5 className="font-serif font-black text-2xl mb-2">Print Ready</h5>
+                      <p className="text-gray-400 text-sm leading-relaxed">High-definition vector documents with embedded fonts.</p>
+                    </div>
+                 </div>
+                 {/* Format 3 */}
+                 <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-md hover:bg-white/10 transition-colors flex flex-col justify-between group/card">
+                    <span className="text-purple-400 font-mono text-xs tracking-widest font-bold mb-6 block group-hover/card:text-purple-300">.CSV / .JSON</span>
+                    <div>
+                      <h5 className="font-serif font-black text-2xl mb-2">Data Graph</h5>
+                      <p className="text-gray-400 text-sm leading-relaxed">Export raw structured data tables directly.</p>
+                    </div>
+                 </div>
+                 {/* Format 4 */}
+                 <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-md hover:bg-white/10 transition-colors flex flex-col justify-between group/card">
+                    <span className="text-amber-400 font-mono text-xs tracking-widest font-bold mb-6 block group-hover/card:text-amber-300">SYNC API</span>
+                    <div>
+                      <h5 className="font-serif font-black text-2xl mb-2">Live Cloud</h5>
+                      <p className="text-gray-400 text-sm leading-relaxed">Continuous sync to Google Drive and other nodes.</p>
+                    </div>
+                 </div>
+               </div>
+            </div>
+        </div>
+
+
+
+        {/* Existing sections wrapper end */}
 
         {/* Central Button & Robot Container */}
         <div className="flex flex-col items-center justify-center relative min-h-[500px] mb-32 z-30">
@@ -267,7 +839,7 @@ export function LandingPage() {
               Headless.<br /> Composable.<br /> Brilliant.
             </h2>
             <p className="text-gray-400 text-lg mb-8 leading-relaxed font-sans max-w-md">
-              Tap into DocCraft Pro's robust block-based architecture via our GraphQL and REST APIs. Everything is an object, letting you sculpt documentation exactly how you need it.
+              Tap into Docscraft Pro's robust block-based architecture via our GraphQL and REST APIs. Everything is an object, letting you sculpt documentation exactly how you need it.
             </p>
             <div className="flex gap-4">
               <Link to="/docs" className="bg-white text-black font-semibold px-6 py-3 rounded-full hover:bg-gray-200 transition-colors">Read Docs</Link>
@@ -468,6 +1040,96 @@ export function LandingPage() {
                 </div>
                 <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.8)_0,transparent_100%)]" style={{ backgroundSize: '20px 20px', backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)' }}></div>
               </TiltCard>
+          </div>
+        </div>
+      </section>
+
+      {/* Expanded Interactive Content Hub Section */}
+      <section className="py-32 bg-[#FAF9F6] relative z-10 border-b border-[#E4DBC5]">
+        <div className="max-w-[1400px] mx-auto px-6">
+          <div className="text-center mb-24">
+             <span className="text-[#D4AF37] font-bold tracking-widest uppercase text-xs mb-4 block">Interactive Architecture</span>
+             <h2 className="text-4xl md:text-6xl font-black mb-6 uppercase tracking-tight text-[#1a1a1a]">Built for Scale.</h2>
+             <p className="text-gray-500 font-sans text-xl max-w-3xl mx-auto">Seamlessly organize massive documentation hubs with our sticky intelligent routing and beautifully structured lengthy cards.</p>
+          </div>
+          
+          <div className="flex flex-col lg:flex-row gap-16 relative items-start">
+             {/* Sticky Sidebar */}
+             <div className="w-full lg:w-1/4 lg:sticky lg:top-32 flex flex-col gap-4 font-sans border-r border-[#E4DBC5] pr-8 hidden md:flex">
+                <h4 className="font-bold text-xs uppercase tracking-widest text-gray-400 mb-4">Documentation Hub</h4>
+                
+                {[
+                  { title: "Core Principles", subtitle: "Foundation of Docscraft" },
+                  { title: "Security Layers", subtitle: "Enterprise-grade protection" },
+                  { title: "API Integration", subtitle: "Headless content delivery" },
+                  { title: "Export Engine", subtitle: "Multi-format generation" }
+                ].map((item, i) => (
+                  <motion.div 
+                    key={i}
+                    whileHover={{ x: 10 }}
+                    className="p-4 rounded-xl border border-transparent hover:border-[#F4E091] hover:bg-white transition-all cursor-pointer group"
+                  >
+                     <h5 className="font-bold text-gray-900 group-hover:text-[#D4AF37] transition-colors">{item.title}</h5>
+                     <p className="text-xs text-gray-500 mt-1">{item.subtitle}</p>
+                  </motion.div>
+                ))}
+             </div>
+
+             {/* Lengthy Cards Showcase */}
+             <div className="w-full lg:w-3/4 flex flex-col gap-16">
+                {[
+                  {
+                    title: "Immutable Core Principles",
+                    tag: "FOUNDATION",
+                    content: "Every document crafted on our platform adheres to strict typography constraints and pristine padding rules. We believe that constraints breed creativity. By locking down the foundational UI, your team can focus entirely on writing brilliant, structural content without fighting formatting glitches.",
+                    imgUrl: "https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&q=80&w=800"
+                  },
+                  {
+                    title: "Advanced Security Layers",
+                    tag: "ENTERPRISE",
+                    content: "Your data is encapsulated within mathematically secure boundaries. From the moment you type a keystroke, it is encrypted locally before being synchronized to the cloud. We utilize SOC-2 compliant infrastructure to ensure your most critical legal and technical documents remain entirely private.",
+                    imgUrl: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=800"
+                  },
+                  {
+                    title: "Headless Content APIs",
+                    tag: "DEVELOPERS",
+                    content: "Extract your documentation directly into your mobile apps or web platforms. Our high-performance GraphQL and REST APIs allow you to decouple the writing experience from the rendering experience. Deliver your docs seamlessly across any digital touchpoint.",
+                    imgUrl: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=800"
+                  }
+                ].map((card, i) => (
+                   <motion.div 
+                     initial={{ opacity: 0, y: 30 }}
+                     whileInView={{ opacity: 1, y: 0 }}
+                     viewport={{ once: true, margin: "-100px" }}
+                     transition={{ duration: 0.6, delay: i * 0.1 }}
+                     key={i} 
+                     className="bg-white border border-[#E4DBC5] rounded-[2.5rem] p-8 md:p-12 shadow-[0_10px_40px_rgba(0,0,0,0.02)] hover:shadow-[0_20px_60px_rgba(212,175,55,0.15)] hover:-translate-y-2 hover:border-[#D4AF37]/50 transition-all duration-500 group flex flex-col md:flex-row gap-10 items-center overflow-hidden relative"
+                   >
+                     {/* Subtle Gold Hover Glow Background */}
+                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#FDF0D5]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 transform -translate-x-full group-hover:translate-x-full"></div>
+
+                     <div className="flex-1 relative z-10 w-full">
+                        <span className="inline-block py-1.5 px-4 rounded-full bg-[#FDFCF8] border border-[#F4E091] text-[#D4AF37] text-xs font-bold tracking-widest uppercase mb-6 shadow-sm">
+                           {card.tag}
+                        </span>
+                        <h3 className="text-3xl md:text-4xl font-serif font-black text-gray-900 mb-6 leading-tight">
+                           {card.title}
+                        </h3>
+                        <p className="text-gray-600 text-lg leading-relaxed font-sans">
+                           {card.content}
+                        </p>
+                        
+                        <div className="mt-8 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-gray-400 group-hover:text-[#D4AF37] transition-colors cursor-pointer w-max border-b-2 border-transparent group-hover:border-[#D4AF37]">
+                           Explore Module <ArrowRight className="w-4 h-4 ml-1 transform group-hover:translate-x-2 transition-transform" />
+                        </div>
+                     </div>
+                     <div className="w-full md:w-5/12 h-[300px] shrink-0 rounded-[1.5rem] overflow-hidden border border-[#E4DBC5] relative z-10 group-hover:border-[#D4AF37]/40 transition-colors">
+                        <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors z-10"></div>
+                        <img src={card.imgUrl} alt={card.title} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700 blur-[2px] group-hover:blur-0" />
+                     </div>
+                   </motion.div>
+                ))}
+             </div>
           </div>
         </div>
       </section>
@@ -832,82 +1494,82 @@ function WaveGlowBackground() {
   const customStyles = `
     @keyframes wateryFlow {
       0% { transform: translate(0, 0) scale(1) rotate(0deg); }
-      50% { transform: translate(-30px, 15px) scale(1.03) rotate(1.5deg); }
+      50% { transform: translate(-15px, 10px) scale(1.02) rotate(1deg); }
       100% { transform: translate(0, 0) scale(1) rotate(0deg); }
     }
     @keyframes sparklyGlow {
-      0%, 100% { opacity: 0.35; transform: scale(1) rotate(0deg); }
-      50% { opacity: 0.9; transform: scale(1.15) rotate(4deg); }
+      0%, 100% { opacity: 0.3; transform: scale(1); }
+      50% { opacity: 0.75; transform: scale(1.1); }
     }
     @keyframes waveShift {
       0% { transform: translateX(0) translateY(0); }
-      50% { transform: translateX(-35px) translateY(8px); }
+      50% { transform: translateX(-15px) translateY(5px); }
       100% { transform: translateX(0) translateY(0); }
     }
     @keyframes waveShiftRev {
       0% { transform: translateX(0) translateY(0); }
-      50% { transform: translateX(35px) translateY(-8px); }
+      50% { transform: translateX(15px) translateY(-5px); }
       100% { transform: translateX(0) translateY(0); }
     }
   `;
 
   return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 opacity-40 select-none">
+    <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 opacity-30 select-none w-screen h-screen">
       <style>{customStyles}</style>
       
-      {/* Sparkles / Blobs */}
+      {/* Sparkles / Blobs in fixed viewport bounds (Highly performant, lighter blurs, no mix-blend-multiply recalculations) */}
       <div 
-        className="absolute top-[8%] left-[15%] w-[650px] h-[650px] rounded-full bg-gradient-to-tr from-[#fbcfe8]/60 via-[#bfdbfe]/50 to-[#fed7aa]/40 filter blur-[90px] mix-blend-multiply" 
-        style={{ animation: 'wateryFlow 12s infinite ease-in-out' }} 
+        className="absolute top-[10%] left-[10%] w-[450px] h-[450px] rounded-full bg-gradient-to-tr from-[#fbcfe8]/40 via-[#bfdbfe]/30 to-[#fed7aa]/20 blur-[60px]" 
+        style={{ animation: 'wateryFlow 14s infinite ease-in-out', willChange: 'transform' }} 
       />
       <div 
-        className="absolute bottom-[15%] right-[5%] w-[750px] h-[750px] rounded-full bg-gradient-to-br from-[#fef08a]/50 via-[#bfdbfe]/60 to-[#fbcfe8]/40 filter blur-[110px] mix-blend-multiply" 
-        style={{ animation: 'wateryFlow 18s infinite ease-in-out' }} 
+        className="absolute bottom-[10%] right-[10%] w-[500px] h-[500px] rounded-full bg-gradient-to-br from-[#fef08a]/30 via-[#bfdbfe]/30 to-[#fbcfe8]/25 blur-[70px]" 
+        style={{ animation: 'wateryFlow 18s infinite ease-in-out', willChange: 'transform' }} 
       />
       <div 
-        className="absolute top-[40%] right-[30%] w-[500px] h-[500px] rounded-full bg-gradient-to-tr from-[#e0f2fe]/40 via-[#f3e8ff]/50 to-[#ffffff]/35 filter blur-[100px] mix-blend-screen" 
-        style={{ animation: 'wateryFlow 15s infinite ease-in-out' }} 
+        className="absolute top-[35%] right-[25%] w-[350px] h-[350px] rounded-full bg-gradient-to-tr from-[#e0f2fe]/30 via-[#f3e8ff]/30 to-white/20 blur-[50px]" 
+        style={{ animation: 'wateryFlow 16s infinite ease-in-out', willChange: 'transform' }} 
       />
       
-      {/* SVG swelling waves looping in background */}
-      <svg className="absolute inset-x-0 bottom-0 min-w-[1400px] w-full h-[650px] opacity-75" viewBox="0 0 1440 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* SVG swelling waves looping in bottom background of active view */}
+      <svg className="absolute inset-x-0 bottom-0 min-w-[1400px] w-full h-[350px] opacity-40 pointer-events-none" viewBox="0 0 1440 600" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path 
-          d="M0,160 C240,220 480,100 720,180 C960,260 1200,140 1440,240 L1440,600 L0,600 Z" 
+          d="M0,250 C240,290 480,180 720,240 C960,300 1200,200 1440,280 L1440,600 L0,600 Z" 
           fill="url(#wave-gradient-1)" 
-          style={{ animation: 'waveShift 14s infinite ease-in-out' }} 
+          style={{ animation: 'waveShift 16s infinite ease-in-out' }} 
         />
         <path 
-          d="M0,220 C280,140 560,260 840,160 C1120,60 1280,240 1440,180 L1440,600 L0,600 Z" 
+          d="M0,320 C280,240 560,360 840,260 C1120,160 1280,340 1440,280 L1440,600 L0,600 Z" 
           fill="url(#wave-gradient-2)" 
-          style={{ animation: 'waveShiftRev 19s infinite ease-in-out' }} 
+          style={{ animation: 'waveShiftRev 22s infinite ease-in-out' }} 
         />
         
         <defs>
           <linearGradient id="wave-gradient-1" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="rgba(253, 240, 213, 0.45)" />
-            <stop offset="50%" stopColor="rgba(255, 255, 255, 0.65)" />
-            <stop offset="100%" stopColor="rgba(191, 219, 254, 0.45)" />
+            <stop offset="0%" stopColor="rgba(253, 240, 213, 0.3)" />
+            <stop offset="50%" stopColor="rgba(255, 255, 255, 0.5)" />
+            <stop offset="100%" stopColor="rgba(191, 219, 254, 0.3)" />
           </linearGradient>
           <linearGradient id="wave-gradient-2" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="rgba(191, 219, 254, 0.4)" />
-            <stop offset="50%" stopColor="rgba(253, 240, 213, 0.55)" />
-            <stop offset="100%" stopColor="rgba(251, 207, 232, 0.4)" />
+            <stop offset="0%" stopColor="rgba(191, 219, 254, 0.3)" />
+            <stop offset="50%" stopColor="rgba(253, 240, 213, 0.4)" />
+            <stop offset="100%" stopColor="rgba(251, 207, 232, 0.3)" />
           </linearGradient>
         </defs>
       </svg>
       
       {/* Tiny gold sparkly pulse elements */}
       <div className="absolute inset-0">
-        {[...Array(18)].map((_, i) => (
+        {[...Array(12)].map((_, i) => (
           <div
             key={i}
-            className="absolute rounded-full bg-white opacity-40 shadow-[0_0_15px_#D4AF37]"
+            className="absolute rounded-full bg-white opacity-35 shadow-[0_0_10px_#D4AF37]"
             style={{
-              top: `${10 + i * 5}%`,
-              left: `${5 + (i * 17) % 91}%`,
-              width: `${4 + (i % 3) * 4}px`,
-              height: `${4 + (i % 3) * 4}px`,
-              animation: `sparklyGlow ${2.5 + (i % 4)}s infinite ease-in-out`
+              top: `${15 + i * 7}%`,
+              left: `${10 + (i * 23) % 81}%`,
+              width: `${3 + (i % 2) * 3}px`,
+              height: `${3 + (i % 2) * 3}px`,
+              animation: `sparklyGlow ${3 + (i % 3)}s infinite ease-in-out`
             }}
           />
         ))}

@@ -83,11 +83,11 @@ export async function sendGmailSupportTicket({
   const supportEmail = 'docscraftpro@gmail.com';
   
   // Customizing internal team subjects and templates to keep categorization distinct
-  let teamSubject = `DocCraft Support Ticket - From ${username}`;
+  let teamSubject = `Docscraft Support Ticket - From ${username}`;
   let teamGreeting = `Hello Support Team,\r\n\r\nA new support ticket has been filed by a user.`;
   
   if (type === 'bug') {
-    teamSubject = `[BUG REPORT] DocCraft Pro - Parser / Render Issue from ${username}`;
+    teamSubject = `[BUG REPORT] Docscraft Pro - Parser / Render Issue from ${username}`;
     teamGreeting = `Hello Engineering Squad,\r\n\r\nA technical bug or parser anomaly report was raised. Details below:`;
   } else if (type === 'feedback') {
     teamSubject = `[WORKSPACE FEEDBACK] Creative Idea / Suggestions from ${username}`;
@@ -117,7 +117,7 @@ export async function sendGmailSupportTicket({
     issue,
     '',
     `------------------------------------------------------------`,
-    `Processed internally via DocCraft Workplace Desk.`,
+    `Processed internally via Docscraft Workplace Desk.`,
     ''
   ];
 
@@ -157,25 +157,25 @@ export async function sendGmailSupportTicket({
   });
 
   // Unique confirmation receipt templates for the user's Inbox
-  let confirmationSubject = `[DocCraft Pro] Support Inquiry Received`;
-  let confirmationHeader = `DocCraft Pro Support`;
+  let confirmationSubject = `[Docscraft Pro] Support Inquiry Received`;
+  let confirmationHeader = `Docscraft Pro Support`;
   let confirmationMessage = `<p>Thank you for reaching out. We have successfully received your support query and our team will check and look into it.</p><p>We will follow up directly at this email address within 24 to 48 hours to assist you.</p>`;
 
   if (type === 'bug') {
-    confirmationSubject = `[DocCraft Pro] Technical Bug Report Received`;
-    confirmationHeader = `DocCraft Pro Support`;
+    confirmationSubject = `[Docscraft Pro] Technical Bug Report Received`;
+    confirmationHeader = `Docscraft Pro Support`;
     confirmationMessage = `<p>Thank you for letting us know about this issue. We have successfully received your bug report and our team will check it.</p><p>We will investigate the issue and follow up directly at this email address within 24 to 48 hours.</p>`;
   } else if (type === 'feedback') {
-    confirmationSubject = `[DocCraft Pro] Feedback Received`;
-    confirmationHeader = `DocCraft Pro Support`;
-    confirmationMessage = `<p>Thank you for sharing your thoughts with us. We have received your feedback and our team will check it as we continue to improve DocCraft Pro.</p><p>We appreciate you taking the time to write to us.</p>`;
+    confirmationSubject = `[Docscraft Pro] Feedback Received`;
+    confirmationHeader = `Docscraft Pro Support`;
+    confirmationMessage = `<p>Thank you for sharing your thoughts with us. We have received your feedback and our team will check it as we continue to improve Docscraft Pro.</p><p>We appreciate you taking the time to write to us.</p>`;
   } else if (type === 'security') {
-    confirmationSubject = `[DocCraft Pro] Security Inquiry Received`;
-    confirmationHeader = `DocCraft Pro Support`;
+    confirmationSubject = `[Docscraft Pro] Security Inquiry Received`;
+    confirmationHeader = `Docscraft Pro Support`;
     confirmationMessage = `<p>We have successfully received your security query. Our team will check and review your inquiry immediately.</p><p>We will follow up directly at this email address within 24 to 48 hours.</p>`;
   } else if (type === 'general') {
-    confirmationSubject = `[DocCraft Pro] Support Inquiry Received`;
-    confirmationHeader = `DocCraft Pro Support`;
+    confirmationSubject = `[Docscraft Pro] Support Inquiry Received`;
+    confirmationHeader = `Docscraft Pro Support`;
     confirmationMessage = `<p>Thank you for reaching out. We have successfully received your support query and our team will check and look into it.</p><p>We will follow up directly at this email address within 24 to 48 hours to assist you.</p>`;
   }
 
@@ -211,8 +211,8 @@ export async function sendGmailSupportTicket({
     `      <div class="ticket-details">${issue.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>`,
     `    </div>`,
     `    <div class="footer">`,
-    `      <p>This is an automated confirmation sent securely from DocCraft Workspace. Do not reply directly to this mail.</p>`,
-    `      <p>© ${new Date().getFullYear()} DocCraft Pro. All rights reserved.</p>`,
+    `      <p>This is an automated confirmation sent securely from Docscraft Workspace. Do not reply directly to this mail.</p>`,
+    `      <p>© ${new Date().getFullYear()} Docscraft Pro. All rights reserved.</p>`,
     `    </div>`,
     `  </div>`,
     `</body>`,
@@ -248,9 +248,9 @@ export async function sendWelcomeEmail({
   username: string;
   accessToken: string;
 }) {
-  const confirmationSubject = `[DocCraft Pro] Welcome to DocCraft Pro!`;
-  const confirmationHeader = `Welcome to DocCraft Pro`;
-  const confirmationMessage = `<p>We are thrilled to welcome you to DocCraft Pro! Your account has been successfully created and you can now start establishing a professional paradigm for document engineering.</p><p>We have received your registration details. Should you have any questions or require support, please feel free to reach out to our team.</p>`;
+  const confirmationSubject = `[Docscraft Pro] Welcome to Docscraft Pro!`;
+  const confirmationHeader = `Welcome to Docscraft Pro`;
+  const confirmationMessage = `<p>We are thrilled to welcome you to Docscraft Pro! Your account has been successfully created and you can now start establishing a professional paradigm for document engineering.</p><p>We have received your registration details. Should you have any questions or require support, please feel free to reach out to our team.</p>`;
 
   const confirmationEmailContent = [
     `To: ${userEmail}`,
@@ -279,8 +279,8 @@ export async function sendWelcomeEmail({
     `      ${confirmationMessage}`,
     `    </div>`,
     `    <div class="footer">`,
-    `      <p>This is an automated confirmation sent securely from DocCraft Workspace. Do not reply directly to this mail.</p>`,
-    `      <p>© ${new Date().getFullYear()} DocCraft Pro. All rights reserved.</p>`,
+    `      <p>This is an automated confirmation sent securely from Docscraft Workspace. Do not reply directly to this mail.</p>`,
+    `      <p>© ${new Date().getFullYear()} Docscraft Pro. All rights reserved.</p>`,
     `    </div>`,
     `  </div>`,
     `</body>`,

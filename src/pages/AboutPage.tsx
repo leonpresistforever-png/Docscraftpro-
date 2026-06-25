@@ -23,7 +23,7 @@ export function AboutPage() {
             About Our Company
           </div>
           <h1 className="text-4xl md:text-6xl font-black mb-4 uppercase tracking-tight text-[#1a1a1a] font-serif">
-            About DocCraft Pro
+            About Docscraft Pro
           </h1>
           <p className="text-lg md:text-xl text-gray-500 max-w-2xl mx-auto font-medium">
             We are redefining how beautifully structured documents are created, edited, and shared safely in the modern workplace.
@@ -48,7 +48,7 @@ export function AboutPage() {
             </div>
             <div className="prose prose-lg text-gray-600 max-w-none space-y-6">
               <p>
-                DocCraft Pro was founded with a single, clear objective: to make writing, editing, and managing your most important documents as seamless and secure as possible. Over the years, we have seen countless professionals struggle with overly complicated software, unpredictable formatting rules, and privacy concerns when storing their files online. We decided it was time for a change.
+                Docscraft Pro was founded with a single, clear objective: to make writing, editing, and managing your most important documents as seamless and secure as possible. Over the years, we have seen countless professionals struggle with overly complicated software, unpredictable formatting rules, and privacy concerns when storing their files online. We decided it was time for a change.
               </p>
               <p>
                 Our team is passionate about building tools that feel natural to use. We believe that whether you are drafting a simple quick note, designing a comprehensive business plan, or organizing a team's creative roadmap, the software should never get in your way. Instead, your tools should gently support you, ensuring that your fonts look great, your images align perfectly, and your tables stay intact when you print or export them to a PDF.
@@ -96,7 +96,7 @@ export function AboutPage() {
                 </div>
                 <div className="space-y-4 text-gray-600 text-sm md:text-base leading-relaxed">
                   <p>
-                    In an era where every website wants to read, analyze, or train on your personal data, we stand apart. DocCraft Pro is built around a privacy-first mindset. Only you have the key to your workspace. 
+                    In an era where every website wants to read, analyze, or train on your personal data, we stand apart. Docscraft Pro is built around a privacy-first mindset. Only you have the key to your workspace. 
                   </p>
                   <p>
                     We built our smart writing tools using local technology. This means that features which assist your writing run entirely on your own device rather than sending your sentences to external servers. It gives you the peace of mind to draft sensitive contracts, personal journals, or secret business proposals knowing they truly belong to you alone.

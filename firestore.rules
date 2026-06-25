@@ -18,7 +18,8 @@ service cloud.firestore {
 
     // Documents Collection: Access strictly restricted to owner or shared visibility
     match /documents/{documentId} {
-      allow read: if request.auth != null && (resource == null || resource.data.ownerId == request.auth.uid || resource.data.isShared == true);
+      allow get: if request.auth != null && (resource.data.ownerId == request.auth.uid || resource.data.isShared == true);
+      allow list: if request.auth != null && (resource.data.ownerId == request.auth.uid || resource.data.isShared == true);
       allow create: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
       allow update: if request.auth != null && resource.data.ownerId == request.auth.uid && request.resource.data.ownerId == request.auth.uid;
       allow delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
@@ -57,6 +58,14 @@ service cloud.firestore {
     match /support_tickets/{ticketId} {
       allow create: if true;
       allow read, update, delete: if false;
+    }
+
+    // Tasks Collection: Writing goals and tasks for each user, strictly owner-owned
+    match /tasks/{taskId} {
+      allow read: if request.auth != null && (resource == null || resource.data.ownerId == request.auth.uid);
+      allow create: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
+      allow update: if request.auth != null && resource.data.ownerId == request.auth.uid && request.resource.data.ownerId == request.auth.uid;
+      allow delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
     }
 
     // Privacy Consents Collection: Records of users accepting the privacy policy

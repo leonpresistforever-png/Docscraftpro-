@@ -35,12 +35,21 @@ import { AiDocumentAutomationPage } from './pages/AiDocumentAutomationPage';
 import { SecurityAndInfrastructurePage } from './pages/SecurityAndInfrastructurePage';
 import { AboutPage } from './pages/AboutPage';
 import { IntegrationsPage } from './pages/IntegrationsPage';
+import { RepositoriesPage } from './pages/RepositoriesPage';
 import { ChangelogPage } from './pages/ChangelogPage';
 import { FeaturesPage } from './pages/FeaturesPage';
 
+import { BlogPage } from './pages/BlogPage';
+import { ProductivityPage } from './pages/ProductivityPage';
 import { ContactPage } from './pages/ContactPage';
 import { SupportFormPage } from './pages/SupportFormPage';
+import { DocsOverviewPage } from './pages/docs/DocsOverviewPage';
+import { DocsGettingStartedPage } from './pages/docs/DocsGettingStartedPage';
+import { DocsKeyboardShortcutsPage } from './pages/docs/DocsKeyboardShortcutsPage';
+import { DocsDocumentsAndSearchPage } from './pages/docs/DocsDocumentsAndSearchPage';
+import { DocsBlocksPage } from './pages/docs/DocsBlocksPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
+import { KeepNotesPage } from './pages/KeepNotesPage';
 import { ServicesPage } from './pages/ServicesPage';
 import { DisclaimerPage } from './pages/DisclaimerPage';
 import { FAQPage } from './pages/FAQPage';
@@ -49,10 +58,19 @@ import { DocumentationPage } from './pages/DocumentationPage';
 import { AnimatePresence, motion } from 'motion/react';
 import { InternalSecurityGate } from './components/InternalSecurityGate';
 
+import { WelcomeProfileSetup } from './pages/WelcomeProfileSetup';
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, userData, loading } = useAuth();
+  const location = useLocation();
+
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   if (!user) return <Navigate to="/auth" />;
+  
+  if (user && userData && !userData.profileSetupComplete && location.pathname !== '/welcome-setup') {
+    return <Navigate to="/welcome-setup" replace />;
+  }
+
   return <>{children}</>;
 }
 
@@ -90,7 +108,9 @@ function AnimatedRoutes() {
         <Route path="/terms" element={<TermsOfServicePage />} />
         <Route path="/cookies" element={<Navigate to="/privacy-policy" replace />} />
         <Route path="/about" element={<AboutPage />} />
+        <Route path="/blog" element={<PageTransition><BlogPage /></PageTransition>} />
         <Route path="/integrations" element={<PageTransition><ProtectedRoute><IntegrationsPage /></ProtectedRoute></PageTransition>} />
+        <Route path="/repositories" element={<PageTransition><ProtectedRoute><RepositoriesPage /></ProtectedRoute></PageTransition>} />
         <Route path="/changelog" element={<ChangelogPage />} />
         <Route path="/features" element={<FeaturesPage />} />
         <Route path="/enterprise-platform" element={<EnterprisePlatformPage />} />
@@ -98,18 +118,27 @@ function AnimatedRoutes() {
         <Route path="/security-infrastructure" element={<SecurityAndInfrastructurePage />} />
         <Route path="/careers" element={<Navigate to="/" replace />} />
         <Route path="/auth" element={<AuthPage />} />
+        <Route path="/welcome-setup" element={<WelcomeProfileSetup />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/contact" element={<PageTransition><ProtectedRoute><ContactPage /></ProtectedRoute></PageTransition>} />
-        <Route path="/support-form" element={<PageTransition><ProtectedRoute><SupportFormPage /></ProtectedRoute></PageTransition>} />
+        <Route path="/contact" element={<PageTransition><ContactPage /></PageTransition>} />
+        <Route path="/support-form" element={<PageTransition><SupportFormPage /></PageTransition>} />
         <Route path="/services" element={<ServicesPage />} />
         <Route path="/disclaimer" element={<DisclaimerPage />} />
         <Route path="/faq" element={<FAQPage />} />
         <Route path="/api" element={<Navigate to="/" replace />} />
         <Route path="/api-reference" element={<Navigate to="/" replace />} />
-        <Route path="/docs" element={<DocumentationPage />} />
+        <Route path="/docs" element={<Navigate to="/docs/overview" replace />} />
+        <Route path="/docs/overview" element={<DocsOverviewPage />} />
+        <Route path="/docs/getting-started" element={<DocsGettingStartedPage />} />
+        <Route path="/docs/keyboard-shortcuts" element={<DocsKeyboardShortcutsPage />} />
+        <Route path="/docs/documents-and-search" element={<DocsDocumentsAndSearchPage />} />
+        <Route path="/docs/blocks" element={<DocsBlocksPage />} />
         <Route path="/documentation" element={<DocumentationPage />} />
         <Route path="/status" element={<Navigate to="/" replace />} />
         <Route path="/dashboard" element={<PageTransition><ProtectedRoute><Dashboard /></ProtectedRoute></PageTransition>} />
+        <Route path="/repositories" element={<PageTransition><ProtectedRoute><RepositoriesPage /></ProtectedRoute></PageTransition>} />
+        <Route path="/notes" element={<PageTransition><ProtectedRoute><KeepNotesPage /></ProtectedRoute></PageTransition>} />
+        <Route path="/productivity" element={<PageTransition><ProtectedRoute><ProductivityPage /></ProtectedRoute></PageTransition>} />
         <Route path="/chat" element={<PageTransition><ProtectedRoute><AiChat /></ProtectedRoute></PageTransition>} />
         <Route path="/pdf/convert" element={<PageTransition><ProtectedRoute><PDFConverter /></ProtectedRoute></PageTransition>} />
         <Route path="/doc/:id" element={<PageTransition><ProtectedRoute><EditorPage /></ProtectedRoute></PageTransition>} />
@@ -134,6 +163,8 @@ function AnimatedRoutes() {
   );
 }
 
+import { KeyboardShortcutsHelper } from './components/KeyboardShortcutsHelper';
+
 export default function App() {
   return (
     <ThemeProvider>
@@ -141,6 +172,7 @@ export default function App() {
         <PremiumProvider>
           <Router>
             <AnimatedRoutes />
+            <KeyboardShortcutsHelper />
             <AdModal />
           </Router>
         </PremiumProvider>

@@ -70,7 +70,7 @@ export function TermsOfServicePage() {
                 <span className="text-indigo-600 font-serif text-lg">01.</span> Acceptance of Terms
               </h2>
               <p className="text-sm">
-                Welcome to DocCraft Pro ("Platform"). This Platform is administered as a dynamic web-based productivity workspace toolset. By accessing this software, connecting your authentication profile, or editing documents, you signify that you have read, understood, and agree to stay bound by the terms outlined inside this User Agreement. If you reject these responsibilities, you are forbidden from utilizing our Platform.
+                Welcome to Docscraft Pro ("Platform"). This Platform is administered as a dynamic web-based productivity workspace toolset. By accessing this software, connecting your authentication profile, or editing documents, you signify that you have read, understood, and agree to stay bound by the terms outlined inside this User Agreement. If you reject these responsibilities, you are forbidden from utilizing our Platform.
               </p>
             </motion.section>
 
@@ -85,11 +85,11 @@ export function TermsOfServicePage() {
                 <div className="pl-4 border-l-4 border-emerald-500 py-1 space-y-1.5">
                   <p className="font-bold text-gray-900">1. Your Documents belong to You (100% User Ownership)</p>
                   <p className="text-gray-600">
-                    You retain full, exclusive, and unrestricted copyright and intellectual possession of any files, notes, draft agreements, signed PDFs, or layouts you create or compile on this platform. DocCraft Pro claims <strong>absolutely zero ownership or copyright</strong> over your creations. Your files remain yours to download, publish, or delete.
+                    You retain full, exclusive, and unrestricted copyright and intellectual possession of any files, notes, draft agreements, signed PDFs, or layouts you create or compile on this platform. Docscraft Pro claims <strong>absolutely zero ownership or copyright</strong> over your creations. Your files remain yours to download, publish, or delete.
                   </p>
                 </div>
                 <div className="pl-4 border-l-4 border-indigo-500 py-1 space-y-1.5">
-                  <p className="font-bold text-gray-900">2. Platform Software Engine (DocCraft Assets)</p>
+                  <p className="font-bold text-gray-900">2. Platform Software Engine (Docscraft Assets)</p>
                   <p className="text-gray-600">
                     The custom-designed platform source code, compiling scripts, responsive styles, visual layout grids, icons, and logo assets are protected by standard trademark and software copyright laws. These protections exist purely to prevent replication of the Platform's core user interface and tools.
                   </p>

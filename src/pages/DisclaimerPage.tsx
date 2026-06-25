@@ -19,7 +19,7 @@ export function DisclaimerPage() {
             <section>
               <h2 className="text-xl font-bold text-gray-900 mb-4">1. Informational Purposes Only</h2>
               <p>
-                The information provided by DocCraft Pro ("we," "us," or "our") on this website and our mobile application is for general informational purposes only. All information on the site and our mobile application is provided in good faith, however, we make no representation or warranty of any kind, express or implied, regarding the accuracy, adequacy, validity, reliability, availability, or completeness of any information on the site.
+                The information provided by Docscraft Pro ("we," "us," or "our") on this website and our mobile application is for general informational purposes only. All information on the site and our mobile application is provided in good faith, however, we make no representation or warranty of any kind, express or implied, regarding the accuracy, adequacy, validity, reliability, availability, or completeness of any information on the site.
               </p>
             </section>
 

@@ -44,7 +44,6 @@ import { cn } from '@/src/lib/utils';
 import { Button } from '../components/ui/Button';
 import { signInForGoogleDocs, createGoogleDoc, exportHtmlToGoogleDoc, getDocsToken, setDocsToken } from '../utils/googleDocs';
 import { signInForGoogleSlides, createGoogleSlidePresentation, getSlidesToken, setSlidesToken } from '../utils/googleSlides';
-import { signInForGoogleForms, createGoogleForm, getFormsToken, setFormsToken, parseQuestionsFromHtml } from '../utils/googleForms';
 import { 
   Wand2, Save, MessageSquare, Send, Bold, Italic, Underline as UnderlineIcon, 
   AlignLeft, AlignCenter, AlignRight, Strikethrough, Superscript as SuperIcon, Subscript as SubIcon,
@@ -243,6 +242,11 @@ export function EditorPage() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const saveTimeoutRef = useRef<any>(null);
   
+  // Background pre-render engine for format-agnostic internal compilation
+  const internalPreRenderCache = useRef<{ html: string, text: string, format: string, timestamp: number }>({
+     html: '', text: '', format: 'word', timestamp: Date.now()
+  });
+
   const [customApiKey, setCustomApiKey] = useState('');
   const [writeSeconds, setWriteSeconds] = useState(0);
 
@@ -350,8 +354,6 @@ export function EditorPage() {
   const [googleDocUrl, setGoogleDocUrl] = useState<string | null>(null);
   const [isGoogleSlidesExporting, setIsGoogleSlidesExporting] = useState(false);
   const [googleSlidesUrl, setGoogleSlidesUrl] = useState<string | null>(null);
-  const [isGoogleFormsExporting, setIsGoogleFormsExporting] = useState(false);
-  const [googleFormsUrl, setGoogleFormsUrl] = useState<{ editUrl: string, responderUrl: string } | null>(null);
   const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
@@ -597,7 +599,7 @@ Requirements:
         currentToken = await signInForGoogleDocs();
       }
       
-      const title = docTitle || "DocCraft Voice-to-Doc";
+      const title = docTitle || "Docscraft Voice-to-Doc";
       const htmlContent = editor.getHTML();
       
       // Create new Google Doc
@@ -626,7 +628,7 @@ Requirements:
         currentToken = await signInForGoogleSlides();
       }
       
-      const title = docTitle || "DocCraft Workspace Presentation";
+      const title = docTitle || "Docscraft Workspace Presentation";
       const htmlContent = editor.getHTML();
       
       const parseSlidesFromHtml = (htmlStr: string) => {
@@ -661,7 +663,7 @@ Requirements:
         });
         if (current) list.push(current);
         if (list.length === 0) {
-          list.push({ heading: docTitle || 'DocCraft Slide', bullets: [doc.body.textContent?.trim()?.substring(0, 300) || ''] });
+          list.push({ heading: docTitle || 'Docscraft Slide', bullets: [doc.body.textContent?.trim()?.substring(0, 300) || ''] });
         }
         return list;
       };
@@ -676,32 +678,6 @@ Requirements:
       setSlidesToken(null);
     } finally {
       setIsGoogleSlidesExporting(false);
-    }
-  };
-
-  const handleExportToGoogleForms = async () => {
-    if (!editor) return;
-    setIsGoogleFormsExporting(true);
-    setGoogleFormsUrl(null);
-    try {
-      let currentToken = getFormsToken();
-      if (!currentToken) {
-        currentToken = await signInForGoogleForms();
-      }
-      
-      const title = docTitle || "DocCraft Custom Survey";
-      const htmlContent = editor.getHTML();
-      const questions = parseQuestionsFromHtml(htmlContent);
-      
-      const urls = await createGoogleForm(title, questions, currentToken);
-      setGoogleFormsUrl(urls);
-      window.open(urls.editUrl, '_blank');
-    } catch (err: any) {
-      console.error(err);
-      alert(`Export to Google Forms failed: ${err.message}`);
-      setFormsToken(null);
-    } finally {
-      setIsGoogleFormsExporting(false);
     }
   };
 
@@ -1085,7 +1061,12 @@ Requirements:
 
   const editor = useEditor({
     extensions: [
-      StarterKit.configure({ codeBlock: false, heading: { levels: [1, 2, 3, 4, 5, 6] } }),
+      StarterKit.configure({ 
+        codeBlock: false, 
+        heading: { levels: [1, 2, 3, 4, 5, 6] },
+        dropcursor: false,
+        gapcursor: false
+      }),
       CodeBlockLowlight.configure({
         lowlight,
       }),
@@ -1166,6 +1147,15 @@ Requirements:
             setShowDocSearch(false);
          }
       }
+
+      // Internal background pre-render engine execution
+      // Processes the document asynchronously into memory when user writes
+      internalPreRenderCache.current = {
+         html: editor.getHTML(),
+         text: editor.getText(),
+         format: selectedFormat,
+         timestamp: Date.now()
+      };
 
       setSyncStatus('Saving...');
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
@@ -1281,6 +1271,18 @@ Requirements:
     }, 1000);
     return () => clearTimeout(timer);
   }, [editor?.getHTML()]);
+
+  // React to selected format changes and update background prerender system
+  useEffect(() => {
+     if (editor) {
+        internalPreRenderCache.current = {
+           html: editor.getHTML(),
+           text: editor.getText(),
+           format: selectedFormat,
+           timestamp: Date.now()
+        };
+     }
+  }, [selectedFormat, editor]);
 
   const handleDocSave = async () => {
     const activeId = idRef.current;
@@ -1919,9 +1921,9 @@ Requirements:
   };
 
   const handleExport = async (format: string) => {
-    // Attempt standard download flow. (Uses blob/a-tag or html2pdf.js)
-    const contentHtml = editor?.getHTML() || '';
-    const contentText = editor?.getText() || '';
+    // Attempt standard download flow utilizing the Background Pre-Renderer Cache
+    const contentHtml = internalPreRenderCache.current.html || editor?.getHTML() || '';
+    const contentText = internalPreRenderCache.current.text || editor?.getText() || '';
     let blob;
     let filename = (docTitle || 'document');
 
@@ -1942,272 +1944,13 @@ Requirements:
         blob = new Blob([`<div style="padding: 20px; font-family: sans-serif;">${contentHtml}</div>`], { type: 'text/html' });
         filename += '.html';
     } else if (format === 'pdf') {
+       // Best way to render perfect PDF is using browser's native print engine
+       // instead of buggy html2canvas clone hacks that skip texts and mess up formatting
        setSaving(true);
        try {
-           let html2pdf = (window as any).html2pdf;
-           if (!html2pdf) {
-               const html2pdfModule = await import('html2pdf.js');
-               html2pdf = html2pdfModule.default ? html2pdfModule.default : html2pdfModule;
-           }
-           
-           addWatermark();
-           const element = document.querySelector('.ProseMirror') as HTMLElement;
-           if (!element) return;
-           
-           const opt: any = {
-             margin:       [10, 10, 10, 10],
-             filename:     `${filename}.pdf`,
-             image:        { type: 'jpeg', quality: 0.98 },
-             html2canvas:  { scale: 2, useCORS: true, letterRendering: true, windowWidth: 1024, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0 },
-             jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-             pagebreak:    { mode: ['css', 'legacy'] }
-           };
-           // Fix for hidden/blank renders: Mount a wrapper matching the layout viewport scroll offset
-           const parent = document.createElement('div');
-           parent.className = 'light pdf-export-parent';
-           const styleTag = document.createElement('style');
-           styleTag.innerHTML = `
-             .pdf-export-parent { 
-                background-color: #ffffff !important; 
-             } 
-             .pdf-export-parent * { 
-                text-shadow: none !important; 
-                box-shadow: none !important; 
-             } 
-             .pdf-export-parent table {
-                width: 100% !important;
-                border-collapse: collapse !important;
-                margin-top: 15px !important;
-                margin-bottom: 15px !important;
-                page-break-inside: avoid !important;
-             }
-             .pdf-export-parent a { 
-                text-decoration: underline !important; 
-             } 
-             .pdf-export-parent hr {
-                border: none !important;
-                border-top: 2px dashed #94a3b8 !important;
-                margin: 40px 0 !important;
-                page-break-after: always !important;
-             }
-             .pdf-export-parent img {
-                max-width: 100% !important;
-                height: auto !important;
-             }
-             .pdf-export-parent .freestyle-wrapper {
-                transform-style: preserve-3d !important;
-             }
-             .pdf-export-parent .page-break-divider { 
-                page-break-after: always !important; 
-                page-break-inside: avoid !important; 
-                height: 0 !important; 
-                border: none !important; 
-                margin: 0 !important; 
-                padding: 0 !important; 
-                visibility: hidden !important; 
-             }
-             .pdf-export-parent a::after {
-                content: "" !important;
-             }
-             @media print {
-                .pdf-export-parent a::after {
-                   content: "" !important;
-                 }
-                 a[href]::after {
-                   content: "" !important;
-                }
-                 .pdf-export-parent table {
-                    page-break-inside: auto !important;
-                 }
-                 .pdf-export-parent tr {
-                    page-break-inside: avoid !important;
-                    page-break-after: auto !important;
-                 }
-                 .pdf-export-parent td, .pdf-export-parent th {
-                    page-break-inside: avoid !important;
-                    word-wrap: break-word !important;
-                    white-space: pre-wrap !important;
-                 }
-                 .pdf-export-parent canvas, .pdf-export-parent img, .pdf-export-parent .recharts-wrapper {
-                    page-break-inside: avoid !important;
-                    max-width: 100% !important;
-                 }
-                 .pdf-export-parent pre {
-                    white-space: pre-wrap !important;
-                    word-wrap: break-word !important;
-                    page-break-inside: avoid !important;
-                 }
-              }
-            `;
-            parent.appendChild(styleTag);
-            parent.style.position = 'absolute';
-            parent.style.left = '0px';
-            parent.style.top = '0px';
-            parent.style.zIndex = '-99999'; 
-            parent.style.opacity = '1'; 
-            parent.style.pointerEvents = 'none';
-            parent.style.width = '800px';
-            parent.style.height = 'auto';
-            parent.style.overflow = 'visible';
-            
-            // Set margins based on rulers safely
-            parent.style.paddingLeft = `${Math.min(180, Math.max(15, editorLeftMargin))}px`;
-            parent.style.paddingRight = `${Math.min(180, Math.max(15, editorRightMargin))}px`;
-            parent.style.paddingTop = `${Math.min(120, Math.max(15, editorVerticalMargin))}px`;
-            parent.style.paddingBottom = `${Math.min(120, Math.max(15, editorVerticalMargin))}px`;
-            parent.style.backgroundColor = '#ffffff';
-
-            const clone = element.cloneNode(true) as HTMLElement;
-            clone.removeAttribute('contenteditable');
-            clone.classList.remove('prose-invert', 'dark:prose-invert', 'dark');
-            clone.classList.add('prose', 'text-black', 'bg-white');
-            clone.style.color = '#000000';
-            clone.style.backgroundColor = '#ffffff';
-
-            // Preserve input and textarea values over clone boundaries
-            const sourceInputs = element.querySelectorAll('input, textarea, select');
-            const cloneInputs = clone.querySelectorAll('input, textarea, select');
-            sourceInputs.forEach((srcNode, index) => {
-                const cNode = cloneInputs[index] as HTMLElement;
-                if (cNode) {
-                    if (srcNode.tagName === 'TEXTAREA') {
-                        cNode.innerHTML = (srcNode as HTMLTextAreaElement).value;
-                    } else if (srcNode.tagName === 'SELECT') {
-                        cNode.setAttribute('value', (srcNode as HTMLSelectElement).value);
-                        // Also set selected attribute on the right option
-                        const selectedOption = cNode.querySelector(`option[value="${(srcNode as HTMLSelectElement).value}"]`);
-                        if (selectedOption) selectedOption.setAttribute('selected', 'selected');
-                    } else {
-                        const type = srcNode.getAttribute('type');
-                        if (type === 'checkbox' || type === 'radio') {
-                            if ((srcNode as HTMLInputElement).checked) {
-                                cNode.setAttribute('checked', 'checked');
-                            } else {
-                                cNode.removeAttribute('checked');
-                            }
-                        } else {
-                            cNode.setAttribute('value', (srcNode as HTMLInputElement).value || '');
-                        }
-                    }
-                }
-            });
-
-            // IMPORTANT: native `<canvas>` rendering states do not get transferred over cloneNode(true). 
-            // We cast all embedded canvas blocks to native HTMLImageElement proxies matching their dimensions for printer compatibility.
-            const sourceCanvases = element.querySelectorAll('canvas');
-            const clonedCanvases = clone.querySelectorAll('canvas');
-            sourceCanvases.forEach((srcCanvas, index) => {
-              const cloneCanvas = clonedCanvases[index];
-              if (cloneCanvas && srcCanvas instanceof HTMLCanvasElement) {
-                try {
-                  const dataUrl = srcCanvas.toDataURL('image/png');
-                  const img = document.createElement('img');
-                  img.src = dataUrl;
-                  img.style.width = srcCanvas.style.width || `${srcCanvas.width}px`;
-                  img.style.height = srcCanvas.style.height || `${srcCanvas.height}px`;
-                  img.style.maxWidth = '100%';
-                  img.style.objectFit = 'contain';
-                  img.className = cloneCanvas.className;
-                  cloneCanvas.parentNode?.replaceChild(img, cloneCanvas);
-                } catch (canvasErr) {
-                  console.error("Canvas could not be rendered out into image proxy safely:", canvasErr);
-                }
-              }
-            });
-
-            clone.querySelectorAll('*').forEach((el: any) => {
-              el.classList.remove('text-white', 'text-gray-100', 'text-gray-200', 'text-gray-300', 'prose-invert', 'dark:prose-invert');
-              if (el.style) {
-                if (el.style.color === 'white' || el.style.color === '#ffffff' || el.style.color === 'rgb(255, 255, 255)') {
-                  el.style.color = '#000000';
-                }
-              }
-            });
-
-            // Post-process Freestyle Images/Watermarks for reliable position rendering
-            try {
-              clone.querySelectorAll('.freestyle-wrapper').forEach((wrapper: any) => {
-                wrapper.style.width = '100%';
-                wrapper.style.height = '100%';
-                wrapper.style.position = 'absolute';
-                wrapper.style.left = '0';
-                wrapper.style.top = '0';
-                wrapper.style.overflow = 'visible';
-                wrapper.style.zIndex = '50';
-                
-                wrapper.querySelectorAll('img').forEach((img: any) => {
-                   const xVal = img.getAttribute('x') || img.style.left || '150';
-                   const yVal = img.getAttribute('y') || img.style.top || '150';
-                   img.style.position = 'absolute';
-                   img.style.left = `${parseFloat(xVal)}px`;
-                   img.style.top = `${parseFloat(yVal)}px`;
-                   img.style.width = img.getAttribute('width') ? `${img.getAttribute('width')}px` : '220px';
-                   img.style.height = 'auto';
-                   img.style.opacity = img.getAttribute('opacity') || img.style.opacity || '0.4';
-                   img.style.zIndex = '50';
-                });
-              });
-            } catch (errWatermark) {
-              console.error("Failed aligning watermarks in PDF bundle:", errWatermark);
-            }
-
-            // Post-process secure attachment / popup links to absolute URLs so they work when user views the PDF on native devices
-            try {
-               clone.querySelectorAll('a').forEach((linkEl: any) => {
-                 const href = linkEl.getAttribute('href');
-                 if (href) {
-                   if (href.startsWith('popup-photo:')) {
-                     const id = href.substring('popup-photo:'.length);
-                     if (!id.startsWith('data:')) {
-                       linkEl.setAttribute('href', `${window.location.origin}/api/attachments/${id}`);
-                     }
-                   } else if (href.startsWith('/api/attachments/')) {
-                     linkEl.setAttribute('href', `${window.location.origin}${href}`);
-                   }
-                 }
-               });
-            } catch (linkReplaceErr) {
-               console.error("Failed mapping secure links to absolute URLs in PDF:", linkReplaceErr);
-            }
-
-            parent.appendChild(clone);
-            document.body.appendChild(parent);
-
-            // Wait for all images in the cloned elements to load fully, securing complete document render
-            try {
-               const images = Array.from(parent.querySelectorAll('img'));
-               await Promise.all(images.map(img => {
-                 if (img.complete) return Promise.resolve();
-                 return new Promise(resolve => {
-                   img.onload = resolve;
-                   img.onerror = resolve;
-                 });
-               }));
-            } catch (imgLoadErr) {
-               console.error("Graceful handler for image loader pre-renderer PDF:", imgLoadErr);
-            }
-
-            const pdfWorker = (html2pdf as any)().from(parent).set(opt);
-            
-            // Try to generate a native blob and open it in a new tab safely
-            try {
-              const pdfBlob = await pdfWorker.output('blob');
-              if (pdfBlob) {
-                const blobUrl = URL.createObjectURL(pdfBlob);
-                const printWin = window.open(blobUrl, '_blank');
-                if (!printWin) {
-                  console.warn("Popup blocked. Proceeding with normal download...");
-                }
-              }
-            } catch (blobErr) {
-              console.error("Could not output PDF blob natively:", blobErr);
-            }
-
-            await pdfWorker.save();
-            document.body.removeChild(parent);
+           window.print();
        } catch (err) {
            console.error("PDF Export error:", err);
-           setTimeout(() => window.print(), 500);
        } finally {
            removeWatermark();
            setSaving(false);
@@ -2220,91 +1963,20 @@ Requirements:
             const html2canvas = html2canvasModule.default ? html2canvasModule.default : html2canvasModule;
             
             addWatermark();
-            const element = document.querySelector('.ProseMirror') as HTMLElement;
-            if (element) {
-                const parent = document.createElement('div');
-                parent.className = 'light pdf-export-parent';
-            const styleTag = document.createElement('style');
-            styleTag.innerHTML = `.pdf-export-parent { background-color: #ffffff !important; } .pdf-export-parent * { text-shadow: none !important; box-shadow: none !important; } .pdf-export-parent .page-break-divider { page-break-after: always !important; page-break-inside: avoid !important; height: 0 !important; border: none !important; margin: 0 !important; padding: 0 !important; visibility: hidden !important; }`;
-            parent.appendChild(styleTag);
-                parent.style.position = 'absolute';
-                parent.style.left = '0px';
-                parent.style.top = '0px';
-                parent.style.zIndex = '-99999'; parent.style.opacity = '1'; parent.style.pointerEvents = 'none';
-                parent.style.width = '800px';
-                parent.style.padding = '40px';
-                parent.style.backgroundColor = '#ffffff';
-
-                const clone = element.cloneNode(true) as HTMLElement;
-                clone.removeAttribute('contenteditable');
-                clone.classList.remove('prose-invert', 'dark:prose-invert', 'dark');
-                clone.classList.add('prose', 'text-black', 'bg-white');
-                clone.style.color = '#000000';
-                clone.style.backgroundColor = '#ffffff';
-
-                // Preserve input and textarea values over clone boundaries
-                const sourceInputs = element.querySelectorAll('input, textarea, select');
-                const cloneInputs = clone.querySelectorAll('input, textarea, select');
-                sourceInputs.forEach((srcNode, index) => {
-                    const cNode = cloneInputs[index] as HTMLElement;
-                    if (cNode) {
-                        if (srcNode.tagName === 'TEXTAREA') {
-                            cNode.innerHTML = (srcNode as HTMLTextAreaElement).value;
-                        } else if (srcNode.tagName === 'SELECT') {
-                            cNode.setAttribute('value', (srcNode as HTMLSelectElement).value);
-                            // Also set selected attribute on the right option
-                            const selectedOption = cNode.querySelector(`option[value="${(srcNode as HTMLSelectElement).value}"]`);
-                            if (selectedOption) selectedOption.setAttribute('selected', 'selected');
-                        } else {
-                            const type = srcNode.getAttribute('type');
-                            if (type === 'checkbox' || type === 'radio') {
-                                if ((srcNode as HTMLInputElement).checked) {
-                                    cNode.setAttribute('checked', 'checked');
-                                } else {
-                                    cNode.removeAttribute('checked');
-                                }
-                            } else {
-                                cNode.setAttribute('value', (srcNode as HTMLInputElement).value || '');
-                            }
-                        }
-                    }
-                });
-
-                // Map raw canvases into native image nodes safely for html2canvas
-                const sourceCanvases = element.querySelectorAll('canvas');
-                const clonedCanvases = clone.querySelectorAll('canvas');
-                sourceCanvases.forEach((srcCanvas, index) => {
-                  const cloneCanvas = clonedCanvases[index];
-                  if (cloneCanvas && srcCanvas instanceof HTMLCanvasElement) {
-                    try {
-                      const img = document.createElement('img');
-                      img.src = srcCanvas.toDataURL('image/png');
-                      img.style.width = srcCanvas.style.width || `${srcCanvas.width}px`;
-                      img.style.height = srcCanvas.style.height || `${srcCanvas.height}px`;
-                      img.style.maxWidth = '100%';
-                      img.className = cloneCanvas.className;
-                      cloneCanvas.parentNode?.replaceChild(img, cloneCanvas);
-                    } catch (e) {
-                      console.error("Canvas could not be extracted:", e);
-                    }
+            const container = document.getElementById('editor-canvas-container');
+            if (container) {
+                // To avoid messing with the DOM, capture the element natively while hiding print-hidden elements
+                const canvas = await (html2canvas as any)(container, { 
+                  scale: 2, 
+                  useCORS: true, 
+                  backgroundColor: '#ffffff',
+                  ignoreElements: (element: Element) => {
+                     return element.classList && element.classList.contains('print:hidden');
                   }
                 });
-
-                clone.querySelectorAll('*').forEach((el: any) => {
-                  el.classList.remove('text-white', 'text-gray-100', 'text-gray-200', 'text-gray-300', 'prose-invert', 'dark:prose-invert');
-                  if (el.style) {
-                    if (el.style.color === 'white' || el.style.color === '#ffffff' || el.style.color === 'rgb(255, 255, 255)') {
-                      el.style.color = '#000000';
-                    }
-                  }
-                });
-
-                parent.appendChild(clone);
-                document.body.appendChild(parent);
-
-                const canvas = await (html2canvas as any)(parent, { scale: 2, useCORS: true, backgroundColor: '#ffffff', windowWidth: 1200 });
-                document.body.removeChild(parent);
-                const imgData = canvas.toDataURL(`image/${format === 'jpg' ? 'jpeg' : 'png'}`);
+                
+                const formatType = format === 'jpg' ? 'jpeg' : 'png';
+                const imgData = canvas.toDataURL(`image/${formatType}`, 1.0);
                 const a = document.createElement('a');
                 a.href = imgData;
                 a.download = `${filename}.${format}`;
@@ -4103,7 +3775,7 @@ Requirements:
 
             {/* Footer */}
             <div className="p-4 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
-              <span className="text-[10px] font-mono text-gray-400 select-none">DocCraft Professional Image Sizer v2.1</span>
+              <span className="text-[10px] font-mono text-gray-400 select-none">Docscraft Professional Image Sizer v2.1</span>
               <Button 
                 variant="outline" 
                 onClick={() => {

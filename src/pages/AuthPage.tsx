@@ -12,7 +12,7 @@ import { Footer } from '../components/layout/Footer';
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '0x4AAAAAADITOkdYnpXv2YLs';
 
 export function AuthPage() {
-  const { user, signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
+  const { user, userData, signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
   const navigate = useNavigate();
   const [isSignUp, setIsSignUp] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
@@ -41,12 +41,16 @@ export function AuthPage() {
   const turnstileRef = React.useRef<any>(null);
   const turnstileSignUpRef = React.useRef<any>(null);
 
-  // If user is already logged in, redirect to landing page
+  // If user is already logged in, redirect to welcome-setup if profile is incomplete, otherwise to landing page
   useEffect(() => {
     if (user) {
-      navigate('/');
+      if (userData && !userData.profileSetupComplete) {
+        navigate('/welcome-setup');
+      } else {
+        navigate('/');
+      }
     }
-  }, [user, navigate]);
+  }, [user, userData, navigate]);
 
   const initRecaptchaForSignIn = () => {
     if (!(window as any).recaptchaVerifier) {
@@ -266,7 +270,7 @@ export function AuthPage() {
                strokeWidth="3.5"
                strokeDasharray="120 240"
              >
-               DocCraft Pro
+               Docscraft Pro
              </text>
            </svg>
            <div className="-mt-4 relative">

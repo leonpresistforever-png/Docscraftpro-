@@ -13,7 +13,7 @@ export function IntegrationsPage() {
   const { signInWithGoogle, user } = useAuth();
   
   // Persistence states
-  const [gdriveFolder, setGdriveFolder] = useState(() => localStorage.getItem('dc_gdrive_folder') || 'DocCraft-Backups');
+  const [gdriveFolder, setGdriveFolder] = useState(() => localStorage.getItem('dc_gdrive_folder') || 'Docscraft-Backups');
   const [isGdriveConnected, setIsGdriveConnected] = useState(() => localStorage.getItem('dc_gdrive_connected') === 'true');
 
   const [localDrafts, setLocalDrafts] = useState<any[]>([]);
@@ -301,7 +301,7 @@ export function IntegrationsPage() {
         const payload = {
           event: "document.signed",
           timestamp: new Date().toISOString(),
-          app: "DocCraft Pro",
+          app: "Docscraft Pro",
           data: {
             documentId: "dc_doc_481a9f",
             title: "Executive Partnership Master Agreement",
@@ -316,7 +316,7 @@ export function IntegrationsPage() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'X-DocCraft-Signature': webhookSecret || 'dc_test_secret_signature_key'
+            'X-Docscraft-Signature': webhookSecret || 'dc_test_secret_signature_key'
           },
           body: JSON.stringify(payload)
         });
@@ -361,7 +361,7 @@ export function IntegrationsPage() {
             Integrations Hub
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl leading-relaxed">
-            Connect DocCraft Pro to your external repositories, backup platforms, and secure notification channels. Configure parameters securely with client-side local sandboxing.
+            Connect Docscraft Pro to your external repositories, backup platforms, and secure notification channels. Configure parameters securely with client-side local sandboxing.
           </p>
         </div>
 
@@ -429,7 +429,7 @@ export function IntegrationsPage() {
                 </div>
 
                 <p className="text-gray-600 text-sm mb-6 leading-relaxed">
-                  Export signed drafts directly to any backup folder in your Google Drive, or bring files, markdown, and text documents directly from Google Drive into DocCraft using the official Google Picker.
+                  Export signed drafts directly to any backup folder in your Google Drive, or bring files, markdown, and text documents directly from Google Drive into Docscraft using the official Google Picker.
                 </p>
 
                 {!isGdriveConnected ? (
@@ -705,7 +705,7 @@ export function IntegrationsPage() {
                 <AlertTriangle className="w-4.5 h-4.5 text-amber-600" /> Compliance Advisory
               </h3>
               <p className="text-xs text-gray-600 leading-relaxed space-y-2">
-                We take data integrity seriously. All credentials configured on this page are compiled into transient browser arrays and secured safely inside your client-side database structure. DocCraft Pro never forwards credentials to remote databases. Refer to the active <a href="/privacy-policy" className="text-[#996A00] font-bold hover:underline">Privacy Policy</a> to review our data integrity and security procedures.
+                We take data integrity seriously. All credentials configured on this page are compiled into transient browser arrays and secured safely inside your client-side database structure. Docscraft Pro never forwards credentials to remote databases. Refer to the active <a href="/privacy-policy" className="text-[#996A00] font-bold hover:underline">Privacy Policy</a> to review our data integrity and security procedures.
               </p>
             </div>
 

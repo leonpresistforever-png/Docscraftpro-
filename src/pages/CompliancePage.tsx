@@ -79,7 +79,7 @@ export function CompliancePage() {
       keyArticles: [
         {
           title: "CCPA/CPRA Section 1798.120 - Right to Opt-Out of Sale or Sharing",
-          details: "DocCraft Pro strictly ensures that personal metrics, workspace settings, or text outputs are never rented, shared, or brokered to external marketers.",
+          details: "Docscraft Pro strictly ensures that personal metrics, workspace settings, or text outputs are never rented, shared, or brokered to external marketers.",
           link: "https://cppa.ca.gov/regulations/"
         },
         {
@@ -130,7 +130,7 @@ export function CompliancePage() {
         },
         {
           title: "DPDP Section 13 - Right to Grievance Redressal",
-          details: "DocCraft Pro provides a direct dispute communication mechanism. Data principals have direct recourse to escalate issues right to our engineering handlers.",
+          details: "Docscraft Pro provides a direct dispute communication mechanism. Data principals have direct recourse to escalate issues right to our engineering handlers.",
           link: "https://www.meity.gov.in/content/digital-personal-data-protection-act-2023"
         }
       ],
@@ -202,7 +202,7 @@ export function CompliancePage() {
       keyArticles: [
         {
           title: "PDPA Section 24 - Security Obligation",
-          details: "DocCraft Pro enforces strict server authorization boundaries to safeguard data against structural leaks and accidental modification.",
+          details: "Docscraft Pro enforces strict server authorization boundaries to safeguard data against structural leaks and accidental modification.",
           link: "https://www.pdpc.gov.sg/Overview-of-PDPA/The-Legislation/Personal-Data-Protection-Act"
         }
       ],
@@ -224,7 +224,7 @@ export function CompliancePage() {
           link: "https://www.pipc.go.kr/np/english/index.do"
         }
       ],
-      docCraftRelevance: "DocCraft Pro maintains zero profiling trackers, ensuring full confidentiality for South Korean document builders."
+      docCraftRelevance: "Docscraft Pro maintains zero profiling trackers, ensuring full confidentiality for South Korean document builders."
     },
     {
       country: "Brazil",
@@ -260,7 +260,7 @@ export function CompliancePage() {
           link: "https://www.tpdpa.or.th/"
         }
       ],
-      docCraftRelevance: "We never utilize coercive design elements or default pre-consents inside DocCraft Pro."
+      docCraftRelevance: "We never utilize coercive design elements or default pre-consents inside Docscraft Pro."
     },
     {
       country: "China",
@@ -292,7 +292,7 @@ export function CompliancePage() {
       keyArticles: [
         {
           title: "POPIA Section 19 - Security Safeguards on Personal Information",
-          details: "DocCraft Pro implements robust access blocks, encrypted storage buckets, and secure environment isolation to safeguard South African consumer records.",
+          details: "Docscraft Pro implements robust access blocks, encrypted storage buckets, and secure environment isolation to safeguard South African consumer records.",
           link: "https://inforegulator.org.za/popia-about/"
         }
       ],
@@ -474,7 +474,7 @@ export function CompliancePage() {
         </h1>
 
         <p className="text-gray-650 text-base md:text-lg leading-relaxed mb-10 max-w-3xl">
-          DocCraft is committed to complete regulatory alignment and transparent workspace practices. As an unyielding security-first toolset, we provide robust access gates, permanent erasure loops, and client-controlled sandbox layers to fulfill domestic and cross-border mandates worldwide.
+          Docscraft is committed to complete regulatory alignment and transparent workspace practices. As an unyielding security-first toolset, we provide robust access gates, permanent erasure loops, and client-controlled sandbox layers to fulfill domestic and cross-border mandates worldwide.
         </p>
 
         {/* Brand Copyright, Trademark & Logo Rights Container */}
@@ -489,13 +489,13 @@ export function CompliancePage() {
             </div>
             <div>
               <h3 className="font-bold text-lg uppercase text-gray-900 tracking-tight">Trademark & Logo Rights Enforcement</h3>
-              <p className="text-xs text-gray-400 font-medium">DocCraft Brand Guidelines & Visual Assets Protection</p>
+              <p className="text-xs text-gray-400 font-medium">Docscraft Brand Guidelines & Visual Assets Protection</p>
             </div>
           </div>
 
           <div className="space-y-4 text-sm text-gray-650 leading-relaxed">
             <p>
-              The <strong>"DocCraft Pro"</strong> brand name, its logo mark (stylized dual-bordered layout diamonds), original code components, vector shapes, styling variables, and trademarked trade-dress (including user interface layouts engineered within this ecosystem) are the proprietary assets of **DocCraft Inc.** and are protected by domestic and international copyright and trademark enforcement treaties.
+              The <strong>"Docscraft Pro"</strong> brand name, its logo mark (stylized dual-bordered layout diamonds), original code components, vector shapes, styling variables, and trademarked trade-dress (including user interface layouts engineered within this ecosystem) are the proprietary assets of **Docscraft Inc.** and are protected by domestic and international copyright and trademark enforcement treaties.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4 pt-4 border-t border-gray-50">
               <div className="bg-amber-50/40 border border-amber-100 p-5 rounded-2xl space-y-2">
@@ -503,7 +503,7 @@ export function CompliancePage() {
                   <Shield className="w-3.5 h-3.5 text-[#D4AF37]" /> Prohibited Brand Mimicry & Usage Limits
                 </p>
                 <p className="text-xs text-gray-500 leading-normal">
-                  You are strictly forbidden from copying, cloning, or distributing the official brand icons, layout stylesheets, custom logos, or system gradients of DocCraft Pro. Replicating the Platform's responsive grid structure or interface branding to host imitation applications is a direct violation of our copyrights.
+                  You are strictly forbidden from copying, cloning, or distributing the official brand icons, layout stylesheets, custom logos, or system gradients of Docscraft Pro. Replicating the Platform's responsive grid structure or interface branding to host imitation applications is a direct violation of our copyrights.
                 </p>
               </div>
               <div className="bg-indigo-50/40 border border-indigo-100 p-5 rounded-2xl space-y-2">
@@ -511,7 +511,7 @@ export function CompliancePage() {
                   <CheckCircle className="w-3.5 h-3.5 text-indigo-500" /> Absolute Ownership of User-Created Assets
                 </p>
                 <p className="text-xs text-gray-500 leading-normal">
-                  In contrast to platform designs, <strong>you retain absolute, unconditional copyright and complete intellectual possession</strong> over any document text, custom charts, signed PDF binaries, or styling templates you write or edit during your active workspace sessions. DocCraft Pro asserts zero copyright or ownership actions over user artifacts.
+                  In contrast to platform designs, <strong>you retain absolute, unconditional copyright and complete intellectual possession</strong> over any document text, custom charts, signed PDF binaries, or styling templates you write or edit during your active workspace sessions. Docscraft Pro asserts zero copyright or ownership actions over user artifacts.
                 </p>
               </div>
             </div>
@@ -581,12 +581,12 @@ export function CompliancePage() {
               </div>
             </div>
 
-            {/* Chart 2: DocCraft Pro Alignment Radar Index */}
+            {/* Chart 2: Docscraft Pro Alignment Radar Index */}
             <div className="flex flex-col justify-between">
               <div>
                 <h4 className="text-sm font-bold uppercase text-gray-700 mb-2 tracking-wide flex items-center gap-1.5">
                   <Shield className="w-4 h-4 text-indigo-505 text-indigo-600" />
-                  DocCraft Alignment Index vs. Industry Average
+                  Docscraft Alignment Index vs. Industry Average
                 </h4>
                 <p className="text-xs text-gray-400 mb-6 font-medium leading-relaxed">
                   Evaluates platform safeguards against complex statutory criteria. Our local client sandbox models achieve zero telemetry leaking.
@@ -606,7 +606,7 @@ export function CompliancePage() {
                     <PolarGrid stroke="#e2e8f0" />
                     <PolarAngleAxis dataKey="subject" stroke="#64748b" fontSize={9} />
                     <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="#cbd5e1" fontSize={8} />
-                    <Radar name="DocCraft Pro" dataKey="docCraft" stroke="#10b981" fill="#10b981" fillOpacity={0.25} />
+                    <Radar name="Docscraft Pro" dataKey="docCraft" stroke="#10b981" fill="#10b981" fillOpacity={0.25} />
                     <Radar name="Industry Avg" dataKey="average" stroke="#94a3b8" fill="#94a3b8" fillOpacity={0.1} />
                     <Tooltip 
                       contentStyle={{ backgroundColor: '#1a1a1a', borderRadius: '12px', border: 'none', color: '#fff' }}
@@ -617,7 +617,7 @@ export function CompliancePage() {
               </div>
 
               <div className="flex items-center justify-between text-[10px] font-bold text-gray-500 mt-3 px-1">
-                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> DocCraft Pro (98.3%)</span>
+                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Docscraft Pro (98.3%)</span>
                 <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-gray-400"></span> Industry Avg (72.1%)</span>
               </div>
             </div>
@@ -783,7 +783,7 @@ export function CompliancePage() {
                           >
                             <div className="p-4 bg-amber-50/20 border border-amber-100 rounded-2xl">
                               <p className="text-xs font-bold text-amber-950 uppercase tracking-wide flex items-center gap-1.5 mb-1">
-                                <Info className="w-3.5 h-3.5 text-[#D4AF37]" /> DocCraft Platform Relevance
+                                <Info className="w-3.5 h-3.5 text-[#D4AF37]" /> Docscraft Platform Relevance
                               </p>
                               <p className="text-xs text-gray-600 leading-normal">{reg.docCraftRelevance}</p>
                             </div>

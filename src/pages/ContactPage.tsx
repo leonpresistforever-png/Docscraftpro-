@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
 import { SupportFormPage } from './SupportFormPage';
+import { ZendeskSupportForm } from '../components/ZendeskSupportForm';
 import { Mail, Clock, ShieldCheck, MapPin } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 
 export function ContactPage() {
   const container = {
@@ -24,11 +25,10 @@ export function ContactPage() {
       <Navbar />
 
       <main className="w-full max-w-[1100px] mx-auto px-6 py-12 flex-1">
-        <motion.div initial="hidden" animate="show" variants={container} className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-          
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           {/* Left Column: Direct contact info & Commitments */}
-          <div className="lg:col-span-5 space-y-8">
-            <motion.div variants={item}>
+          <div className="lg:col-span-12 xl:col-span-5 space-y-8">
+            <motion.div variants={item} initial="hidden" animate="show">
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 border border-amber-200 rounded-full text-xs text-amber-800 font-bold uppercase tracking-widest mb-3">
                 <Clock className="w-3.5 h-3.5 text-[#D4AF37]" />
                 Support Matrix
@@ -42,7 +42,7 @@ export function ContactPage() {
             </motion.div>
 
             {/* Direct Cards */}
-            <div className="space-y-4">
+            <motion.div variants={container} initial="hidden" animate="show" className="space-y-4">
               <motion.div variants={item} className="flex gap-4 p-5 bg-white border border-gray-200 rounded-xl shadow-sm">
                 <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center shrink-0 border border-amber-200">
                   <Mail className="w-5 h-5 text-[#D4AF37]" />
@@ -79,23 +79,22 @@ export function ContactPage() {
                   </p>
                 </div>
               </motion.div>
-            </div>
+            </motion.div>
           </div>
 
           {/* Right Column: Dynamic Form Block */}
-          <div className="lg:col-span-7">
-            <motion.div variants={item} className="bg-white p-6 md:p-8 rounded-2xl border border-gray-200 shadow-sm w-full">
+          <div className="lg:col-span-12 xl:col-span-7">
+            <div className="bg-white p-6 md:p-8 rounded-2xl border border-gray-200 shadow-sm w-full">
               <h3 className="text-lg font-black uppercase text-[#1a1a1a] mb-4 font-sans tracking-wide">
                 Submit an Issue Ticket
               </h3>
               <p className="text-xs text-gray-500 mb-6 leading-relaxed">
                 Please complete the registry fields below. This connects cleanly to our background event framework for instant validation routing.
               </p>
-              
-              <SupportFormPage isEmbedded={true} hideCategorySelector={true} defaultCategory="general" />
-            </motion.div>
-          </div>
 
+              <SupportFormPage isEmbedded={true} hideCategorySelector={true} defaultCategory="general" />
+            </div>
+          </div>
         </motion.div>
       </main>
 

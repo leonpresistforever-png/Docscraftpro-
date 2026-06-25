@@ -67,7 +67,13 @@ interface UserData {
   credits: number;
   subscription?: string;
   updatedAt?: string;
-  givenTestCredits?: boolean;
+  profileSetupComplete?: boolean;
+  firstName?: string;
+  lastName?: string;
+  username?: string;
+  avatarUrl?: string;
+  bio?: string;
+  occupation?: string;
 }
 
 interface AuthContextType {
@@ -78,7 +84,6 @@ interface AuthContextType {
   signInWithApple: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (email: string, password: string, name: string) => Promise<void>;
-  signInAsDemo: () => void;
   logout: () => Promise<void>;
   updateUserCredits: (newCredits: number, subscription?: string) => Promise<void>;
   consumeCredits: (amount: number) => Promise<boolean>;
@@ -163,16 +168,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return false;
   };
 
-  const signInAsDemo = () => {
-    console.warn("Demo sign in is fully retired. Please authenticate with a real account.");
-  };
-
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
     provider.addScope('https://www.googleapis.com/auth/gmail.send');
     provider.addScope('https://www.googleapis.com/auth/documents');
     provider.addScope('https://www.googleapis.com/auth/presentations');
-    provider.addScope('https://www.googleapis.com/auth/forms.body');
     provider.addScope('https://www.googleapis.com/auth/drive.file');
     provider.addScope('https://www.googleapis.com/auth/drive.readonly');
     provider.addScope('https://www.googleapis.com/auth/userinfo.email');
@@ -205,8 +205,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         docsMod.setDocsToken(credential.accessToken);
         const slidesMod = await import('../utils/googleSlides');
         slidesMod.setSlidesToken(credential.accessToken);
-        const formsMod = await import('../utils/googleForms');
-        formsMod.setFormsToken(credential.accessToken);
       } catch (err) {
         console.warn('Silent token caching failed on load modules:', err);
       }
@@ -244,7 +242,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, userData, loading, signInWithGoogle, signInWithApple, signInWithEmail, signUpWithEmail, signInAsDemo, logout, updateUserCredits, consumeCredits }}>
+    <AuthContext.Provider value={{ user, userData, loading, signInWithGoogle, signInWithApple, signInWithEmail, signUpWithEmail, logout, updateUserCredits, consumeCredits }}>
       {!loading && children}
     </AuthContext.Provider>
   );

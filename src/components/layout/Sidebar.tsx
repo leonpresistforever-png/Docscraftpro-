@@ -158,7 +158,7 @@ export function Sidebar({ defaultCollapsed = false }: { defaultCollapsed?: boole
 
   // 2. User Profile Functionality
   const handleProfileClick = () => {
-    navigate('/preferences?tab=account');
+    navigate('/settings');
   };
 
   // 3. New Page Creation
@@ -318,7 +318,7 @@ export function Sidebar({ defaultCollapsed = false }: { defaultCollapsed?: boole
       <motion.div 
         animate={{ width: isCollapsed ? 70 : 250 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      className="bg-[#FAF9F6] border-r border-[#EAE6DF] h-screen flex flex-col font-sans relative shrink-0 z-50 text-[#1a1a1a]"
+      className="bg-[#FAF9F6] border-r border-[#EAE6DF] h-screen flex flex-col font-sans relative shrink-0 z-50 text-[#1a1a1a] print:hidden"
     >
       {/* Resizer Button */}
       <button 
@@ -375,6 +375,22 @@ export function Sidebar({ defaultCollapsed = false }: { defaultCollapsed?: boole
           >
             <div className="shrink-0 flex justify-center w-5"><LayoutDashboard size={16} /></div>
             {!isCollapsed && <span className="truncate">Dashboard</span>}
+          </Link>
+          <Link
+            to="/notes"
+            title="Notes"
+            className="flex items-center gap-3 px-2 py-1.5 rounded text-[13px] text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+          >
+            <div className="shrink-0 flex justify-center w-5"><Box size={16} /></div>
+            {!isCollapsed && <span className="truncate">Notes</span>}
+          </Link>
+          <Link
+            to="/productivity"
+            title="Tasks & Calendar"
+            className="flex items-center gap-3 px-2 py-1.5 rounded text-[13px] text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+          >
+            <div className="shrink-0 flex justify-center w-5"><CheckSquare size={16} /></div>
+            {!isCollapsed && <span className="truncate">Tasks & Calendar</span>}
           </Link>
           <Link
             to="/models"

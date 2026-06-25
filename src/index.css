@@ -115,6 +115,7 @@ body {
   background-color: var(--dc-bg-page);
   color: var(--dc-text);
   touch-action: manipulation;
+  overflow-x: hidden;
 }
 
 /* Document Text Wrap Fixes */
@@ -329,7 +330,7 @@ a[href^="data:application/"],
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 !important;
-    padding: 10mm !important;
+    padding: 0 !important;
     box-shadow: none !important;
     border: none !important;
     background-color: #ffffff !important;

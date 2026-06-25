@@ -111,9 +111,29 @@
         "createdAt": { "type": "string", "format": "timestamp" }
       },
       "required": ["username", "email", "issue"]
+    },
+    "Task": {
+      "title": "Task",
+      "description": "User created writing target tasks and goals",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "notes": { "type": "string" },
+        "completed": { "type": "boolean" },
+        "dueDate": { "type": "string" },
+        "category": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "timestamp" },
+        "updatedAt": { "type": "string", "format": "timestamp" }
+      },
+      "required": ["ownerId", "title", "completed", "category"]
     }
   },
   "firestore": {
+    "/tasks/{taskId}": {
+      "schema": { "$ref": "Task" },
+      "description": "Writing goals and tasks for each user"
+    },
     "/support_tickets/{ticketId}": {
       "schema": { "$ref": "SupportTicket" },
       "description": "User submitted support tickets"

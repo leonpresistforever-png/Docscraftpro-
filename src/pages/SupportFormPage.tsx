@@ -240,7 +240,7 @@ export function SupportFormPage({
       return {
         badge: 'Support Desk',
         title: 'Contact Support Helpdesk',
-        desc: 'Have a question or need assistance with DocCraft Pro? We read and reply to every support inquiry.'
+        desc: 'Have a question or need assistance with Docscraft Pro? We read and reply to every support inquiry.'
       };
     }
     return {

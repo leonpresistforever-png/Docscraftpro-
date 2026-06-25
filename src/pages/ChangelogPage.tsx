@@ -13,7 +13,7 @@ export function ChangelogPage() {
       description: 'An advanced cloud engineering release introducing real-time secure connections to Google Drive and dynamic Google Web Picker imports.',
       badges: ['Google Drive', 'Picker API', 'Import/Export'],
       changes: [
-        { type: 'feature', desc: 'Google Workspace Cloud Storage component: Mount custom target backup directories (e.g., "DocCraft-Backups") and instantly transfer secure drafts.' },
+        { type: 'feature', desc: 'Google Workspace Cloud Storage component: Mount custom target backup directories (e.g., "Docscraft-Backups") and instantly transfer secure drafts.' },
         { type: 'feature', desc: 'Google Picker API client: Interactive files browser overlay enabling on-the-fly imports of external PDF, markdown, and doc streams into sandboxed local databases.' },
         { type: 'enhancement', desc: 'Upgraded Google OAuth Provider to declare unified picker, drive.file, and drive.readonly scope profiles safely side-by-side.' },
         { type: 'ux', desc: 'Added a direct dropdown selector within the Integrations control deck showing all matching local offline drafts available for transit.' }
@@ -82,7 +82,7 @@ export function ChangelogPage() {
               System Logs & Changelog
             </h1>
             <p className="text-sm text-gray-500 mt-2 max-w-[650px] leading-relaxed">
-              Durable audit trails tracking all core performance updates, compliance additions, secure Workspace connections, and bug resolutions rolled out inside DocCraft Pro.
+              Durable audit trails tracking all core performance updates, compliance additions, secure Workspace connections, and bug resolutions rolled out inside Docscraft Pro.
             </p>
           </motion.div>
 

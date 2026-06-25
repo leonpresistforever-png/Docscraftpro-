@@ -151,7 +151,7 @@ export function PrivacyPolicyPage() {
                   We guarantee total local privacy and user sandbox isolation:
                 </p>
                 <p className="text-sm text-gray-700 italic border-l-4 border-[#D4AF37] pl-4 bg-white py-3 pr-3 rounded-r-lg">
-                  "All custom-written document drafts, notes, and local API keys stored inside our features are preserved exclusively in secure local storage structures on your physical device. DocCraft Pro does not run unauthorized background tracking, nor does it monetize your document data under any circumstance."
+                  "All custom-written document drafts, notes, and local API keys stored inside our features are preserved exclusively in secure local storage structures on your physical device. Docscraft Pro does not run unauthorized background tracking, nor does it monetize your document data under any circumstance."
                 </p>
               </div>
               <p className="text-sm mt-4">
@@ -168,7 +168,7 @@ export function PrivacyPolicyPage() {
               </p>
               <ul className="list-disc pl-5 text-sm mt-3 space-y-2">
                 <li><strong>SSL Transports:</strong> All data packets are encrypted in-transit using Secure Sockets Layer (SSL) protocols.</li>
-                <li><strong>Zero Sale Pledge:</strong> DocCraft Pro explicitly confirms that your document contents, personal emails, or metadata profiles are never rented, sold, or distributed to any advertising networks.</li>
+                <li><strong>Zero Sale Pledge:</strong> Docscraft Pro explicitly confirms that your document contents, personal emails, or metadata profiles are never rented, sold, or distributed to any advertising networks.</li>
                 <li><strong>No Model Training:</strong> Unlike generic workspace platforms, we never train models on your private document history files without explicit, double-confirmed user opt-in properties.</li>
               </ul>
             </motion.section>
@@ -193,7 +193,7 @@ export function PrivacyPolicyPage() {
               <div className="pl-4 border-l-4 border-indigo-500 bg-indigo-50/40 p-4 rounded-r-xl space-y-2 text-xs mb-4">
                 <p className="font-bold text-indigo-950 uppercase tracking-wider text-[10px]">Google API Services Disclosure</p>
                 <p className="text-gray-700 leading-relaxed font-medium">
-                  <strong>DocCraft Pro’s use and transfer of information received from Google APIs to any other app will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener noreferrer" className="underline text-indigo-700 hover:text-indigo-900 font-bold">Google API Services User Data Policy</a>, including the Limited Use requirements.</strong>
+                  <strong>Docscraft Pro’s use and transfer of information received from Google APIs to any other app will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener noreferrer" className="underline text-indigo-700 hover:text-indigo-900 font-bold">Google API Services User Data Policy</a>, including the Limited Use requirements.</strong>
                 </p>
               </div>
               <div className="mt-4 space-y-4 text-sm text-gray-600">
@@ -204,7 +204,7 @@ export function PrivacyPolicyPage() {
                   <li><strong>.../auth/documents:</strong> Allows us to write, structure, customize, and edit document files directly inside your Google Docs.</li>
                   <li><strong>.../auth/presentations:</strong> Allows us to assemble slides and present visual layouts directly inside your Google Slides.</li>
                   <li><strong>.../auth/forms.body:</strong> Allows us to inspect and modify form schemas inside Google Forms.</li>
-                  <li><strong>.../auth/drive.file:</strong> Permits uploading, creating, and modifying files that you select or create using DocCraft Pro.</li>
+                  <li><strong>.../auth/drive.file:</strong> Permits uploading, creating, and modifying files that you select or create using Docscraft Pro.</li>
                   <li><strong>.../auth/userinfo.email & .../auth/userinfo.profile:</strong> To verify your email address and profile identity securely to authorize account creation.</li>
                 </ul>
                 <p>
@@ -249,20 +249,39 @@ export function PrivacyPolicyPage() {
               </h2>
               <div className="space-y-4 text-sm text-gray-600">
                 <p>
-                  <strong>1. Acceptance of Terms:</strong> By registering an account or executing documents on DocCraft Pro, you agree to be bound by these standard Terms of Service and all applicable local, national, and international laws.
+                  <strong>1. Acceptance of Terms:</strong> By registering an account or executing documents on Docscraft Pro, you agree to be bound by these standard Terms of Service and all applicable local, national, and international laws.
                 </p>
                 <p>
                   <strong>2. Intellectual Property:</strong> You retain complete and unconditional intellectual property ownership over all content, drafts, files, logic maps, or notes you compile inside the editor. We exert absolutely zero ownership rights over user-created documents.
                 </p>
                 <p>
-                  <strong>3. Authorized Use:</strong> You agree not to utilize DocCraft Pro to design, compile, or transmit any malicious materials, spyware, unlawful file formats, or spam documents.
+                  <strong>3. Authorized Use:</strong> You agree not to utilize Docscraft Pro to design, compile, or transmit any malicious materials, spyware, unlawful file formats, or spam documents.
                 </p>
                 <p>
-                  <strong>4. Disclaimer of Warranty:</strong> DocCraft Pro is provided on an "AS IS" and "AS AVAILABLE" basis without warranties of any kind, whether express or implied. We do not guarantee uninterrupted server runtimes or error-free rendering parameters.
+                  <strong>4. Disclaimer of Warranty:</strong> Docscraft Pro is provided on an "AS IS" and "AS AVAILABLE" basis without warranties of any kind, whether express or implied. We do not guarantee uninterrupted server runtimes or error-free rendering parameters.
                 </p>
                 <p>
                   <strong>5. Contact Support:</strong> For legal disputes, compliance audits, or data deletion queries, please submit a support ticket in the support console or redirect directly to our <Link to="/support-form?type=security" className="text-indigo-600 hover:underline font-mono font-bold">Compliance & Security Desk</Link>.
                 </p>
+              </div>
+            </motion.section>
+
+            <motion.section variants={item} className="bg-white p-7 md:p-8 rounded-2xl border border-gray-200 shadow-sm">
+              <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <span className="text-dc-gold font-serif text-lg">08.</span> Advertising & Third-Party Cookies (Google AdSense)
+              </h2>
+              <div className="space-y-4 text-sm text-gray-600">
+                <p>
+                  We primarily operate as a free service, and to maintain our server costs, we may employ third-party advertising vendors, including Google AdSense. 
+                </p>
+                <p>
+                  <strong>Google and the DoubleClick DART Cookie:</strong>
+                </p>
+                <ul className="list-disc pl-6 space-y-2 text-sm text-gray-600">
+                  <li>Third party vendors, including Google, use cookies to serve ads based on a user's prior visits to our website or other websites.</li>
+                  <li>Google's use of advertising cookies enables it and its partners to serve ads to our users based on their visit to our sites and/or other sites on the Internet.</li>
+                  <li>Users may opt out of personalized advertising by visiting <a href="https://myadcenter.google.com/" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline font-bold">Google Ads Settings</a>. Alternatively, you can opt out of a third-party vendor's use of cookies for personalized advertising by visiting <a href="https://www.aboutads.info" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline font-bold">www.aboutads.info</a>.</li>
+                </ul>
               </div>
             </motion.section>
 
@@ -277,7 +296,7 @@ export function PrivacyPolicyPage() {
                     <span className="text-emerald-500 text-xl font-bold">✨</span> 100% Free Lifetime Guarantee
                   </h3>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    DocCraft Pro is committed to democratic, open, and fully accessible document creation tools for everyone.
+                    Docscraft Pro is committed to democratic, open, and fully accessible document creation tools for everyone.
                   </p>
                 </div>
                 <div className="shrink-0 self-start sm:self-center px-4 py-2 bg-emerald-100/80 border border-emerald-200 text-emerald-800 rounded-full text-xs font-black tracking-wider uppercase select-none">
@@ -293,7 +312,7 @@ export function PrivacyPolicyPage() {
                   <p className="font-bold flex items-center gap-1.5 uppercase text-indigo-950 mb-1">
                     🚀 System Status Notice & Early Beta Access
                   </p>
-                  Please keep in mind that DocCraft Pro is currently in <strong>early access beta</strong> under continuous improvement cycles. If you encounter any bugs, security flaws, rendering anomalies, or have feature proposals, please submit a report immediately! Your generous suggestions, debugging assistance, and comments light up the promising future of DocCraft. Thank you for your partnership!
+                  Please keep in mind that Docscraft Pro is currently in <strong>early access beta</strong> under continuous improvement cycles. If you encounter any bugs, security flaws, rendering anomalies, or have feature proposals, please submit a report immediately! Your generous suggestions, debugging assistance, and comments light up the promising future of Docscraft. Thank you for your partnership!
                 </div>
                 <p className="text-xs text-gray-400 font-medium">
                   Have feedback? Submit a report anytime on our raw <Link to="/support-form?type=feedback" className="text-indigo-600 hover:underline font-bold">Feedback Form</Link> to reach our engineering desk!

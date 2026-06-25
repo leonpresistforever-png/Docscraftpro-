@@ -14,8 +14,17 @@ export function Navbar() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   return (
-    <nav className="flex items-center justify-between px-8 py-4 bg-transparent absolute top-0 w-full z-50">
-      <Link to="/" className="flex items-center gap-3 group">
+    <nav className="flex items-center justify-between px-8 py-4 bg-[#FDFBF7]/85 backdrop-blur-md border-b border-stone-200/20 fixed top-0 left-0 right-0 z-50 transition-all duration-300">
+      <div 
+        onClick={() => {
+          if (user) {
+            setShowProfile(!showProfile);
+          } else {
+            navigate('/');
+          }
+        }}
+        className="flex items-center gap-3 group cursor-pointer"
+      >
         <div className="relative w-10 h-10 flex items-center justify-center transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110">
            {/* Geometric SVG Hexagon Base */}
            <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full drop-shadow-[0_4px_8px_rgba(212,175,55,0.4)]">
@@ -40,10 +49,10 @@ export function Navbar() {
            </svg>
         </div>
         <div className="flex flex-col">
-          <span className="font-bold text-xl leading-none font-serif tracking-tight">DocCraft Pro</span>
+          <span className="font-bold text-xl leading-none font-serif tracking-tight">Docscraft Pro</span>
           <span className="text-xs font-bold uppercase tracking-widest text-dc-gold mt-1 drop-shadow-sm">Workspace</span>
         </div>
-      </Link>
+      </div>
       
       <div className="hidden md:flex items-center gap-8 font-sans font-medium text-sm text-dc-text relative z-50">
         <Link to="/contact" className="cursor-pointer hover:text-dc-gold transition-colors py-2">Contact Support</Link>
@@ -114,7 +123,7 @@ export function Navbar() {
             className="absolute top-16 left-4 right-4 bg-white border border-[#EAE6DF] shadow-2xl rounded-2xl md:hidden overflow-hidden flex flex-col p-5 z-40 gap-4"
           >
             <div className="text-xs font-bold uppercase tracking-widest text-[#AA7A00] border-b border-gray-100 pb-2 mb-1">
-              DocCraft Pro Navigation
+              Docscraft Pro Navigation
             </div>
             
             {user && (

@@ -8,11 +8,11 @@ export function DocumentationPage() {
 
   const guides = {
     'getting-started': {
-      title: "DocCraft Core Workspace Overview",
+      title: "Docscraft Core Workspace Overview",
       content: (
         <div className="space-y-6">
           <p className="text-sm text-gray-600 leading-relaxed">
-            Welcome to DocCraft Pro, the ultimate local text design and canvas tool. Our system operates client-first, leveraging advanced local browser caches, localized databases, and WebAssembly packages to compile and design documents securely.
+            Welcome to Docscraft Pro, the ultimate local text design and canvas tool. Our system operates client-first, leveraging advanced local browser caches, localized databases, and WebAssembly packages to compile and design documents securely.
           </p>
           <h3 className="font-bold text-gray-900 text-lg mt-6 mb-2">Creating Your First Document</h3>
           <p className="text-sm text-gray-600 leading-relaxed">
@@ -32,7 +32,7 @@ export function DocumentationPage() {
       content: (
         <div className="space-y-6">
           <p className="text-sm text-gray-600 leading-relaxed">
-            DocCraft supports standard Markdown formatting and inline blocks out of the box, letting you structure drafts cleanly using rapid triggers.
+            Docscraft supports standard Markdown formatting and inline blocks out of the box, letting you structure drafts cleanly using rapid triggers.
           </p>
           <div className="space-y-4">
             <div className="bg-[#FAF9F6] p-5 rounded-xl border border-dc-border">
@@ -57,7 +57,7 @@ export function DocumentationPage() {
       content: (
         <div className="space-y-6">
           <p className="text-sm text-gray-600 leading-relaxed">
-            DocCraft ships with integration for offline localized intelligence. Run on-device micro-models (such as SmolLM or Llama) directly inside your GPU without sending data to any cloud service.
+            Docscraft ships with integration for offline localized intelligence. Run on-device micro-models (such as SmolLM or Llama) directly inside your GPU without sending data to any cloud service.
           </p>
           <h3 className="font-bold text-gray-900 text-lg mt-4 mb-2">WebGPU Checklist</h3>
           <p className="text-sm text-gray-600 leading-relaxed">
@@ -76,7 +76,7 @@ export function DocumentationPage() {
       content: (
         <div className="space-y-6">
           <p className="text-sm text-gray-600 leading-relaxed">
-            DocCraft Pro supports natively rendering code-driven diagrams and flowcharts directly inside your document canvas using <strong>Mermaid.js</strong>.
+            Docscraft Pro supports natively rendering code-driven diagrams and flowcharts directly inside your document canvas using <strong>Mermaid.js</strong>.
           </p>
           <h3 className="font-bold text-gray-900 text-lg mt-4 mb-2">How to Render Diagrams</h3>
           <p className="text-sm text-gray-600 leading-relaxed">

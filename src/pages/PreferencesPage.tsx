@@ -228,7 +228,7 @@ export function PreferencesPage() {
         let yOffset = 20;
 
         doc.setFontSize(20);
-        doc.text("DocCraft Workspace Export", 20, yOffset);
+        doc.text("Docscraft Workspace Export", 20, yOffset);
         yOffset += 15;
 
         let index = 0;

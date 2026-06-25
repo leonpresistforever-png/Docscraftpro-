@@ -19,7 +19,7 @@ export function FAQPage() {
       a: "Instead of remembering to manually press 'Save' every few minutes, our application continuously tracks your keystrokes and structural changes in the background. If you make a mistake, you can instantly undo your actions. Furthermore, your saved timeline generates independent versions of your document in your history logs, so if you decide you actually preferred what you wrote yesterday afternoon, you can easily restore previous drafts without losing your current progress." 
     },
     { 
-      q: "Can I use DocCraft Pro on my tablet or mobile phone?", 
+      q: "Can I use Docscraft Pro on my tablet or mobile phone?", 
       a: "Absolutely. We designed our entire system to be fully responsive. Whether you are typing comfortably on a wide desktop screen, adjusting columns on an iPad, or quickly drafting a quick memo on your smartphone, our interface adapts to your screen size. The core tools, including PDF exporting and complex table modifications, remain accessible and fully operational regardless of the device you are using." 
     },
     { 

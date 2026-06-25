@@ -64,10 +64,10 @@ function isExpandableContent(isExpanded: boolean) {
               <span className="text-amber-500 font-mono text-xs">11.</span> Limitation of Liability for Data Incidents
             </h3>
             <p className="text-xs text-stone-300 leading-relaxed">
-              While we implement industry-standard security measures and native browser memory isolation, we cannot guarantee absolute protection against all conceivable security threats. To the maximum extent permitted by applicable law, DocCraft's liability for any data incidents, unauthorized leakage, cached coordinate exposure, or security events is strictly limited to direct, actual damages proven in the competent court. 
+              While we implement industry-standard security measures and native browser memory isolation, we cannot guarantee absolute protection against all conceivable security threats. To the maximum extent permitted by applicable law, Docscraft's liability for any data incidents, unauthorized leakage, cached coordinate exposure, or security events is strictly limited to direct, actual damages proven in the competent court. 
             </p>
             <p className="text-xs text-stone-300 leading-relaxed font-semibold italic border-l-2 border-red-500 pl-4 py-1">
-              "Under no circumstances shall DocCraft, its developers, parent affiliates, or infrastructure partners be liable for indirect, incidental, consequential, special, punitive, or exemplary damages, including but not limited to loss of profits, data downtime, client-side registry failures, or goodwill loss, even if advised beforehand of their potential occurrence."
+              "Under no circumstances shall Docscraft, its developers, parent affiliates, or infrastructure partners be liable for indirect, incidental, consequential, special, punitive, or exemplary damages, including but not limited to loss of profits, data downtime, client-side registry failures, or goodwill loss, even if advised beforehand of their potential occurrence."
             </p>
             <p className="text-xs text-stone-400">
               This limitation explicitly does not apply where prohibited by law, including in cases of gross negligence, conscious bad faith, or willful misconduct by our direct software architects.
@@ -135,7 +135,7 @@ function isExpandableContent(isExpanded: boolean) {
         <HelpCircle className="w-4.5 h-4.5 text-amber-500 shrink-0 mt-0.5" />
         <div>
           <span className="font-bold text-white mb-0.5 block uppercase tracking-wider">Consent Binding Acknowledgment</span>
-          By executing calculations, registering database models, or building document grids inside DocCraft, you explicitly consent to the liability bounds and forum exclusions defined under these provisions.
+          By executing calculations, registering database models, or building document grids inside Docscraft, you explicitly consent to the liability bounds and forum exclusions defined under these provisions.
         </div>
       </div>
 

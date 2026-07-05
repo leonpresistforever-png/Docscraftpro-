@@ -8,7 +8,7 @@ import { ProfileMenu } from './ProfileMenu';
 import { AnimatePresence, motion } from 'motion/react';
 
 export function Navbar() {
-  const { user } = useAuth();
+  const { user, userData } = useAuth();
   const navigate = useNavigate();
   const [showProfile, setShowProfile] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -55,6 +55,7 @@ export function Navbar() {
       </div>
       
       <div className="hidden md:flex items-center gap-8 font-sans font-medium text-sm text-dc-text relative z-50">
+        <Link to="/repositories" className="cursor-pointer hover:text-dc-gold transition-colors py-2">Agent Studio</Link>
         <Link to="/contact" className="cursor-pointer hover:text-dc-gold transition-colors py-2">Contact Support</Link>
         <Link to="/about" className="cursor-pointer hover:text-dc-gold transition-colors py-2">About</Link>
         
@@ -84,8 +85,8 @@ export function Navbar() {
                  onClick={() => setShowProfile(!showProfile)}
                  className="w-10 h-10 rounded-full border-2 border-transparent hover:border-dc-gold overflow-hidden bg-white shadow-sm transition-all focus:outline-none"
                >
-                 {user.photoURL ? (
-                    <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" />
+                 {userData?.avatarUrl || user.photoURL ? (
+                    <img src={userData?.avatarUrl || user.photoURL || ''} alt="Profile" className="w-full h-full object-cover" />
                  ) : (
                     <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email || 'user'}&backgroundColor=e5e5e5`} alt="Profile" className="w-full h-full object-cover" />
                  )}

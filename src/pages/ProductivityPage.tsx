@@ -1,3 +1,4 @@
+import { Footer } from "../components/layout/Footer";
 import React, { useState, useEffect } from 'react';
 import { Sidebar } from '../components/layout/Sidebar';
 import { Calendar, CheckSquare, Clock, Plus, Trash2, Sparkles, Loader2 } from 'lucide-react';

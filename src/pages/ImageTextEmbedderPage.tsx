@@ -94,6 +94,11 @@ export function ImageTextEmbedderPage() {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      if (!file.type.startsWith('image/')) {
+        alert('Please upload a valid image file (JPG, PNG, WebP, etc).');
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
       setImageFile(file);
       const reader = new FileReader();
       reader.onload = (event) => {
@@ -401,13 +406,17 @@ export function ImageTextEmbedderPage() {
               <div 
                 ref={containerRef}
                 onClick={handleImageClick}
-                className="relative max-w-full max-h-full rounded-xl overflow-hidden shadow-2xl border border-gray-400/30"
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseLeave}
+                className="relative inline-block rounded-xl overflow-hidden shadow-2xl border border-gray-400/30"
+                style={{ overflow: 'hidden', touchAction: 'none' }}
               >
                 <img 
                   ref={imageRef}
                   src={imageSrc} 
                   alt="Workspace Canvas"
-                  className="max-w-full max-h-[75vh] object-contain block pointer-events-none"
+                  className="max-w-full max-h-[75vh] block pointer-events-none w-auto h-auto"
                   onLoad={() => {
                     // Force height calculation if needed
                   }}

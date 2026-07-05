@@ -1,3 +1,4 @@
+import { Footer } from "../components/layout/Footer";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Bot, Sparkles, Tag, Loader2, Play } from 'lucide-react';

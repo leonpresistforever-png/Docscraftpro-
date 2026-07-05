@@ -81,13 +81,14 @@ export function ProfileMenu({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       <motion.div 
         initial={{ opacity: 0, scale: 0.95, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 15 }}
         transition={{ duration: 0.25 }}
-        className="bg-white rounded-[2rem] border border-stone-200/60 shadow-[0_20px_50px_rgba(0,0,0,0.15)] p-8 max-w-sm w-full font-sans relative"
+        className="bg-white rounded-[2rem] border border-stone-200/60 shadow-[0_20px_50px_rgba(0,0,0,0.15)] p-6 md:p-8 max-w-sm w-full font-sans relative z-10"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header Title and Close Button */}

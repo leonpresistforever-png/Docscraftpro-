@@ -45,7 +45,7 @@ export async function addWatermark(file: File, text: string = "CONFIDENTIAL"): P
   return new Blob([modifiedPdfBytes as any], { type: 'application/pdf' });
 }
 
-export async function addPageNumbers(file: File): Promise<Blob> {
+export async function addPageNumbers(file: File, startPage: number = 1): Promise<Blob> {
   const arrayBuffer = await file.arrayBuffer();
   const pdfDoc = await PDFDocument.load(arrayBuffer);
   
@@ -54,7 +54,9 @@ export async function addPageNumbers(file: File): Promise<Blob> {
   const pages = pdfDoc.getPages();
   pages.forEach((page, index) => {
     const { width } = page.getSize();
-    const text = `Page ${index + 1} of ${pages.length}`;
+    const currentNumber = startPage + index;
+    const totalPagesOffset = startPage + pages.length - 1;
+    const text = `Page ${currentNumber} of ${totalPagesOffset}`;
     const textSize = 12;
     const textWidth = helveticaFont.widthOfTextAtSize(text, textSize);
     

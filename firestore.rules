@@ -79,5 +79,11 @@ service cloud.firestore {
     match /nexus_chats/{chatId} {
       allow read, write: if false;
     }
+    // Paper Drafts (Landing Page Feature): Allows public creation so users can test out drafting without logging in
+    match /paper_drafts/{draftId} {
+      allow create: if true;
+      allow read: if true;
+      allow update, delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
+    }
   }
 }

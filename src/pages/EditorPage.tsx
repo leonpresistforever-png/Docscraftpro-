@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Sidebar } from '../components/layout/Sidebar';
-import { useEditor, EditorContent } from '@tiptap/react';
+import { useEditor, EditorContent, NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react';
+import { Node, mergeAttributes } from '@tiptap/core';
 import { BubbleMenu } from '@tiptap/react/menus';
 import { DOMSerializer } from '@tiptap/pm/model';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -638,7 +639,7 @@ Requirements:
         let current: { heading: string, bullets: string[] } | null = null;
         
         doc.body.childNodes.forEach(node => {
-          if (node.nodeType === Node.ELEMENT_NODE) {
+          if (node.nodeType === 1) {
             const el = node as HTMLElement;
             const tagName = el.tagName.toLowerCase();
             if (tagName.match(/h[1-6]/)) {
@@ -1080,6 +1081,8 @@ Requirements:
       ChartBox,
       FlowchartBox,
       MangaPanel,
+      // DividerBlock,
+      // SignatureBlock,
       MermaidBox,
       Table.configure({
         resizable: true,
@@ -3255,19 +3258,19 @@ Requirements:
         )}
 
         <div 
-          className="flex-1 overflow-y-auto p-2 sm:p-4 md:p-6 lg:p-8 flex justify-center items-start gap-4 md:gap-8 relative print:bg-white print:p-0 print:overflow-visible transition-all duration-300"
+          className="flex-1 overflow-y-auto flex justify-center items-start relative print:bg-white print:p-0 print:overflow-visible transition-all duration-300"
           style={{ backgroundColor: DOCUMENT_THEMES[docThemeKey]?.outerBgValue || '#EFEFEF' }}
         >
           <div 
              id="editor-canvas-container"
              className={cn(
-               "flex-1 w-full py-16 md:py-24 shadow-xl border h-fit transition-all duration-300 mb-20 relative outline-none print:shadow-none print:border-none print:m-0 print:min-h-0 print:p-0",
-               selectedFormat === 'powerpoint' ? 'max-w-[1920px] aspect-video border-[16px] border-orange-200 shadow-2xl rounded-xl' :
-               selectedFormat === 'excel' ? 'max-w-[2000px] border-[8px] border-green-200 shadow-inner' :
-               selectedFormat === 'jpg' ? 'max-w-[1080px] aspect-[4/5] border-[2px] border-gray-300 !p-0 shadow-2xl' :
-               selectedFormat === 'zip' ? 'max-w-[800px] border-[4px] border-dashed border-gray-300 bg-gray-50' :
-               selectedFormat === 'html' ? 'max-w-none border-t-[32px] border-gray-800 rounded-t-xl' :
-               'max-w-[1150px] min-h-[1400px] w-[98%]',
+               "flex-1 w-full shadow-xl border h-fit transition-all duration-300 relative outline-none print:shadow-none print:border-none print:m-0 print:min-h-0 print:p-0",
+               selectedFormat === 'powerpoint' ? 'max-w-[1920px] aspect-video border-[16px] border-orange-200 shadow-2xl rounded-xl my-8 mx-auto' :
+               selectedFormat === 'excel' ? 'max-w-[2000px] border-[8px] border-green-200 shadow-inner my-8 mx-auto' :
+               selectedFormat === 'jpg' ? 'max-w-[1080px] aspect-[4/5] border-[2px] border-gray-300 !p-0 shadow-2xl my-8 mx-auto' :
+               selectedFormat === 'zip' ? 'max-w-[800px] border-[4px] border-dashed border-gray-300 bg-gray-50 my-8 mx-auto' :
+               selectedFormat === 'html' ? 'max-w-none border-t-[32px] border-gray-800 rounded-t-xl my-8 mx-auto' :
+               'max-w-full w-full min-h-screen',
                dragDropEditMode && 'cursor-text ring-4 ring-blue-400 ring-offset-8 rounded-lg selection:bg-blue-300'
              )}
              style={{

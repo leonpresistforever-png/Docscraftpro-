@@ -1081,8 +1081,6 @@ Requirements:
       ChartBox,
       FlowchartBox,
       MangaPanel,
-      // DividerBlock,
-      // SignatureBlock,
       MermaidBox,
       Table.configure({
         resizable: true,

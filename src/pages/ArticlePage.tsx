@@ -1,3 +1,4 @@
+import { Footer } from "../components/layout/Footer";
 import React from 'react';
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
@@ -37,13 +38,15 @@ export function ArticlePage({ article }: { article: Article }) {
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 border border-amber-200 rounded-full text-[10px] text-amber-800 font-bold uppercase tracking-widest mb-4">
             <FileText className="w-3.5 h-3.5 text-[#D4AF37]" />
             {article.category}
-          </div>
+            <Footer />
+    </div>
           <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tight text-[#1a1a1a] font-serif mb-4 leading-tight">
             {article.title}
           </h1>
           <div className="flex items-center justify-center md:justify-start gap-4 text-xs font-bold text-gray-500 uppercase tracking-widest">
             <div className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-[#D4AF37]" /> {article.readTime}</div>
-          </div>
+            <Footer />
+    </div>
         </motion.div>
 
         {/* Article Content Body */}
@@ -65,13 +68,16 @@ export function ArticlePage({ article }: { article: Article }) {
                   <div key={index} className="bg-white p-5 rounded-xl border border-gray-200 shadow-xs">
                      <h4 className="font-bold text-sm text-gray-900 mb-2">{faq.question}</h4>
                      <p className="text-xs text-gray-600 leading-relaxed">{faq.answer}</p>
-                  </div>
+                    <Footer />
+    </div>
                 ))}
-             </div>
+               <Footer />
+    </div>
           </motion.div>
         )}
 
       </motion.div>
+      <Footer />
     </div>
   );
 }

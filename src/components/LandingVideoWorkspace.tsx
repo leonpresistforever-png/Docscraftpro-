@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Play, Pause, Volume2, VolumeX, Sparkles, Monitor, Maximize, Cpu, Code, Brain, Shield, Info } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Sparkles, Monitor, Maximize, Cpu, Code, Brain, Shield, Info, Send, Loader2 } from 'lucide-react';
 
 export function LandingVideoWorkspace() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -10,21 +10,10 @@ export function LandingVideoWorkspace() {
   const [videoError, setVideoError] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [robotActive, setRobotActive] = useState(false);
-  const [speechIndex, setSpeechIndex] = useState(0);
-
-  const robotSpeech = [
-    "Docscraft system online. Ready to secure your creative documents.",
-    "Goal reminder toggle activated. Stay focused on your targets!",
-    "Establishing high-speed client-side local database caching.",
-    "Your dreams and milestones are safely encrypted inside the vault."
-  ];
-
-  useEffect(() => {
-    const speechInterval = setInterval(() => {
-      setSpeechIndex(prev => (prev + 1) % robotSpeech.length);
-    }, 6000);
-    return () => clearInterval(speechInterval);
-  }, []);
+  
+  const [chatMessage, setChatMessage] = useState("");
+  const [botResponse, setBotResponse] = useState("Hello! I am the Docscraft Smart Assistant. Welcome to the workspace. Ask me anything about Docscraft or just say hi!");
+  const [isBotTyping, setIsBotTyping] = useState(false);
 
   const handlePlayPause = () => {
     if (!videoRef.current) return;
@@ -65,6 +54,39 @@ export function LandingVideoWorkspace() {
     document.addEventListener('fullscreenchange', handleFSChange);
     return () => document.removeEventListener('fullscreenchange', handleFSChange);
   }, []);
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatMessage.trim() || isBotTyping) return;
+    
+    const userPrompt = chatMessage.trim();
+    setChatMessage("");
+    setBotResponse("");
+    setIsBotTyping(true);
+
+    try {
+      const res = await fetch("/api/ai/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          prompt: `You are the Docscraft Robot Assistant. The user asks: "${userPrompt}". Reply concisely in 1-2 short sentences. Keep it friendly and high-tech.`
+        })
+      });
+      
+      const data = await res.json();
+      if (data.result) {
+        setBotResponse(data.result);
+      } else {
+        setBotResponse("My circuits are a bit busy right now. Try again!");
+      }
+    } catch (err) {
+      setBotResponse("Error connecting to my core matrix. Are you online?");
+    } finally {
+      setIsBotTyping(false);
+    }
+  };
 
   return (
     <div className="py-24 w-full max-w-7xl mx-auto relative flex flex-col items-center px-6 md:px-12 selection:bg-amber-600 selection:text-white">
@@ -110,13 +132,13 @@ export function LandingVideoWorkspace() {
           </div>
         </div>
 
-        {/* Cinematic Content Section (Either real video, or exquisite Robot CSS Workspace if video is unloaded/error) */}
+        {/* Cinematic Content Section */}
         <div className="relative w-full aspect-video rounded-2xl bg-black overflow-hidden shadow-2xl border border-white/5 flex items-center justify-center">
           
           {videoError ? (
             
             /* HIGH-FIDELITY INTERACTIVE CSS/SVG FALLBACK STREAM PLAYER (THE SMART ROBOT WORKSPACE) */
-            <div className="absolute inset-0 bg-[#0F0F12] overflow-hidden flex flex-col md:flex-row items-center justify-between p-6 md:p-12 gap-8 select-none relative">
+            <div className="absolute inset-0 bg-[#0F0F12] overflow-hidden flex flex-col md:flex-row items-center justify-between p-6 md:p-12 gap-8 relative">
               
               {/* Dynamic Tech Matrix Background */}
               <div 
@@ -135,31 +157,33 @@ export function LandingVideoWorkspace() {
               <div className="absolute left-[30%] top-0 bottom-0 w-[1px] bg-gradient-to-b from-transparent via-amber-500/20 to-transparent pointer-events-none"></div>
 
               {/* Interactive Speech & Information Panel (Left Column) */}
-              <div className="w-full md:w-1/2 flex flex-col justify-center space-y-5 text-left relative z-10 text-white font-sans">
+              <div className="w-full md:w-1/2 flex flex-col justify-center space-y-5 text-left relative z-10 text-white font-sans h-full">
                 <div className="flex items-center gap-2 text-amber-500 font-mono text-xs font-bold uppercase tracking-widest">
-                  <Brain className="w-4 h-4 animate-bounce" /> AI Smart Assistant
+                  <Brain className="w-4 h-4 animate-bounce" /> Gemini AI Assistant
                 </div>
 
-                <AnimatePresence mode="wait">
-                  <motion.div 
-                    key={speechIndex}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
-                    transition={{ duration: 0.5 }}
-                    className="p-4 rounded-2xl bg-white/5 border border-white/10 shadow-lg backdrop-blur-md relative"
-                  >
-                    {/* Tiny talk bubble arrow */}
-                    <div className="absolute right-[-6px] top-1/2 -translate-y-1/2 w-3 h-3 rotate-45 bg-[#1f1f25] border-t border-r border-white/10 hidden md:block"></div>
-                    
-                    <p className="text-sm md:text-base text-gray-200 leading-relaxed font-serif font-medium">
-                      "{robotSpeech[speechIndex]}"
-                    </p>
-                  </motion.div>
-                </AnimatePresence>
+                <div className="flex-1 flex flex-col justify-end min-h-[140px]">
+                  <AnimatePresence mode="wait">
+                    <motion.div 
+                      key={botResponse}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 10 }}
+                      transition={{ duration: 0.5 }}
+                      className="p-4 rounded-2xl bg-white/5 border border-white/10 shadow-lg backdrop-blur-md relative"
+                    >
+                      {/* Tiny talk bubble arrow */}
+                      <div className="absolute right-[-6px] top-1/2 -translate-y-1/2 w-3 h-3 rotate-45 bg-[#1f1f25] border-t border-r border-white/10 hidden md:block"></div>
+                      
+                      <p className="text-sm md:text-base text-gray-200 leading-relaxed font-serif font-medium">
+                        Greetings, Author! I am the Docscraft Assistant. How can I help you build the future today?
+                      </p>
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
 
                 {/* Live typing carets / tech telemetry log line */}
-                <div className="bg-black/40 border border-white/5 rounded-xl p-3.5 space-y-2.5 font-mono text-[10px] md:text-xs text-amber-400">
+                <div className="bg-black/40 border border-white/5 rounded-xl p-3.5 space-y-2.5 font-mono text-[10px] md:text-xs text-amber-400 mt-auto">
                   <div className="flex items-center gap-2">
                     <Code className="w-3.5 h-3.5 text-amber-500" />
                     <span>$ cat docscraft_vault_status.log</span>
@@ -173,10 +197,6 @@ export function LandingVideoWorkspace() {
                       <span className="text-blue-500">● SYNC</span>
                       <span>CLOUD_REDUNDANCY_STABLE = active</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-amber-500">● TARGETS</span>
-                      <span>NOTIFICATION_PING_CHANNEL = open</span>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -189,7 +209,7 @@ export function LandingVideoWorkspace() {
                   onMouseLeave={() => setRobotActive(false)}
                 >
                   {/* Glowing core shadow behind the robot */}
-                  <div className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl transition-all duration-500 ${robotActive ? 'w-28 h-28 bg-amber-500/20' : 'w-20 h-20 bg-amber-500/10'}`}></div>
+                  <div className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl transition-all duration-500 ${robotActive || isBotTyping ? 'w-32 h-32 bg-amber-500/30' : 'w-20 h-20 bg-amber-500/10'}`}></div>
 
                   <motion.div 
                     animate={{ y: [0, -12, 0] }}
@@ -198,32 +218,32 @@ export function LandingVideoWorkspace() {
                   >
                     
                     {/* Floating Speeches popup above robot */}
-                    <div className="absolute -top-12 bg-amber-500 text-black py-1 px-3 text-[10px] font-black uppercase tracking-widest rounded-full shadow-[0_4px_12px_rgba(240,160,20,0.4)] opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className={`absolute -top-12 bg-amber-500 text-black py-1 px-3 text-[10px] font-black uppercase tracking-widest rounded-full shadow-[0_4px_12px_rgba(240,160,20,0.4)] transition-opacity duration-300 ${robotActive ? 'opacity-100' : 'opacity-0'}`}>
                       Hi Author!
                     </div>
 
                     {/* Robot Head */}
-                    <div className="w-24 h-20 rounded-[2rem] bg-gradient-to-b from-[#333] via-[#1F1F24] to-[#111] border-2 border-amber-500/50 flex flex-col items-center justify-between p-3.5 shadow-2xl relative z-10">
+                    <div className={`w-24 h-20 rounded-[2rem] bg-gradient-to-b from-[#333] via-[#1F1F24] to-[#111] border-2 flex flex-col items-center justify-between p-3.5 shadow-2xl relative z-10 transition-colors ${isBotTyping ? 'border-amber-400' : 'border-amber-500/50'}`}>
                       
                       {/* Interactive glowing visor section */}
                       <div className="w-full h-8 rounded-xl bg-black border border-white/10 flex items-center justify-center gap-3 px-2">
                         {/* Eye 1 */}
                         <div className="relative">
-                          <div className={`rounded-full bg-amber-400 transition-all ${robotActive ? 'w-3 h-3' : 'w-2 h-2 animate-ping'}`}></div>
+                          <div className={`rounded-full bg-amber-400 transition-all ${robotActive || isBotTyping ? 'w-3 h-3' : 'w-2 h-2 animate-ping'}`}></div>
                           <div className="absolute inset-0 bg-yellow-300 rounded-full blur-[1.5px] opacity-75"></div>
                         </div>
                         {/* Eye 2 */}
                         <div className="relative">
-                          <div className={`rounded-full bg-amber-400 transition-all ${robotActive ? 'w-3 h-3' : 'w-2 h-2 animate-ping'}`}></div>
+                          <div className={`rounded-full bg-amber-400 transition-all ${robotActive || isBotTyping ? 'w-3 h-3' : 'w-2 h-2 animate-ping'}`}></div>
                           <div className="absolute inset-0 bg-yellow-300 rounded-full blur-[1.5px] opacity-75"></div>
                         </div>
                       </div>
 
                       {/* Speaking indicator / micro grill */}
                       <div className="flex gap-0.5 mt-1">
-                        <span className={`w-1 bg-amber-500 rounded-full transition-all ${robotActive ? 'h-3' : 'h-1.5 animate-pulse'}`}></span>
-                        <span className={`w-1 bg-amber-500 rounded-full transition-all ${robotActive ? 'h-4' : 'h-1 animate-pulse'}`}></span>
-                        <span className={`w-1 bg-amber-500 rounded-full transition-all ${robotActive ? 'h-3' : 'h-1.5 animate-pulse'}`}></span>
+                        <span className={`w-1 bg-amber-500 rounded-full transition-all ${robotActive || isBotTyping ? 'h-3' : 'h-1.5 animate-pulse'}`}></span>
+                        <span className={`w-1 bg-amber-500 rounded-full transition-all ${robotActive || isBotTyping ? 'h-4' : 'h-1 animate-pulse'}`}></span>
+                        <span className={`w-1 bg-amber-500 rounded-full transition-all ${robotActive || isBotTyping ? 'h-3' : 'h-1.5 animate-pulse'}`}></span>
                       </div>
                     </div>
 
@@ -236,7 +256,7 @@ export function LandingVideoWorkspace() {
                       {/* Integrated heart light */}
                       <div className="w-8 h-8 rounded-full bg-black border border-white/10 flex items-center justify-center shadow-inner relative overflow-hidden">
                         <div className="absolute inset-0.5 rounded-full bg-amber-500/10 animate-ping"></div>
-                        <Cpu className={`w-4 h-4 text-amber-500 ${robotActive ? 'rotate-90 scale-110' : ''} transition-transform duration-300`} />
+                        <Cpu className={`w-4 h-4 text-amber-500 transition-transform duration-300 ${robotActive || isBotTyping ? 'rotate-90 scale-110' : ''}`} />
                       </div>
 
                       {/* Small decorative serial number */}

@@ -250,7 +250,23 @@ export async function sendWelcomeEmail({
 }) {
   const confirmationSubject = `[Docscraft Pro] Welcome to Docscraft Pro!`;
   const confirmationHeader = `Welcome to Docscraft Pro`;
-  const confirmationMessage = `<p>We are thrilled to welcome you to Docscraft Pro! Your account has been successfully created and you can now start establishing a professional paradigm for document engineering.</p><p>We have received your registration details. Should you have any questions or require support, please feel free to reach out to our team.</p>`;
+  const confirmationMessage = `
+    <p style="font-size: 18px; color: #1a1a1a; font-weight: 500; margin-bottom: 24px;">Welcome to the Future of Document Engineering.</p>
+    <p>We are absolutely thrilled to welcome you to Docscraft Pro! Your account has been successfully verified and provisioned. You have just taken the first step into a professional paradigm where ideas flow seamlessly into structured, elegant documents.</p>
+    <p>Docscraft Pro is designed to break down the barriers between thought and text. Our intelligent workspace, equipped with advanced AI agents and robust editing tools, is here to support your creative and technical endeavors.</p>
+    
+    <div style="background-color: #f8f6f0; border-left: 4px solid #D4AF37; padding: 16px; margin: 24px 0; border-radius: 4px;">
+      <h3 style="margin-top: 0; color: #4a4a4a; font-size: 16px;">What you can do next:</h3>
+      <ul style="margin-bottom: 0; padding-left: 20px;">
+        <li style="margin-bottom: 8px;">Explore the <strong>Agent Studio</strong> to harness AI for complex tasks.</li>
+        <li style="margin-bottom: 8px;">Create beautiful, structured documents with our advanced Editor.</li>
+        <li>Connect your integrations to streamline your workflow.</li>
+      </ul>
+    </div>
+    
+    <p>We have safely received your registration details. Should you have any questions, encounter any issues, or simply want to share your feedback, please feel free to reach out to our dedicated support team.</p>
+    <p style="margin-top: 32px; font-weight: 500;">Let's build something extraordinary together.</p>
+  `;
 
   const confirmationEmailContent = [
     `To: ${userEmail}`,

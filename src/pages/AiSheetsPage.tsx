@@ -480,7 +480,7 @@ Remember: Output ONLY valid JSON containing the "headers" and "rows" arrays. No 
                   >
                      {attachments.map((file, i) => (
                         <div key={i} className="relative group shrink-0">
-                           <img src={URL.createObjectURL(file)} className="w-14 h-14 object-cover rounded-xl border border-gray-200" />
+                           <img src={URL.createObjectURL(file)} alt={file.name} className="w-14 h-14 object-cover rounded-xl border border-gray-200" />
                            <button 
                              onClick={() => setAttachments(prev => prev.filter((_, idx) => idx !== i))}
                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"

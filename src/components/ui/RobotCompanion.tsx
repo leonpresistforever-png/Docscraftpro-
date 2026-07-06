@@ -69,10 +69,10 @@ export function RobotCompanion({ isActionTriggered, onFlipComplete }: { isAction
   const headRotateX = robotMode === 'happy' ? -mousePosition.y * 10 : -mousePosition.y * 10;
   const headRotateY = mousePosition.x * 15;
   const headTilt = robotMode === 'happy' ? 0 : 0;
-  const leftArmRaise = robotMode === 'happy' ? -25 : (robotMode === 'cheering' ? -150 : 25);
+  const leftArmRaise = robotMode === 'happy' ? 0 : (robotMode === 'cheering' ? -150 : 25);
   
   // Clean right arm pose
-  const rightArmRaise = robotMode === 'happy' ? 25 : (robotMode === 'cheering' ? 150 : -25);
+  const rightArmRaise = robotMode === 'happy' ? 0 : (robotMode === 'cheering' ? 150 : -25);
   
   const dynamicRightArm = robotMode === 'happy' ? { rotateZ: rightArmRaise - (mousePosition.y * 15) } : { rotateZ: rightArmRaise - (mousePosition.y * 20) };
   const dynamicLeftArm = robotMode === 'happy' ? { rotateZ: leftArmRaise + (mousePosition.y * 15) } : { rotateZ: leftArmRaise + (mousePosition.y * 20) };

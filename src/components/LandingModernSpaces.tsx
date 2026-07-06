@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { motion, useScroll, useTransform } from 'motion/react';
+import { motion, useScroll, useTransform, useInView } from 'motion/react';
 import { Home, Building2, PaintBucket, Layers, Compass, Box } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Canvas, useFrame } from '@react-three/fiber';
@@ -121,6 +121,7 @@ function ArchitecturalStructure({ scrollProgress }: { scrollProgress: any }) {
 export function LandingModernSpaces() {
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(containerRef, { margin: "200px" });
   
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -136,30 +137,32 @@ export function LandingModernSpaces() {
       
       {/* 3D Canvas Full Background */}
       <div className="absolute inset-0 z-0 pointer-events-none">
-        <Canvas dpr={[1, 2]}>
-          <OrthographicCamera makeDefault position={[30, 30, 30]} zoom={22} />
-          
-          <ambientLight intensity={0.6} />
-          <directionalLight 
-            castShadow 
-            position={[10, 20, 10]} 
-            intensity={1.5} 
-            color="#FFF5E6" 
-            shadow-mapSize={[2048, 2048]} 
-            shadow-camera-left={-30} 
-            shadow-camera-right={30} 
-            shadow-camera-top={30} 
-            shadow-camera-bottom={-30} 
-          />
-          <directionalLight position={[-10, 5, -10]} intensity={0.8} color="#E0F0FF" />
-          <directionalLight position={[0, -10, 0]} intensity={0.2} color="#FFFFFF" />
-          
-          <Environment preset="apartment" />
-          
-          <ArchitecturalStructure scrollProgress={scrollYProgress} />
-          
-          <ContactShadows position={[0, -3.5, 0]} opacity={0.5} scale={60} blur={2.5} far={15} color="#8A857D" />
-        </Canvas>
+        {isInView && (
+          <Canvas dpr={[1, 1.5]}>
+            <OrthographicCamera makeDefault position={[30, 30, 30]} zoom={22} />
+            
+            <ambientLight intensity={0.6} />
+            <directionalLight 
+              castShadow 
+              position={[10, 20, 10]} 
+              intensity={1.5} 
+              color="#FFF5E6" 
+              shadow-mapSize={[2048, 2048]} 
+              shadow-camera-left={-30} 
+              shadow-camera-right={30} 
+              shadow-camera-top={30} 
+              shadow-camera-bottom={-30} 
+            />
+            <directionalLight position={[-10, 5, -10]} intensity={0.8} color="#E0F0FF" />
+            <directionalLight position={[0, -10, 0]} intensity={0.2} color="#FFFFFF" />
+            
+            <Environment preset="apartment" />
+            
+            <ArchitecturalStructure scrollProgress={scrollYProgress} />
+            
+            <ContactShadows position={[0, -3.5, 0]} opacity={0.5} scale={60} blur={2.5} far={15} color="#8A857D" />
+          </Canvas>
+        )}
       </div>
 
       <div className="max-w-[1400px] mx-auto px-6 relative z-10">

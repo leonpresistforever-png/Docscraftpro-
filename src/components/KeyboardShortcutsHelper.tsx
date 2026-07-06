@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Search, Keyboard, Sparkles, Command, Save, Plus, HelpCircle, HardDrive, Layout, Maximize } from 'lucide-react';
+import { X, Search, Keyboard, Sparkles, Command, Save, Plus, HelpCircle, HardDrive, Layout, Maximize, ChevronDown, ChevronUp } from 'lucide-react';
+import Draggable from 'react-draggable';
 
 interface ShortcutItem {
   keys: string[];
@@ -46,7 +47,9 @@ const EXTENSIVE_SHORTCUTS: ShortcutItem[] = [
 
 export function KeyboardShortcutsHelper() {
   const navigate = useNavigate();
+  const nodeRef = React.useRef(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<'All' | 'Global' | 'Editing' | 'Formatting' | 'AI Assistant' | 'Sovereign Exports'>('All');
@@ -152,16 +155,35 @@ export function KeyboardShortcutsHelper() {
   return (
     <>
       {/* Floating Retro Tactile Action Button (Bottom Right) */}
-      <div className="fixed bottom-6 right-6 z-[99] print:hidden" title="Keyboard Shortcuts &amp; Commands (Cmd + /)">
-        <button 
-          onClick={() => setIsOpen(true)}
-          className="flex items-center gap-2 px-4 py-3 bg-[#FCFAF6] border-2 border-[#D4AF37] hover:border-[#b08d2c] hover:bg-[#FAF6EE] text-amber-900 font-sans font-bold text-xs uppercase tracking-widest rounded-full shadow-lg transition-all transform hover:scale-105 select-none focus:outline-none"
+      {!isMinimized ? (
+        <Draggable nodeRef={nodeRef} cancel=".no-drag">
+          <div ref={nodeRef} className="fixed bottom-6 right-6 z-[99] print:hidden cursor-move flex items-center gap-2" title="Keyboard Shortcuts & Commands (Cmd + /)">
+            <button 
+              onClick={() => setIsMinimized(true)}
+              className="no-drag w-6 h-6 flex items-center justify-center bg-gray-200 text-gray-500 rounded-full hover:bg-gray-300 transition-colors shadow-md"
+              title="Hide shortcuts"
+            >
+              <ChevronDown className="w-4 h-4" />
+            </button>
+            <button 
+              onClick={() => setIsOpen(true)}
+              className="no-drag flex items-center gap-2 px-4 py-3 bg-[#FCFAF6] border-2 border-[#D4AF37] hover:border-[#b08d2c] hover:bg-[#FAF6EE] text-amber-900 font-sans font-bold text-xs uppercase tracking-widest rounded-full shadow-lg transition-all transform hover:scale-105 select-none focus:outline-none"
+            >
+              <Keyboard className="w-4 h-4 text-[#D4AF37] animate-pulse" />
+              <span>Shortcuts</span>
+              <span className="bg-stone-200 text-stone-700 font-mono text-[9px] px-1.5 py-0.5 rounded border border-stone-300">⌘ /</span>
+            </button>
+          </div>
+        </Draggable>
+      ) : (
+        <button
+          onClick={() => setIsMinimized(false)}
+          className="fixed bottom-6 right-6 z-[99] w-8 h-8 flex items-center justify-center bg-stone-800 text-white rounded-full shadow-lg hover:bg-stone-700 transition-all opacity-50 hover:opacity-100 print:hidden"
+          title="Show shortcuts"
         >
-          <Keyboard className="w-4 h-4 text-[#D4AF37] animate-pulse" />
-          <span>Shortcuts</span>
-          <span className="bg-stone-200 text-stone-700 font-mono text-[9px] px-1.5 py-0.5 rounded border border-stone-300">⌘ /</span>
+          <Keyboard className="w-4 h-4" />
         </button>
-      </div>
+      )}
 
       {/* Global Success Save / Notify Toast */}
       <AnimatePresence>

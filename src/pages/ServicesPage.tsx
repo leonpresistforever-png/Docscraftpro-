@@ -8,33 +8,43 @@ import { CheckCircle2, ArrowRight, ShieldCheck, Mail, FileText, Zap, Database } 
 export function ServicesPage() {
   const services = [
     {
-      title: "Real-time AI Document Processing",
-      description: "Convert, edit, and analyze unstructured documents in seconds.",
+      title: "Agent Studio Workspace",
+      description: "An AI-powered development sandbox that writes code, manages files, and creates interactive full-stack applications in the browser using E2B cloud containers.",
       icon: <FileText className="w-6 h-6 text-[#D4AF37]" />,
       benefits: [
-        "Eliminate manual data entry",
-        "Extract critical information accurately",
-        "Export to multiple formats seamlessly"
+        "Live code execution environments",
+        "Multi-agent reasoning capabilities",
+        "Direct export of generated components"
       ]
     },
     {
-      title: "Enterprise Data Governance",
-      description: "Secure workspace environments with HIPAA & SOC2 compliance standards.",
+      title: "Docscraft Pro Canvases",
+      description: "Rich text editing environments featuring interactive components, Markdown support, and embedded document workflows.",
       icon: <ShieldCheck className="w-6 h-6 text-[#D4AF37]" />,
       benefits: [
-        "End-to-end encryption",
-        "Role-based access controls",
-        "Automated compliance reporting"
+        "Seamless offline to online synchronization",
+        "Integration of videos and 3D elements",
+        "Real-time text manipulation and formatting"
       ]
     },
     {
-      title: "Automated Workflow Logic",
-      description: "Build custom logic mappers to route your documents to the right teams.",
+      title: "Offline Scratchpad Engine",
+      description: "A completely local, browser-based note taking system. Your ideas are saved to your device immediately and sync back up when you reconnect.",
+      icon: <Database className="w-6 h-6 text-[#D4AF37]" />,
+      benefits: [
+        "Zero data loss on connection drops",
+        "Instant local storage caching",
+        "Privacy-first offline environment"
+      ]
+    },
+    {
+      title: "AI Document Automation",
+      description: "Leveraging the Gemini API, our platform provides smart text generation, grammar adjustments, and structural outlining directly within your editor.",
       icon: <Zap className="w-6 h-6 text-[#D4AF37]" />,
       benefits: [
-        "Reduce operational bottlenecks",
-        "Visual drag-and-drop builder",
-        "Real-time notifications & alerts"
+        "Smart context-aware text completion",
+        "Tone and structure adjustments",
+        "Instant summarization tools"
       ]
     }
   ];

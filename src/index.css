@@ -4,6 +4,19 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+@media print {
+  body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .print\:hidden,
+  .print\\:hidden,
+  [class*="print:hidden"],
+  .cursor-move {
+    display: none !important;
+  }
+}
+
 @theme {
   --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Lora", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
@@ -48,6 +61,18 @@
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
+  }
+
+  --animate-sheen: sheen 5s infinite;
+  @keyframes sheen {
+    0% { transform: translateX(-200%) skewX(-15deg); }
+    20%, 100% { transform: translateX(300%) skewX(-15deg); }
+  }
+
+  --animate-border-pulse: border-pulse 4s infinite alternate ease-in-out;
+  @keyframes border-pulse {
+    0% { border-color: rgba(255, 255, 255, 0.5); }
+    100% { border-color: var(--dc-gold); }
   }
 
   /* Dust Particles / Explode Expand */
@@ -359,9 +384,8 @@ a[href^="data:application/"],
     print-color-adjust: exact !important;
   }
   
-  mark {
-    background-color: #fef08a !important; /* adjust based on actual highlight color */
-    color: inherit !important;
+  .print\:hidden {
+    display: none !important;
   }
 }
 

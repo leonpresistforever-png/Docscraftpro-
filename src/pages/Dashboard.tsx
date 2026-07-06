@@ -278,7 +278,7 @@ export function Dashboard() {
          resultBlob = await addWatermark(workbenchFile, watermarkText);
          filename = `watermarked_${workbenchFile.name}`;
       } else if (workbenchTool === 'Add Page Numbers') {
-         resultBlob = await addPageNumbers(workbenchFile);
+         resultBlob = await addPageNumbers(workbenchFile, rotationAngle);
          filename = `numbered_${workbenchFile.name}`;
       }
       
@@ -600,11 +600,33 @@ export function Dashboard() {
                   )}
 
                   {workbenchTool === 'Add Page Numbers' && (
-                    <div className="p-3 bg-slate-950/40 border border-slate-850 rounded-xl space-y-1">
-                      <p className="text-xs font-bold text-yellow-500 uppercase tracking-widest">Formatter Node Active</p>
-                      <p className="text-[10px] text-slate-400 leading-relaxed font-sans">
-                        Engine will inject styled footers "Page X of Y" dynamically, matching absolute margins automagically.
+                    <div className="space-y-4">
+                      <label className="text-xs uppercase font-extrabold tracking-wider text-slate-300">Start Page Number</label>
+                      
+                      <div className="flex items-center gap-4 bg-slate-900 border border-slate-800 rounded-xl p-4">
+                         <div className="flex-1">
+                           <input 
+                             type="number" 
+                             min={1}
+                             value={rotationAngle} 
+                             onChange={(e) => setRotationAngle(Math.max(1, parseInt(e.target.value) || 1))}
+                             className="w-full bg-slate-950 border border-slate-700 outline-none font-bold text-sm text-white px-4 py-2 rounded-lg focus:ring-1 focus:ring-yellow-500"
+                           />
+                         </div>
+                         <div className="flex-1 bg-white h-24 rounded shadow-sm relative flex flex-col justify-end pb-2 items-center text-black">
+                             <div className="text-[8px] font-bold border-t border-gray-200 pt-1 w-4/5 text-center">Page {rotationAngle} of X</div>
+                         </div>
+                      </div>
+                      <p className="text-[10px] text-slate-500 leading-normal font-sans">
+                        Select the starting number. Preview shows live placement at the bottom center of pages.
                       </p>
+                      
+                      <div className="p-3 bg-slate-950/40 border border-slate-850 rounded-xl space-y-1">
+                        <p className="text-xs font-bold text-yellow-500 uppercase tracking-widest">Formatter Node Active</p>
+                        <p className="text-[10px] text-slate-400 leading-relaxed font-sans">
+                          Engine will inject styled footers "Page X of Y" dynamically, matching absolute margins automagically.
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>

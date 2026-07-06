@@ -57,6 +57,12 @@ export function SignPDFPage() {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      
+      if (file.type !== "application/pdf") {
+        alert("Please upload a valid PDF file. Images are not supported here.");
+        return;
+      }
+      
       setPdfFile(file);
       setIsProcessing(true);
       
@@ -168,6 +174,10 @@ export function SignPDFPage() {
   const handleSignatureUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      if (!file.type.startsWith('image/')) {
+        alert('Please upload a valid image file (JPG, PNG, WebP, etc).');
+        return;
+      }
       const reader = new FileReader();
       reader.onload = (event) => {
         setSignatureDataUrl(event.target?.result as string);
@@ -180,6 +190,10 @@ export function SignPDFPage() {
   const handleStampUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      if (!file.type.startsWith('image/')) {
+        alert('Please upload a valid image file (JPG, PNG, WebP, etc).');
+        return;
+      }
       const reader = new FileReader();
       reader.onload = (event) => {
         setStampDataUrl(event.target?.result as string);
@@ -578,13 +592,29 @@ export function SignPDFPage() {
                    <button 
                       disabled={currentPage <= 1} 
                       onClick={() => setCurrentPage(p => p - 1)}
-                      className="px-3 py-1 bg-white border border-gray-200 rounded shadow-sm text-sm disabled:opacity-50"
+                      className="px-3 py-1 bg-white border border-gray-200 rounded shadow-sm text-sm disabled:opacity-50 font-medium"
                    >Prev</button>
-                   <span className="text-sm font-medium">Page {currentPage} of {totalPages}</span>
+                   <div className="flex items-center gap-2">
+                     <span className="text-sm font-medium text-gray-500">Page</span>
+                     <input 
+                        type="number" 
+                        min={1} 
+                        max={totalPages || 1} 
+                        value={currentPage}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value);
+                          if (!isNaN(val) && val >= 1 && val <= totalPages) {
+                            setCurrentPage(val);
+                          }
+                        }}
+                        className="w-16 text-center border border-gray-300 rounded px-2 py-1 text-sm font-bold focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                     />
+                     <span className="text-sm font-medium text-gray-500">of {totalPages}</span>
+                   </div>
                    <button 
                       disabled={currentPage >= totalPages} 
                       onClick={() => setCurrentPage(p => p + 1)}
-                      className="px-3 py-1 bg-white border border-gray-200 rounded shadow-sm text-sm disabled:opacity-50"
+                      className="px-3 py-1 bg-white border border-gray-200 rounded shadow-sm text-sm disabled:opacity-50 font-medium"
                    >Next</button>
                 </div>
               </div>

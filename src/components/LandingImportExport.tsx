@@ -155,45 +155,6 @@ export function LandingImportExport() {
             </motion.div>
           </div>
         </div>
-
-        {/* Multi-Format Compilation Engine */}
-        <div className="text-center mb-8">
-          <p className="text-sm font-bold tracking-[0.2em] text-gray-400 uppercase">Multi-Format Compilation Engine</p>
-        </div>
-
-        <motion.div 
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          className="bg-[#111318] rounded-t-[3rem] p-4 pt-12 md:p-12 md:pb-0 relative overflow-hidden"
-        >
-          {/* subtle pattern */}
-          <div className="absolute inset-0 opacity-[0.05]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '24px 24px' }} />
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10 h-64">
-            
-            {/* Native Web */}
-            <div className="bg-[#1C1E24] rounded-t-3xl border border-white/5 flex flex-col items-center justify-center text-center p-8">
-              <div className="flex gap-2 mb-6">
-                <span className="text-xs font-mono text-blue-400">.MD</span>
-                <span className="text-xs font-mono text-gray-500">/</span>
-                <span className="text-xs font-mono text-blue-400">.TEXTBUNDLE</span>
-              </div>
-              <h4 className="text-2xl font-bold text-white mb-3">Native Web</h4>
-              <p className="text-gray-400 text-sm">Full fidelity markdown parsing with metadata tags.</p>
-            </div>
-
-            {/* Print Ready */}
-            <div className="bg-[#1C1E24] rounded-t-3xl border border-white/5 flex flex-col items-center justify-center text-center p-8">
-              <div className="flex gap-2 mb-6">
-                <span className="text-xs font-mono text-emerald-400">.PDF</span>
-              </div>
-              <h4 className="text-2xl font-bold text-white mb-3">Print Ready</h4>
-              <p className="text-gray-400 text-sm">High-definition vector documents with embedded fonts.</p>
-            </div>
-
-          </div>
-        </motion.div>
       </div>
     </div>
   );

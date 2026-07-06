@@ -13,18 +13,17 @@ interface Task {
 export function LandingCalendarTasks() {
   const [selectedDay, setSelectedDay] = useState(22); // June 22, 2026
   const [taskText, setTaskText] = useState('');
-  const [taskTime, setTaskTime] = useState('09:00');
   const [trackingActive, setTrackingActive] = useState(false);
-  const [secondsTracked, setSecondsTracked] = useState(0); 
-  const [activeTask, setActiveTask] = useState<string | null>(null);
-  const [notification, setNotification] = useState<{show: boolean, msg: string}>({show: false, msg: ''});
+  const [secondsTracked, setSecondsTracked] = useState(128); // Real-time ticking stopwatch
+  const [activeTask, setActiveTask] = useState<string | null>("Draft Q3 Creative Milestones");
 
-  const [tasks, setTasks] = useState<Task[]>([]);
-
-  const showNotification = (msg: string) => {
-    setNotification({ show: true, msg });
-    setTimeout(() => setNotification({ show: false, msg: '' }), 3000);
-  };
+  const [tasks, setTasks] = useState<Task[]>([
+    { id: '1', text: "Draft Q3 Creative Milestones", time: "10:00 AM", done: false, date: 22 },
+    { id: '2', text: "Define Vault Architecture Security rules", time: "01:30 PM", done: true, date: 22 },
+    { id: '3', text: "Configure Client local database caching", time: "04:00 PM", done: false, date: 22 },
+    { id: '4', text: "Revamp 3D Cinematic interactive transitions", time: "11:15 AM", done: false, date: 23 },
+    { id: '5', text: "Finalize standard Google sheets integration", time: "03:00 PM", done: true, date: 24 }
+  ]);
 
   // Real-time tracking tick
   useEffect(() => {
@@ -44,9 +43,6 @@ export function LandingCalendarTasks() {
         if (t.text === activeTask && nextState) {
           setTrackingActive(false);
         }
-        if (nextState) {
-          showNotification(`Task completed: ${t.text}`);
-        }
         return { ...t, done: nextState };
       }
       return t;
@@ -56,25 +52,16 @@ export function LandingCalendarTasks() {
   const handleAddTask = (e: React.FormEvent) => {
     e.preventDefault();
     if (!taskText.trim()) return;
-    
-    // Convert 24h to 12h am/pm format for display
-    const [hours, minutes] = taskTime.split(':');
-    const h = parseInt(hours, 10);
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    const displayHour = h % 12 || 12;
-    const formattedTime = `${displayHour.toString().padStart(2, '0')}:${minutes} ${ampm}`;
-
     const newTask: Task = {
       id: Date.now().toString(),
       text: taskText.trim(),
-      time: formattedTime,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       done: false,
       date: selectedDay
     };
     setTasks(prev => [newTask, ...prev]);
     setActiveTask(newTask.text);
     setTaskText('');
-    showNotification(`New task assigned for June ${selectedDay} at ${formattedTime}`);
   };
 
   // Human readable time formatter
@@ -89,22 +76,6 @@ export function LandingCalendarTasks() {
   return (
     <div className="py-20 w-full max-w-7xl mx-auto px-6 md:px-12 relative z-10 selection:bg-amber-600 selection:text-white">
       
-      <AnimatePresence>
-        {notification.show && (
-           <motion.div 
-             initial={{ opacity: 0, y: -20, x: '-50%' }}
-             animate={{ opacity: 1, y: 0, x: '-50%' }}
-             exit={{ opacity: 0, y: -20, x: '-50%' }}
-             className="fixed top-8 left-1/2 z-[100] bg-emerald-50 text-emerald-800 border border-emerald-200 px-6 py-3 rounded-full shadow-lg font-mono text-xs font-bold flex items-center gap-3"
-           >
-             <div className="w-6 h-6 rounded-full bg-emerald-200 flex items-center justify-center text-emerald-800">
-               <Check className="w-4 h-4" />
-             </div>
-             {notification.msg}
-           </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Editorial Decorative Gold Border Separator */}
       <div className="w-full h-px bg-gradient-to-r from-transparent via-amber-300 to-transparent mb-16"></div>
 
@@ -239,18 +210,6 @@ export function LandingCalendarTasks() {
                 placeholder={`Assign new task for June ${selectedDay}...`}
                 className="flex-1 bg-white border border-[#E6DBBD] outline-none rounded-xl px-4 py-2.5 text-xs text-stone-900 placeholder-stone-400 font-sans focus:border-[#b08d2c] focus:ring-1 focus:ring-[#b08d2c] transition-all"
               />
-              <div className="relative group flex items-center justify-center">
-                <input 
-                  type="time" 
-                  value={taskTime}
-                  onChange={e => setTaskTime(e.target.value)}
-                  className="w-28 bg-white border border-[#E6DBBD] outline-none rounded-xl px-2 py-2.5 text-xs text-stone-900 font-mono focus:border-[#b08d2c] focus:ring-1 focus:ring-[#b08d2c] transition-all cursor-pointer opacity-0 absolute inset-0 z-10 w-full h-full"
-                />
-                <div className="w-28 bg-white border border-[#E6DBBD] rounded-xl px-3 py-2.5 text-xs text-stone-900 font-mono font-bold text-center flex items-center justify-center shadow-sm group-hover:border-[#b08d2c] transition-colors relative pointer-events-none">
-                  {taskTime} 
-                  <span className="ml-1 text-[9px] text-gray-400 uppercase tracking-wider block translate-y-[1px]">O'clock</span>
-                </div>
-              </div>
               <button 
                 type="submit"
                 className="px-4 bg-[#b08d2c] hover:bg-[#9a7b26] text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 focus:outline-none active:scale-95 shrink-0"

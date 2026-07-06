@@ -5,7 +5,6 @@ import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { PremiumProvider } from './context/PremiumContext';
 import { LandingPage } from './pages/LandingPage';
-import { AgentStudioPage } from './pages/AgentStudioPage';
 import ModernSpacesPage from './pages/ModernSpacesPage';
 import OrbitalPage from './pages/OrbitalPage';
 import NexusPage from './pages/NexusPage';
@@ -18,8 +17,6 @@ import { ElementStudio } from './pages/ElementStudio';
 import { ChartsLibrary } from './pages/ChartsLibrary';
 import { AuthPage } from './pages/AuthPage';
 import { PreferencesPage } from './pages/PreferencesPage';
-import { AgentStudioContactPage } from './pages/AgentStudioContactPage';
-import { WorkPage } from './pages/WorkPage';
 import { TrashPage } from './pages/TrashPage';
 import { HistoryPage } from './pages/HistoryPage';
 import { SettingsPage } from './pages/SettingsPage';
@@ -108,7 +105,6 @@ function AnimatedRoutes() {
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/agent-studio" element={<AgentStudioPage />} />
         <Route path="/modern-spaces" element={<ModernSpacesPage />} />
         <Route path="/orbital" element={<OrbitalPage />} />
         <Route path="/nexus" element={<NexusPage />} />
@@ -132,9 +128,7 @@ function AnimatedRoutes() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/contact" element={<PageTransition><ContactPage /></PageTransition>} />
         <Route path="/support-form" element={<PageTransition><SupportFormPage /></PageTransition>} />
-        <Route path="/agent-studio-contact" element={<PageTransition><AgentStudioContactPage /></PageTransition>} />
         <Route path="/services" element={<ServicesPage />} />
-        <Route path="/work" element={<WorkPage />} />
         <Route path="/disclaimer" element={<DisclaimerPage />} />
         <Route path="/faq" element={<FAQPage />} />
         <Route path="/api" element={<Navigate to="/" replace />} />

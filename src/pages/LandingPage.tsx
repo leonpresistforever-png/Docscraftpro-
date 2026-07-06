@@ -196,8 +196,11 @@ export function LandingPage() {
         {/* Top Text Block */}
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
-          animate={isLoaded ? { opacity: 1, y: 0 } : {}}
-          transition={{ opacity: { duration: 0.8, ease: "easeOut" } }}
+          animate={isLoaded ? { opacity: 1, y: [0, -10, 0] } : {}}
+          transition={{ 
+            opacity: { duration: 0.8, ease: "easeOut" },
+            y: { duration: 6, repeat: Infinity, ease: "easeInOut", delay: 0.5 }
+          }}
           className="flex flex-col lg:flex-row justify-between items-start mb-24 gap-12"
         >
           {/* Custom 3D Logo Section */}
@@ -267,7 +270,7 @@ export function LandingPage() {
                       <div className="flex items-center gap-2 text-gray-600 text-sm px-2 py-1.5 hover:bg-gray-200/50 rounded-md"><Folder className="w-3.5 h-3.5"/> Marketing 2026</div>
                       <div className="flex items-center gap-2 text-gray-600 text-sm px-2 py-1.5 hover:bg-gray-200/50 rounded-md"><Folder className="w-3.5 h-3.5"/> Personal Notes</div>
                    </div>
-                   <img loading="lazy" width="600" height="400" src="https://images.unsplash.com/photo-1618761714954-0b8cd0026356?q=80&w=600&auto=format&fit=crop" className="mt-auto rounded-lg shadow-sm border border-gray-200/50 mix-blend-multiply opacity-80" alt="Sidebar decorative"/>
+                   <img src="https://images.unsplash.com/photo-1618761714954-0b8cd0026356?q=80&w=600&auto=format&fit=crop" className="mt-auto rounded-lg shadow-sm border border-gray-200/50 mix-blend-multiply opacity-80" alt="Sidebar decorative"/>
                 </div>
                 {/* Main Content Area */}
                 <div className="flex-1 bg-white p-12 relative flex justify-end flex-col">
@@ -276,15 +279,15 @@ export function LandingPage() {
                      <h3 className="text-2xl font-serif font-bold text-gray-800">Getting Started <span className="px-2 py-0.5 ml-2 bg-rose-100 text-rose-600 text-[10px] rounded-full uppercase tracking-wider font-bold align-middle">New</span></h3>
                      <div className="flex gap-2">
                        <div className="w-8 h-8 rounded-full border border-gray-200 bg-white shadow-sm overflow-hidden">
-                         <img loading="lazy" width="200" height="200" src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=200&auto=format&fit=crop" className="w-full h-full object-cover" alt="User portrait profile" />
+                         <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=200&auto=format&fit=crop" className="w-full h-full object-cover" />
                        </div>
                        <button className="bg-blue-600 text-white text-xs font-bold px-3 rounded-md shadow flex items-center gap-1">Share</button>
                      </div>
                    </div>
                    <div className="grid grid-cols-2 gap-6 h-[400px]">
                       <div className="col-span-1 rounded-xl bg-gray-50 border border-gray-100 p-6 flex flex-col shadow-sm relative overflow-hidden">
-                        <img loading="lazy" width="800" height="400" src="https://images.unsplash.com/photo-1581287053822-fd7bf4f4bfec?q=80&w=800&auto=format&fit=crop" className="absolute top-0 right-0 w-full h-32 object-cover opacity-30 mix-blend-overlay" alt="Abstract background overlay" />
-                        <h3 className="font-bold mb-2">Beautiful Code Snippets</h3>
+                        <img src="https://images.unsplash.com/photo-1581287053822-fd7bf4f4bfec?q=80&w=800&auto=format&fit=crop" className="absolute top-0 right-0 w-full h-32 object-cover opacity-30 mix-blend-overlay" />
+                        <h4 className="font-bold mb-2">Beautiful Code Snippets</h4>
                         <p className="text-xs text-gray-500 mb-4">Paste your code and let our AI format it beautifully with syntax highlighting.</p>
                         <div className="bg-gray-900 rounded-lg p-4 mt-auto shadow-inner text-blue-300 font-mono text-[10px]">
                            <div><span className="text-purple-400">const</span> <span className="text-yellow-200">generate</span> = () =&gt; {'{'}</div>
@@ -293,10 +296,10 @@ export function LandingPage() {
                         </div>
                       </div>
                       <div className="col-span-1 border border-gray-200/60 rounded-xl overflow-hidden shadow-sm flex items-center justify-center relative">
-                         <img loading="lazy" width="800" height="400" src="https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=800&auto=format&fit=crop" className="w-full h-full object-cover" alt="Coding workspace" />
+                         <img src="https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=800&auto=format&fit=crop" className="w-full h-full object-cover" />
                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                          <div className="absolute bottom-4 left-4 right-4">
-                            <h3 className="text-white font-bold text-sm mb-1">Collaborative Workspace</h3>
+                            <h4 className="text-white font-bold text-sm mb-1">Collaborative Workspace</h4>
                             <p className="text-white/70 text-[10px]">Your team, completely in sync.</p>
                          </div>
                       </div>
@@ -350,7 +353,7 @@ export function LandingPage() {
                      <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center shadow-sm font-bold mb-3 relative z-10">
                        <FileText className="w-5 h-5"/>
                      </div>
-                     <h3 className="font-bold text-gray-900 mb-1 text-lg relative z-10">Museums visit</h3>
+                     <h4 className="font-bold text-gray-900 mb-1 text-lg relative z-10">Museums visit</h4>
                      <div className="space-y-2 mt-4 relative z-10">
                        <div className="flex items-center gap-3">
                          <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
@@ -370,10 +373,10 @@ export function LandingPage() {
                    </div>
 
                    <div className="bg-gradient-to-br from-gray-900 to-gray-800 p-5 rounded-3xl border border-gray-700 shadow-lg text-white">
-                     <h3 className="font-bold text-white text-lg mb-1 flex justify-between items-center">
+                     <h4 className="font-bold text-white text-lg mb-1 flex justify-between items-center">
                         Weekend Trip
                         <Sparkles className="w-4 h-4 text-yellow-400" />
-                     </h3>
+                     </h4>
                      <p className="text-xs text-gray-300 mb-4 line-clamp-3 leading-relaxed mt-2 font-medium">Friday Night: drop off our bags at the hotel, stretch our legs with a stroll around Vienna's historic center to get a feel for the city.</p>
                      <div className="flex gap-2">
                        <span className="px-2 py-1 bg-white/10 rounded-md text-[10px] font-bold">TRAVEL</span>
@@ -382,7 +385,7 @@ export function LandingPage() {
                    </div>
                    
                    <div className="bg-white p-5 rounded-3xl border border-gray-100 min-h-[260px] flex flex-col shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative">
-                     <h3 className="font-bold text-gray-900 mb-4 text-lg">Reading list</h3>
+                     <h4 className="font-bold text-gray-900 mb-4 text-lg">Reading list</h4>
                      <div className="flex items-center gap-3 mb-4 bg-white/60 p-2 rounded-xl">
                         <div className="w-10 h-10 bg-rose-400/80 rounded-lg shrink-0"></div>
                         <div>
@@ -489,9 +492,9 @@ export function LandingPage() {
 
                             <div className="bg-white border border-gray-200 p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-shadow">
                                 <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
-                                    <h3 className="font-bold text-xl text-gray-900 flex items-center gap-2">
+                                    <h4 className="font-bold text-xl text-gray-900 flex items-center gap-2">
                                       <CheckCircle className="w-5 h-5 text-gray-400"/> Team Tasks
-                                    </h3>
+                                    </h4>
                                     <div className="flex -space-x-3">
                                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 border-2 border-white shadow-sm flex items-center justify-center text-white text-xs font-black font-sans">TM</div>
                                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-400 to-rose-600 border-2 border-white shadow-sm flex items-center justify-center text-white text-xs font-black font-sans relative z-10">AL</div>
@@ -636,8 +639,8 @@ export function LandingPage() {
 
           {/* Quote Section */}
           <div className="py-24 max-w-4xl mx-auto text-center px-4 mb-20 bg-white/50 backdrop-blur-md rounded-3xl border border-gray-100 shadow-xl">
-             <img loading="lazy" width="100" height="100" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=300&auto=format&fit=crop" alt="User Profile" className="w-24 h-24 rounded-full mx-auto mb-6 object-cover shadow-md border-4 border-white" />
-             <p className="font-semibold text-gray-600 mb-8 text-xl">Jacob</p>
+             <img src="https://i.pravatar.cc/150?u=tom" alt="Tom" className="w-24 h-24 rounded-full mx-auto mb-6 object-cover shadow-md border-4 border-white" />
+             <p className="font-semibold text-gray-600 mb-8 text-xl">Tom</p>
              <h2 className="text-3xl md:text-5xl font-serif italic text-gray-900 leading-[1.3] px-10">
                "Publishing directly from Docscraft Pro just feels natural &mdash; it's where I write, so it makes sense to share from there too."
              </h2>
@@ -666,7 +669,7 @@ export function LandingPage() {
         {/* Existing sections wrapper end */}
 
         {/* Central Button & Robot Container */}
-        <div className="flex flex-col items-center justify-center relative min-h-[500px] mb-32 mt-20 z-40">
+        <div className="flex flex-col items-center justify-center relative min-h-[500px] mb-32 z-30">
            
            {/* Background Floating Elements */}
            <FloatingElements onExamine={handleExamine} onRelease={handleReleaseExamine} />
@@ -676,7 +679,7 @@ export function LandingPage() {
              initial={{ opacity: 0, scale: 0, y: 150 }}
              animate={isLoaded ? { opacity: 1, scale: 1, y: 0 } : {}}
              transition={{ type: "spring", damping: 15, delay: 0.6 }}
-             className="absolute z-[100] transform translate-x-[110px] md:translate-x-[220px] -translate-y-[120px] md:-translate-y-[110px] scale-[0.65] md:scale-[0.9] origin-bottom pointer-events-auto"
+             className="absolute z-40 transform translate-x-[110px] md:translate-x-[220px] -translate-y-[120px] md:-translate-y-[110px] scale-[0.65] md:scale-[0.9] origin-bottom pointer-events-auto"
            >
              <RobotCompanion isActionTriggered={isFlipping} onFlipComplete={finishLaunch} />
            </motion.div>
@@ -802,78 +805,70 @@ export function LandingPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
             <motion.div 
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0, scale: 1.05 }}
-              viewport={{ once: false, margin: "-100px" }}
-              transition={{ duration: 0.5, type: 'spring', bounce: 0.4 }}
-              className="bg-white/80 backdrop-blur-xl p-8 rounded-[2rem] border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-2xl transition-all min-h-[340px] flex flex-col relative overflow-hidden group"
+              whileHover={{ y: -8, scale: 1.02 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+              className="bg-white p-8 rounded-[2rem] border border-[#E4DBC5] shadow-xs hover:shadow-xl hover:border-[#D4AF37]/50 transition-all min-h-[340px] flex flex-col relative overflow-hidden group"
             >
-               <div className="absolute inset-0 bg-gradient-to-br from-amber-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-               <div className="w-14 h-14 bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl flex items-center justify-center mb-6 text-white shadow-lg shadow-amber-500/30 shrink-0 relative z-10 group-hover:scale-110 transition-transform">
+               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-amber-100 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-bl-full"></div>
+               <div className="w-14 h-14 bg-amber-50 border border-amber-100 rounded-2xl flex items-center justify-center mb-6 text-amber-600 shadow-sm shrink-0 relative z-10">
                  <Shield className="w-7 h-7" />
                </div>
                <h3 className="text-xl font-black uppercase text-gray-900 mb-4 tracking-tight relative z-10">Legal & Contracts</h3>
-               <p className="text-gray-600 text-sm leading-relaxed mb-6 flex-grow relative z-10 font-medium">Generate NDAs, vendor agreements, and essential contracts confidently. Apply offline editing controls and review historical versions effortlessly. Keep track of complex clauses, format legal terminology precisely, and ensure your confidential drafts remain perfectly structured across infinite revisions.</p>
+               <p className="text-gray-600 text-sm leading-relaxed mb-6 flex-grow relative z-10">Generate NDAs, vendor agreements, and essential contracts confidently. Apply offline editing controls and review historical versions effortlessly.</p>
                <ul className="space-y-3 relative z-10">
-                 <li className="flex items-center gap-3 text-sm text-gray-800 font-bold"><CheckCircle className="w-5 h-5 text-amber-500"/> Deep Offline Privacy</li>
-                 <li className="flex items-center gap-3 text-sm text-gray-800 font-bold"><CheckCircle className="w-5 h-5 text-amber-500"/> PDF Archiving Output</li>
+                 <li className="flex items-center gap-3 text-sm text-gray-700 font-medium"><CheckCircle className="w-5 h-5 text-[#D4AF37]"/> Deep Offline Privacy</li>
+                 <li className="flex items-center gap-3 text-sm text-gray-700 font-medium"><CheckCircle className="w-5 h-5 text-[#D4AF37]"/> PDF Archiving Output</li>
                </ul>
             </motion.div>
             
             <motion.div 
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0, scale: 1.05 }}
-              viewport={{ once: false, margin: "-100px" }}
-              transition={{ duration: 0.5, delay: 0.1, type: 'spring', bounce: 0.4 }}
-              className="bg-white/80 backdrop-blur-xl p-8 rounded-[2rem] border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-2xl transition-all min-h-[340px] flex flex-col relative overflow-hidden group"
+              whileHover={{ y: -8, scale: 1.02 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+              className="bg-white p-8 rounded-[2rem] border border-[#E4DBC5] shadow-xs hover:shadow-xl hover:border-blue-400/50 transition-all min-h-[340px] flex flex-col relative overflow-hidden group"
             >
-               <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-               <div className="w-14 h-14 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center mb-6 text-white shadow-lg shadow-blue-500/30 shrink-0 relative z-10 group-hover:scale-110 transition-transform">
+               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-blue-100 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-bl-full"></div>
+               <div className="w-14 h-14 bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-center mb-6 text-blue-600 shadow-sm shrink-0 relative z-10">
                  <Database className="w-7 h-7" />
                </div>
                <h3 className="text-xl font-black uppercase text-gray-900 mb-4 tracking-tight relative z-10">Technical Documentation</h3>
-               <p className="text-gray-600 text-sm leading-relaxed mb-6 flex-grow relative z-10 font-medium">Build developer manuals, structural references, and engineering blueprints right next to your codebase with embedded diagram tools. Organize expansive knowledge bases, maintain hierarchical outlines for massive API documentation, and seamlessly structure deep technical concepts with perfect typographical clarity.</p>
+               <p className="text-gray-600 text-sm leading-relaxed mb-6 flex-grow relative z-10">Build developer manuals, structural references, and engineering blueprints right next to your codebase with embedded diagram tools.</p>
                <ul className="space-y-3 relative z-10">
-                 <li className="flex items-center gap-3 text-sm text-gray-800 font-bold"><CheckCircle className="w-5 h-5 text-blue-500"/> Synchronized Blocks</li>
-                 <li className="flex items-center gap-3 text-sm text-gray-800 font-bold"><CheckCircle className="w-5 h-5 text-blue-500"/> Mermaid Diagrams</li>
+                 <li className="flex items-center gap-3 text-sm text-gray-700 font-medium"><CheckCircle className="w-5 h-5 text-blue-500"/> Synchronized Blocks</li>
+                 <li className="flex items-center gap-3 text-sm text-gray-700 font-medium"><CheckCircle className="w-5 h-5 text-blue-500"/> Mermaid Diagrams</li>
                </ul>
             </motion.div>
             
             <motion.div 
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0, scale: 1.05 }}
-              viewport={{ once: false, margin: "-100px" }}
-              transition={{ duration: 0.5, delay: 0.2, type: 'spring', bounce: 0.4 }}
-              className="bg-white/80 backdrop-blur-xl p-8 rounded-[2rem] border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-2xl transition-all min-h-[340px] flex flex-col relative overflow-hidden group"
+              whileHover={{ y: -8, scale: 1.02 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+              className="bg-white p-8 rounded-[2rem] border border-[#E4DBC5] shadow-xs hover:shadow-xl hover:border-emerald-400/50 transition-all min-h-[340px] flex flex-col relative overflow-hidden group"
             >
-               <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-               <div className="w-14 h-14 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-2xl flex items-center justify-center mb-6 text-white shadow-lg shadow-emerald-500/30 shrink-0 relative z-10 group-hover:scale-110 transition-transform">
+               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-emerald-100 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-bl-full"></div>
+               <div className="w-14 h-14 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center justify-center mb-6 text-emerald-600 shadow-sm shrink-0 relative z-10">
                  <UserCheck className="w-7 h-7" />
                </div>
                <h3 className="text-xl font-black uppercase text-gray-900 mb-4 tracking-tight relative z-10">HR & Onboarding</h3>
-               <p className="text-gray-600 text-sm leading-relaxed mb-6 flex-grow relative z-10 font-medium">Draft offer letters, employee directories, and performance schedules with rich formatting options that print beautifully. Standardize corporate communication, build extensive onboarding guides, and craft professional internal memos that align flawlessly with your organizational standards.</p>
+               <p className="text-gray-600 text-sm leading-relaxed mb-6 flex-grow relative z-10">Draft offer letters, employee directories, and performance schedules with rich formatting options that print beautifully.</p>
                <ul className="space-y-3 relative z-10">
-                 <li className="flex items-center gap-3 text-sm text-gray-800 font-bold"><CheckCircle className="w-5 h-5 text-emerald-500"/> Rich Typography</li>
-                 <li className="flex items-center gap-3 text-sm text-gray-800 font-bold"><CheckCircle className="w-5 h-5 text-emerald-500"/> Table Generators</li>
+                 <li className="flex items-center gap-3 text-sm text-gray-700 font-medium"><CheckCircle className="w-5 h-5 text-emerald-500"/> Rich Typography</li>
+                 <li className="flex items-center gap-3 text-sm text-gray-700 font-medium"><CheckCircle className="w-5 h-5 text-emerald-500"/> Table Generators</li>
                </ul>
             </motion.div>
 
             <motion.div 
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0, scale: 1.05 }}
-              viewport={{ once: false, margin: "-100px" }}
-              transition={{ duration: 0.5, delay: 0.3, type: 'spring', bounce: 0.4 }}
-              className="bg-white/80 backdrop-blur-xl p-8 rounded-[2rem] border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-2xl transition-all min-h-[340px] flex flex-col relative overflow-hidden group"
+              whileHover={{ y: -8, scale: 1.02 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+              className="bg-white p-8 rounded-[2rem] border border-[#E4DBC5] shadow-xs hover:shadow-xl hover:border-orange-400/50 transition-all min-h-[340px] flex flex-col relative overflow-hidden group"
             >
-               <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-               <div className="w-14 h-14 bg-gradient-to-br from-orange-400 to-orange-600 rounded-2xl flex items-center justify-center mb-6 text-white shadow-lg shadow-orange-500/30 shrink-0 relative z-10 group-hover:scale-110 transition-transform">
+               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-orange-100 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-bl-full"></div>
+               <div className="w-14 h-14 bg-orange-50 border border-orange-100 rounded-2xl flex items-center justify-center mb-6 text-orange-600 shadow-sm shrink-0 relative z-10">
                  <PenTool className="w-7 h-7" />
                </div>
                <h3 className="text-xl font-black uppercase text-gray-900 mb-4 tracking-tight relative z-10">Creative Content & Strategy</h3>
-               <p className="text-gray-600 text-sm leading-relaxed mb-6 flex-grow relative z-10 font-medium">Brainstorm marketing campaigns, outline detailed research papers, and maintain structural consistency across massive content projects. Keep your narrative flowing without distraction, break down complex storyboards, and organize expansive volumes of research notes in a clean, distraction-free creative vault.</p>
+               <p className="text-gray-600 text-sm leading-relaxed mb-6 flex-grow relative z-10">Brainstorm marketing campaigns, outline detailed research papers, and maintain structural consistency across massive content projects.</p>
                <ul className="space-y-3 relative z-10">
-                 <li className="flex items-center gap-3 text-sm text-gray-800 font-bold"><CheckCircle className="w-5 h-5 text-orange-500"/> Docscraft Pro Workspaces</li>
-                 <li className="flex items-center gap-3 text-sm text-gray-800 font-bold"><CheckCircle className="w-5 h-5 text-orange-500"/> Outline Structuring</li>
+                 <li className="flex items-center gap-3 text-sm text-gray-700 font-medium"><CheckCircle className="w-5 h-5 text-orange-500"/> Interactive Canvases</li>
+                 <li className="flex items-center gap-3 text-sm text-gray-700 font-medium"><CheckCircle className="w-5 h-5 text-orange-500"/> Outline Structuring</li>
                </ul>
             </motion.div>
           </div>
@@ -951,7 +946,7 @@ export function LandingPage() {
       <section className="py-32 bg-[#FAF9F6] relative z-10 border-b border-[#E4DBC5]">
         <div className="max-w-[1400px] mx-auto px-6">
           <div className="text-center mb-24">
-             <span className="text-[#D4AF37] font-bold tracking-widest uppercase text-xs mb-4 block">ENTERPRISE READY</span>
+             <span className="text-[#D4AF37] font-bold tracking-widest uppercase text-xs mb-4 block">Interactive Architecture</span>
              <h2 className="text-4xl md:text-6xl font-black mb-6 uppercase tracking-tight text-[#1a1a1a]">Built for Scale.</h2>
              <p className="text-gray-500 font-sans text-xl max-w-3xl mx-auto">Seamlessly organize massive documentation hubs with our sticky intelligent routing and beautifully structured lengthy cards.</p>
           </div>
@@ -959,10 +954,11 @@ export function LandingPage() {
           <div className="flex flex-col lg:flex-row gap-16 relative items-start">
              {/* Sticky Sidebar */}
              <div className="w-full lg:w-1/4 lg:sticky lg:top-32 flex flex-col gap-4 font-sans border-r border-[#E4DBC5] pr-8 hidden md:flex">
-                <h3 className="font-bold text-xs uppercase tracking-widest text-gray-400 mb-4">Documentation Hub</h3>
+                <h4 className="font-bold text-xs uppercase tracking-widest text-gray-400 mb-4">Documentation Hub</h4>
                 
                 {[
                   { title: "Core Principles", subtitle: "Foundation of Docscraft" },
+                  { title: "Security Layers", subtitle: "Enterprise-grade protection" },
                   { title: "API Integration", subtitle: "Headless content delivery" },
                   { title: "Export Engine", subtitle: "Multi-format generation" }
                 ].map((item, i) => (
@@ -985,6 +981,12 @@ export function LandingPage() {
                     tag: "FOUNDATION",
                     content: "Every document crafted on our platform adheres to strict typography constraints and pristine padding rules. We believe that constraints breed creativity. By locking down the foundational UI, your team can focus entirely on writing brilliant, structural content without fighting formatting glitches.",
                     imgUrl: "https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&q=80&w=800"
+                  },
+                  {
+                    title: "Advanced Security Layers",
+                    tag: "ENTERPRISE",
+                    content: "Your data is encapsulated within mathematically secure boundaries. From the moment you type a keystroke, it is encrypted locally before being synchronized to the cloud. We utilize SOC-2 compliant infrastructure to ensure your most critical legal and technical documents remain entirely private.",
+                    imgUrl: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=800"
                   },
                   {
                     title: "Headless Content APIs",
@@ -1021,7 +1023,7 @@ export function LandingPage() {
                      </div>
                      <div className="w-full md:w-5/12 h-[300px] shrink-0 rounded-[1.5rem] overflow-hidden border border-[#E4DBC5] relative z-10 group-hover:border-[#D4AF37]/40 transition-colors">
                         <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors z-10"></div>
-                        <img loading="lazy" src={card.imgUrl} alt={card.title} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700 blur-[2px] group-hover:blur-0" />
+                        <img src={card.imgUrl} alt={card.title} className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700 blur-[2px] group-hover:blur-0" />
                      </div>
                    </motion.div>
                 ))}
@@ -1034,45 +1036,6 @@ export function LandingPage() {
       <section className="bg-[#0a0a0a] text-white py-32 relative overflow-hidden">
          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-[#D4AF37]/10 to-transparent rounded-full blur-[100px] pointer-events-none"></div>
          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-blue-900/20 to-transparent rounded-full blur-[80px] pointer-events-none"></div>
-         
-         {/* String Waves Animation */}
-         <div className="absolute inset-0 z-0 opacity-30 pointer-events-none overflow-hidden flex items-center justify-center">
-            <svg className="w-full h-full min-w-[2000px]" viewBox="0 0 1000 200" preserveAspectRatio="none">
-               <motion.path 
-                  d="M0,100 C150,200 350,0 500,100 C650,200 850,0 1000,100 L1000,200 L0,200 Z" 
-                  fill="url(#waveGrad1)"
-                  animate={{ d: ["M0,100 C150,200 350,0 500,100 C650,200 850,0 1000,100 L1000,200 L0,200 Z", "M0,100 C150,0 350,200 500,100 C650,0 850,200 1000,100 L1000,200 L0,200 Z", "M0,100 C150,200 350,0 500,100 C650,200 850,0 1000,100 L1000,200 L0,200 Z"] }}
-                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-               />
-               <motion.path 
-                  d="M0,100 C200,0 300,200 500,100 C700,0 800,200 1000,100 L1000,200 L0,200 Z" 
-                  fill="url(#waveGrad2)"
-                  animate={{ d: ["M0,100 C200,0 300,200 500,100 C700,0 800,200 1000,100 L1000,200 L0,200 Z", "M0,100 C200,200 300,0 500,100 C700,200 800,0 1000,100 L1000,200 L0,200 Z", "M0,100 C200,0 300,200 500,100 C700,0 800,200 1000,100 L1000,200 L0,200 Z"] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-               />
-               <motion.path 
-                  d="M0,100 C100,200 400,0 500,100 C600,200 900,0 1000,100 L1000,200 L0,200 Z" 
-                  fill="url(#waveGrad3)"
-                  animate={{ d: ["M0,100 C100,200 400,0 500,100 C600,200 900,0 1000,100 L1000,200 L0,200 Z", "M0,100 C100,0 400,200 500,100 C600,0 900,200 1000,100 L1000,200 L0,200 Z", "M0,100 C100,200 400,0 500,100 C600,200 900,0 1000,100 L1000,200 L0,200 Z"] }}
-                  transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-               />
-               <defs>
-                 <linearGradient id="waveGrad1" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#8B5CF6" stopOpacity="0.4" />
-                    <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.1" />
-                 </linearGradient>
-                 <linearGradient id="waveGrad2" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#EC4899" stopOpacity="0.3" />
-                    <stop offset="100%" stopColor="#8B5CF6" stopOpacity="0.1" />
-                 </linearGradient>
-                 <linearGradient id="waveGrad3" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#10B981" stopOpacity="0.2" />
-                    <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.1" />
-                 </linearGradient>
-               </defs>
-            </svg>
-         </div>
-
          <div className="max-w-[1400px] mx-auto px-6 relative z-10 text-center flex flex-col items-center">
             <span className="text-[#D4AF37] font-bold tracking-widest uppercase text-xs mb-6 block border border-[#D4AF37]/30 px-4 py-1.5 rounded-full">The Next Chapter</span>
             <h2 className="text-5xl md:text-7xl font-black mb-8 uppercase tracking-tight font-serif text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.1)]">
@@ -1081,9 +1044,9 @@ export function LandingPage() {
             <p className="text-gray-400 text-xl max-w-2xl leading-relaxed mb-12">
               Transform your workflows with unparalleled reliability, offline privacy, and limitless integrations. Your best work awaits.
             </p>
-            <Link to="/agent-studio" className="bg-white text-black px-10 py-5 rounded-full text-xl font-bold hover:scale-105 transition-transform shadow-[0_0_30px_rgba(255,255,255,0.2)]">
+            <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="bg-white text-black px-10 py-5 rounded-full text-xl font-bold hover:scale-105 transition-transform shadow-[0_0_30px_rgba(255,255,255,0.2)]">
               Start Building Now
-            </Link>
+            </button>
          </div>
       </section>
 
@@ -1091,6 +1054,12 @@ export function LandingPage() {
         <LandingRevolutionizeWorkflow />
         <LandingModernSpaces />
         <LandingNexus />
+        <div className="flex justify-center pb-24 relative z-20">
+          <Link to="/nexus" className="bg-white text-gray-900 border border-gray-200 px-8 py-4 rounded-full font-bold shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1 transition-all flex items-center gap-3">
+             View Full Nexus Experience
+             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </Link>
+        </div>
       </div>
 
       <SEOBoost />
@@ -1102,14 +1071,6 @@ export function LandingPage() {
 
 function FloatingElements({ onExamine, onRelease }: { onExamine: (title: string, desc: string, extra?: string[]) => void, onRelease: () => void }) {
   const [activePopup, setActivePopup] = useState<number | null>(null);
-
-  React.useEffect(() => {
-    const handleScroll = () => {
-      if (activePopup !== null) setActivePopup(null);
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [activePopup]);
 
   const descriptions = [
     { 
@@ -1185,17 +1146,17 @@ function FloatingElements({ onExamine, onRelease }: { onExamine: (title: string,
           padding: '2px'
         }}
       >
-        <div className="w-full h-full bg-white/80 backdrop-blur-xl p-4 rounded-[14px]">
+        <div className="w-full h-full bg-white p-4 rounded-[14px]">
           <div className="text-[9px] font-bold tracking-wider mb-3 text-gray-500 uppercase">Datagram Flow document</div>
           <div className="flex flex-col items-center gap-2">
-            <div className="w-16 h-6 bg-green-100/80 rounded-md border border-green-200"></div>
+            <div className="w-16 h-6 bg-green-100 rounded-md border border-green-200"></div>
             <div className="h-4 w-[1px] bg-gray-300"></div>
-            <div className="w-24 h-8 bg-blue-50/80 rounded-md border border-blue-200 flex items-center justify-center px-2">
+            <div className="w-24 h-8 bg-blue-50 rounded-md border border-blue-200 flex items-center justify-center px-2">
                <div className="h-1.5 w-full bg-blue-200 rounded-full"></div>
             </div>
             <div className="flex w-full justify-center gap-4 mt-1">
-               <div className="w-16 h-8 bg-[#FDF0D5]/80 transform -skew-x-12 border border-[#F4E091] mt-2"></div>
-               <div className="w-16 h-8 bg-purple-50/80 rounded border border-purple-200 mt-6"></div>
+               <div className="w-16 h-8 bg-[#FDF0D5] transform -skew-x-12 border border-[#F4E091] mt-2"></div>
+               <div className="w-16 h-8 bg-purple-50 rounded border border-purple-200 mt-6"></div>
             </div>
           </div>
         </div>
@@ -1203,8 +1164,8 @@ function FloatingElements({ onExamine, onRelease }: { onExamine: (title: string,
 
       <motion.div 
         animate={activePopup === 1 
-          ? { scale: 1.28, rotate: 1, zIndex: 40, y: -10 }
-          : { y: [20, -10, 20], rotate: [4, -2, 4], scale: 1, zIndex: 10 }
+          ? { scale: 1.28, rotate: 1, zIndex: 120, y: -10 }
+          : { y: [20, -10, 20], rotate: [4, -2, 4], scale: 1 }
         }
         transition={activePopup === 1 
           ? { type: 'spring', stiffness: 350, damping: 20 }
@@ -1221,8 +1182,8 @@ function FloatingElements({ onExamine, onRelease }: { onExamine: (title: string,
           padding: '2px'
         }}
       >
-        <div className="w-full h-full bg-[#1A1A1A]/80 backdrop-blur-xl p-5 rounded-[14px]">
-          <div className="flex items-center justify-between mb-4 border-b border-[#333]/50 pb-3">
+        <div className="w-full h-full bg-[#1A1A1A] p-5 rounded-[14px]">
+          <div className="flex items-center justify-between mb-4 border-b border-[#332] pb-3">
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
               <span className="text-[10px] font-mono text-amber-400 tracking-wider font-bold">WORKSPACE DIRECTORY</span>
@@ -1238,8 +1199,8 @@ function FloatingElements({ onExamine, onRelease }: { onExamine: (title: string,
 
       <motion.div 
         animate={activePopup === 2 
-          ? { scale: 1.28, rotate: -1, zIndex: 40, y: -10 }
-          : { y: [-5, 10, -5], rotate: [-4, 4, -4], scale: 1, zIndex: 10 }
+          ? { scale: 1.28, rotate: -1, zIndex: 120, y: -10 }
+          : { y: [-5, 10, -5], rotate: [-4, 4, -4], scale: 1 }
         }
         transition={activePopup === 2 
           ? { type: 'spring', stiffness: 350, damping: 20 }
@@ -1256,7 +1217,7 @@ function FloatingElements({ onExamine, onRelease }: { onExamine: (title: string,
           padding: '2px'
         }}
       >
-        <div className="w-full h-full bg-white/80 backdrop-blur-xl p-5 rounded-[20px]">
+        <div className="w-full h-full bg-white p-5 rounded-[20px]">
           <div className="text-[14px] font-bold mb-2">document examined</div>
           <div className="text-[10px] text-gray-500 mb-3 border-b border-gray-100 pb-2">The core initializations (ogvecter)</div>
           <div className="font-mono text-[11px] leading-relaxed space-y-2 relative">
@@ -1268,7 +1229,7 @@ function FloatingElements({ onExamine, onRelease }: { onExamine: (title: string,
              
              {/* Fake Magnifying Glass overlaying text */}
              <div className="absolute right-[-40px] bottom-[-40px] w-36 h-36 border-none">
-               <div className="absolute top-0 right-0 w-24 h-24 rounded-full border-[6px] border-[#333]/80 bg-[#EAEAEA]/60 backdrop-blur-sm shadow-[inset_0_4px_10px_white,0_10px_20px_rgba(0,0,0,0.2)]">
+               <div className="absolute top-0 right-0 w-24 h-24 rounded-full border-[6px] border-[#333] bg-[#EAEAEA]/80 backdrop-blur-[2px] shadow-[inset_0_4px_10px_white,0_10px_20px_rgba(0,0,0,0.2)]">
                  <div className="absolute inset-2 rounded-full border border-white/50 bg-gradient-to-tr from-white/10 to-white/60"></div>
                </div>
                <div className="absolute top-[80px] right-[70px] w-4 h-16 bg-gradient-to-b from-[#333] to-[#111] rotate-[45deg] rounded-b-lg border border-[#555] shadow-lg origin-top"></div>

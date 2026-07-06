@@ -1,4 +1,3 @@
-import { Footer } from "../components/layout/Footer";
 import React, { useState, useEffect } from 'react';
 import { Navbar } from '../components/layout/Navbar';
 import { useAuth } from '../context/AuthContext';

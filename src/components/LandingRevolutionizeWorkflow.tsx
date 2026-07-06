@@ -1,6 +1,6 @@
-import React, { useRef, useState } from 'react';
-import { motion, useScroll, useTransform, useInView, AnimatePresence, useMotionValue, useSpring } from 'motion/react';
-import { BarChart3, Share2, Settings, X } from 'lucide-react';
+import React, { useRef } from 'react';
+import { motion, useScroll, useTransform } from 'motion/react';
+import { BarChart3, Share2, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Float, Environment, ContactShadows, OrthographicCamera } from '@react-three/drei';
@@ -8,19 +8,12 @@ import * as THREE from 'three';
 
 function FloatingShapes({ scrollProgress }: { scrollProgress: any }) {
   const group = useRef<any>(null);
-  const cubeMaterialRef = useRef<any>(null);
   
   useFrame((state) => {
     if (group.current) {
       const scrollValue = scrollProgress ? scrollProgress.get() : 0;
       group.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.3) * 0.2 + (scrollValue * 2);
       group.current.position.y = (scrollValue * -15);
-    }
-    
-    // Silky smooth RGB shifting for the glass cube
-    if (cubeMaterialRef.current) {
-      const t = state.clock.elapsedTime * 0.5;
-      cubeMaterialRef.current.color.setHSL((t % 1), 0.6, 0.7);
     }
   });
 
@@ -38,11 +31,7 @@ function FloatingShapes({ scrollProgress }: { scrollProgress: any }) {
       <Float speed={2} rotationIntensity={0.5} floatIntensity={1} position={[8, 4, 0]}>
         <mesh castShadow receiveShadow>
           <boxGeometry args={[5, 5, 5]} />
-          <meshStandardMaterial 
-            ref={cubeMaterialRef}
-            roughness={0.05}
-            metalness={0.1}
-          />
+          <meshPhysicalMaterial {...materialConfig} transmission={0.2} ior={1.5} thickness={0.5} />
         </mesh>
         
         {/* Ring orbiting */}
@@ -56,7 +45,7 @@ function FloatingShapes({ scrollProgress }: { scrollProgress: any }) {
       <Float speed={1.5} rotationIntensity={1} floatIntensity={2} position={[16, 10, -2]}>
         <mesh castShadow receiveShadow>
           <boxGeometry args={[3, 3, 3]} />
-          <meshStandardMaterial {...materialConfig} />
+          <meshPhysicalMaterial {...materialConfig} />
         </mesh>
       </Float>
       
@@ -64,7 +53,7 @@ function FloatingShapes({ scrollProgress }: { scrollProgress: any }) {
       <Float speed={2.5} rotationIntensity={0.2} floatIntensity={1.5} position={[-10, -5, 2]}>
         <mesh castShadow receiveShadow>
           <sphereGeometry args={[4, 64, 64]} />
-          <meshStandardMaterial {...materialConfig} />
+          <meshPhysicalMaterial {...materialConfig} />
         </mesh>
       </Float>
 
@@ -72,7 +61,7 @@ function FloatingShapes({ scrollProgress }: { scrollProgress: any }) {
       <Float speed={1.8} rotationIntensity={1.5} floatIntensity={1.2} position={[-8, 12, -4]}>
         <mesh castShadow receiveShadow rotation={[0.5, 0.5, 0]}>
           <cylinderGeometry args={[2, 2, 5, 32]} />
-          <meshStandardMaterial {...materialConfig} />
+          <meshPhysicalMaterial {...materialConfig} />
         </mesh>
       </Float>
       
@@ -80,132 +69,42 @@ function FloatingShapes({ scrollProgress }: { scrollProgress: any }) {
       <Float speed={3} rotationIntensity={0} floatIntensity={2} position={[10, -8, 4]}>
         <mesh castShadow receiveShadow>
           <sphereGeometry args={[2, 32, 32]} />
-          <meshStandardMaterial {...materialConfig} />
+          <meshPhysicalMaterial {...materialConfig} />
         </mesh>
       </Float>
       
       <Float speed={2.2} rotationIntensity={1} floatIntensity={1.8} position={[-16, 2, -6]}>
         <mesh castShadow receiveShadow>
           <octahedronGeometry args={[3]} />
-          <meshStandardMaterial {...materialConfig} />
+          <meshPhysicalMaterial {...materialConfig} />
         </mesh>
       </Float>
     </group>
   );
 }
 
-const CARDS = [
-  { id: 'analytics', title: 'Analytics', icon: BarChart3, desc: 'Elevate productivity with our intuitive, intelligent platform designed for modern teams.' },
-  { id: 'collaboration', title: 'Collaboration', icon: Share2, desc: 'Elevate productivity with our intuitive, intelligent platform designed for modern teams.' },
-  { id: 'automation', title: 'Automation', icon: Settings, desc: 'Elevate productivity with our intuitive, intelligent platform designed for modern teams.' },
-];
-
-function TiltCard({ card, onClick, delay }: any) {
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-
-  const mouseXSpring = useSpring(x, { stiffness: 300, damping: 30 });
-  const mouseYSpring = useSpring(y, { stiffness: 300, damping: 30 });
-
-  const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["10deg", "-10deg"]);
-  const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-10deg", "10deg"]);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const width = rect.width;
-    const height = rect.height;
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-    x.set(mouseX / width - 0.5);
-    y.set(mouseY / height - 0.5);
-  };
-
-  const handleMouseLeave = () => {
-    x.set(0);
-    y.set(0);
-  };
-
-  const Icon = card.icon;
-
-  return (
-    <motion.div
-      layoutId={`card-${card.id}`}
-      initial={{ opacity: 0, y: 50, rotateX: 10, scale: 0.95 }}
-      whileInView={{ opacity: 1, y: 0, rotateX: 0, scale: 1 }}
-      viewport={{ once: false, amount: 0.3 }}
-      transition={{ duration: 0.8, delay, type: "spring", bounce: 0.4 }}
-      whileHover={{ 
-        scale: 1.03, 
-        boxShadow: "0px 30px 60px rgba(212, 175, 55, 0.25)"
-      }}
-      onClick={() => onClick(card.id)}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      className="bg-white/30 backdrop-blur-[16px] rounded-[2.5rem] p-10 flex flex-col items-center text-center shadow-[0_20px_40px_rgba(0,0,0,0.04)] dark:shadow-[0_30px_60px_rgba(0,0,0,0.5)] border border-white/60 animate-border-pulse group transition-colors duration-500 overflow-hidden relative cursor-pointer"
-      style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
-    >
-      <div className="absolute top-0 -inset-full h-full block z-20 w-1/2 -skew-x-12 bg-gradient-to-r from-transparent via-white/50 to-transparent opacity-60 animate-sheen pointer-events-none" />
-      <motion.div 
-        className="absolute inset-0 bg-gradient-to-tr from-blue-200/20 via-white/10 to-cyan-100/20 opacity-0 group-hover:opacity-100 transition-opacity duration-700" 
-        style={{ transform: "translateZ(-10px)" }}
-      />
-      
-      <motion.div 
-        initial={{ clipPath: 'inset(100% 0 0 0)' }}
-        whileInView={{ clipPath: 'inset(0% 0 0 0)' }}
-        transition={{ duration: 0.8, delay: delay + 0.1, ease: "circOut" }}
-        className="w-28 h-28 mb-8 rounded-[1.5rem] bg-gradient-to-br from-white/80 to-blue-50/50 shadow-[0_8px_20px_rgba(37,99,235,0.1)] flex items-center justify-center group-hover:scale-110 group-hover:shadow-[0_15px_30px_rgba(37,99,235,0.2)] transition-all duration-500 relative z-10 border border-white"
-      >
-        <Icon className="w-12 h-12 text-blue-600 group-hover:text-blue-700 transition-colors" strokeWidth={1.5} />
-      </motion.div>
-      
-      <motion.h4 layoutId={`title-${card.id}`} className="text-2xl font-black text-gray-900 mb-4 group-hover:text-blue-700 transition-colors relative z-10" style={{ transform: "translateZ(20px)" }}>{card.title}</motion.h4>
-      <motion.p layoutId={`desc-${card.id}`} className="text-base text-gray-600 font-medium mb-8 leading-relaxed relative z-10" style={{ transform: "translateZ(30px)" }}>
-        {card.desc}
-      </motion.p>
-      <motion.button className="bg-blue-600 text-white font-bold group-hover:bg-blue-700 transition-colors mt-auto px-6 py-2 rounded-full shadow-md hover:shadow-lg relative z-10" style={{ transform: "translateZ(40px)" }}>
-        Learn More
-      </motion.button>
-    </motion.div>
-  );
-}
-
 export function LandingRevolutionizeWorkflow() {
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
-  const isInView = useInView(containerRef, { margin: "200px" });
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start end", "end start"]
   });
-  const [selectedCard, setSelectedCard] = useState<string | null>(null);
-
-  React.useEffect(() => {
-    const handleScroll = () => {
-      if (selectedCard) setSelectedCard(null);
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [selectedCard]);
-
-  const selectedData = CARDS.find(c => c.id === selectedCard);
 
   return (
     <div ref={containerRef} className="w-full relative z-20 py-32 lg:py-64 bg-[#FDFBF7] overflow-hidden min-h-screen">
       
       {/* Abstract 3D Canvas Background */}
       <div className="absolute inset-0 z-0 pointer-events-none">
-        {isInView && (
-          <Canvas dpr={[1, 1.5]}>
-            <OrthographicCamera makeDefault position={[0, 0, 40]} zoom={15} />
-            <ambientLight intensity={0.5} />
-            <directionalLight position={[10, 10, 5]} intensity={1.5} color="#ffffff" castShadow />
-            <directionalLight position={[-10, -10, -5]} intensity={0.5} color="#e6f0ff" />
-            <Environment preset="city" />
-            <FloatingShapes scrollProgress={scrollYProgress} />
-            <ContactShadows position={[0, -20, 0]} opacity={0.4} scale={80} blur={2.5} far={30} color="#8c9bb0" />
-          </Canvas>
-        )}
+        <Canvas dpr={[1, 2]}>
+          <OrthographicCamera makeDefault position={[0, 0, 40]} zoom={15} />
+          <ambientLight intensity={0.5} />
+          <directionalLight position={[10, 10, 5]} intensity={1.5} color="#ffffff" castShadow />
+          <directionalLight position={[-10, -10, -5]} intensity={0.5} color="#e6f0ff" />
+          <Environment preset="city" />
+          <FloatingShapes scrollProgress={scrollYProgress} />
+          <ContactShadows position={[0, -20, 0]} opacity={0.4} scale={80} blur={2.5} far={30} color="#8c9bb0" />
+        </Canvas>
       </div>
 
       <div className="max-w-[1400px] mx-auto px-6 grid grid-cols-1 gap-16 items-center relative z-10">
@@ -256,56 +155,83 @@ export function LandingRevolutionizeWorkflow() {
           <p className="text-xl text-gray-500 font-medium opacity-0 hidden">Everything you need to work faster, smarter, and together.</p>
         </motion.div>
 
-          <motion.div 
+        <motion.div 
           style={{ 
             y: useTransform(scrollYProgress, [0.4, 0.9], [100, -20]), 
             opacity: useTransform(scrollYProgress, [0.3, 0.5], [0, 1]) 
           }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12 relative z-30 perspective-[1000px]"
+          className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12 relative z-30"
         >
-          {CARDS.map((card, i) => (
-            <TiltCard key={card.id} card={card} delay={0.1 + i * 0.1} onClick={setSelectedCard} />
-          ))}
+          {/* Analytics Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: false, amount: 0.3 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            whileHover={{ y: -10 }}
+            className="bg-white/90 backdrop-blur-xl rounded-[2rem] p-10 flex flex-col items-center text-center shadow-[0_20px_40px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.02)] border border-white/60 group transition-all duration-300"
+          >
+            <div className="w-28 h-28 mb-8 rounded-[1.5rem] bg-gradient-to-br from-blue-50 to-blue-100/50 shadow-inner flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+              <BarChart3 className="w-12 h-12 text-blue-600 group-hover:text-blue-700 transition-colors" strokeWidth={1.5} />
+            </div>
+            <h4 className="text-2xl font-bold text-gray-900 mb-4 group-hover:text-blue-600 transition-colors">Analytics</h4>
+            <p className="text-base text-gray-500 font-medium mb-8 leading-relaxed">
+              Elevate productivity with our intuitive, intelligent platform designed for modern teams.
+            </p>
+            <button className="text-blue-600 font-bold group-hover:text-blue-800 transition-colors mt-auto text-lg">
+              Learn More
+            </button>
+          </motion.div>
+
+          {/* Collaboration Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: false, amount: 0.3 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            whileHover={{ y: -10 }}
+            className="bg-white/90 backdrop-blur-xl rounded-[2rem] p-10 flex flex-col items-center text-center shadow-[0_20px_40px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.02)] border border-white/60 group transition-all duration-300"
+          >
+            <div className="w-28 h-28 mb-8 rounded-[1.5rem] bg-gradient-to-br from-blue-50 to-blue-100/50 shadow-inner flex items-center justify-center relative group-hover:scale-110 transition-transform duration-500">
+               <Share2 className="w-12 h-12 text-blue-600 group-hover:text-blue-700 transition-colors relative z-10" strokeWidth={1.5} />
+               <motion.div animate={{ rotate: 360 }} transition={{ duration: 10, repeat: Infinity, ease: "linear" }} className="absolute inset-0 w-full h-full rounded-[1.5rem] overflow-hidden">
+                 <div className="absolute top-4 right-4 w-3 h-3 bg-blue-400 rounded-full blur-[1px]"></div>
+                 <div className="absolute bottom-4 left-4 w-2 h-2 bg-indigo-400 rounded-full blur-[1px]"></div>
+               </motion.div>
+            </div>
+            <h4 className="text-2xl font-bold text-gray-900 mb-4 group-hover:text-blue-600 transition-colors">Collaboration</h4>
+            <p className="text-base text-gray-500 font-medium mb-8 leading-relaxed">
+              Elevate productivity with our intuitive, intelligent platform designed for modern teams.
+            </p>
+            <button className="text-blue-600 font-bold group-hover:text-blue-800 transition-colors mt-auto text-lg">
+              Learn More
+            </button>
+          </motion.div>
+
+          {/* Automation Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: false, amount: 0.3 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            whileHover={{ y: -10 }}
+            className="bg-white/90 backdrop-blur-xl rounded-[2rem] p-10 flex flex-col items-center text-center shadow-[0_20px_40px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.02)] border border-white/60 group transition-all duration-300"
+          >
+            <div className="w-28 h-28 mb-8 rounded-[1.5rem] bg-gradient-to-br from-blue-50 to-blue-100/50 shadow-inner flex items-center justify-center relative group-hover:scale-110 transition-transform duration-500">
+              <Settings className="w-12 h-12 text-blue-600 group-hover:text-blue-700 transition-colors relative z-10" strokeWidth={1.5} />
+              <motion.div animate={{ rotate: -360 }} transition={{ duration: 8, repeat: Infinity, ease: "linear" }} className="absolute inset-0 m-auto w-20 h-20 border-2 border-blue-200/60 rounded-full border-dashed"></motion.div>
+            </div>
+            <h4 className="text-2xl font-bold text-gray-900 mb-4 group-hover:text-blue-600 transition-colors">Automation</h4>
+            <p className="text-base text-gray-500 font-medium mb-8 leading-relaxed">
+              Elevate productivity with our intuitive, intelligent platform designed for modern teams.
+            </p>
+            <button className="text-blue-600 font-bold group-hover:text-blue-800 transition-colors mt-auto text-lg">
+              Learn More
+            </button>
+          </motion.div>
+
         </motion.div>
       </div>
-
-      <AnimatePresence>
-        {selectedCard && selectedData && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setSelectedCard(null)}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm cursor-pointer"
-          >
-            <motion.div
-              layoutId={`card-${selectedData.id}`}
-              className="bg-white/70 backdrop-blur-[24px] w-full max-w-2xl rounded-[3rem] p-12 md:p-16 flex flex-col items-center text-center shadow-[0_50px_100px_rgba(0,0,0,0.2)] border border-white relative cursor-default"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button 
-                className="absolute top-8 right-8 w-12 h-12 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
-                onClick={() => setSelectedCard(null)}
-              >
-                <X className="w-6 h-6 text-gray-600" />
-              </button>
-              
-              <motion.div layoutId={`icon-container-${selectedData.id}`} className="w-32 h-32 mb-10 rounded-[2rem] bg-gradient-to-br from-white to-blue-50/80 shadow-[0_15px_30px_rgba(37,99,235,0.15)] flex items-center justify-center border border-white">
-                <selectedData.icon className="w-16 h-16 text-blue-600" strokeWidth={1.5} />
-              </motion.div>
-              
-              <motion.h4 layoutId={`title-${selectedData.id}`} className="text-4xl md:text-5xl font-black text-gray-900 mb-6">{selectedData.title}</motion.h4>
-              <motion.p layoutId={`desc-${selectedData.id}`} className="text-xl text-gray-600 font-medium mb-10 leading-relaxed max-w-lg">
-                {selectedData.desc} Dive deeper into how this feature transforms your daily operations and unleashes team potential.
-              </motion.p>
-              
-              <div className="flex gap-4">
-                <button className="bg-blue-600 text-white px-8 py-4 rounded-full font-bold shadow-lg hover:bg-blue-700 transition-colors">Start Using {selectedData.title}</button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

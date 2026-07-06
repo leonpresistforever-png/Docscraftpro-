@@ -77,8 +77,6 @@ export function KeepNotesPage() {
       });
       
       setNotes(notesData);
-    }, (error) => {
-      console.warn("Failed to fetch keep notes:", error);
     });
 
     return () => unsubscribe();

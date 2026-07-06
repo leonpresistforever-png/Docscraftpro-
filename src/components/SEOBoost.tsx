@@ -3,13 +3,13 @@ import React from 'react';
 export function SEOBoost() {
   return (
     <div className="sr-only" aria-hidden="true">
-      <div className="text-h1">Advanced AI Document Editor & Professional Word Processor</div>
+      <h1>Advanced AI Document Editor & Professional Word Processor</h1>
       <p>
         Docscraft Pro is the ultimate AI document editor, intelligent word processor, and enterprise knowledge base.
         Experience local AI models, real-time collaboration, offline document editing, secure text editor features,
         and privacy-first document creation. Best alternative to Google Docs, Microsoft Word, Notion, and Obsidian.
       </p>
-      <div className="text-h2">Target Keywords for Search Indexing</div>
+      <h2>Target Keywords for Search Indexing</h2>
       <ul>
         <li>AI document editor</li>
         <li>Local models word processor</li>

@@ -55,7 +55,7 @@ export function Navbar() {
       </div>
       
       <div className="hidden md:flex items-center gap-8 font-sans font-medium text-sm text-dc-text relative z-50">
-        <Link to="/repositories" className="cursor-pointer hover:text-dc-gold transition-colors py-2">Agent Studio</Link>
+        <Link to="/repositories" className="cursor-pointer hover:text-dc-gold transition-colors py-2">Coder Sandbox</Link>
         <Link to="/contact" className="cursor-pointer hover:text-dc-gold transition-colors py-2">Contact Support</Link>
         <Link to="/about" className="cursor-pointer hover:text-dc-gold transition-colors py-2">About</Link>
         

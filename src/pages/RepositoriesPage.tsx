@@ -3,27 +3,11 @@ import {
   Folder, File, FileCode, Plus, Trash2, Play, RefreshCw, Send, Sparkles, Code2, 
   Terminal, Settings, Search, Layout, HelpCircle, LogOut, ArrowLeft, Key, ExternalLink, 
   Database, Server, Cloud, Shield, Check, Info, Cpu, PlayCircle, AppWindow, Gamepad2, Layers,
-  BrainCircuit, Loader2, Bot, User
+  BrainCircuit
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ModelSelector } from '../components/ModelSelector';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { AgentStudioBackground } from '../components/AgentStudioBackground';
-import { VibecodingAPI } from '../lib/vibecoding/FrontendAPI';
-import Editor from 'react-simple-code-editor';
-import Prism from 'prismjs';
-import 'prismjs/components/prism-clike';
-import 'prismjs/components/prism-javascript';
-import 'prismjs/components/prism-typescript';
-import 'prismjs/components/prism-css';
-import 'prismjs/components/prism-json';
-import 'prismjs/components/prism-markup';
-import 'prismjs/themes/prism.css';
-import JSZip from 'jszip';
-import { saveAs } from 'file-saver';
-import { db } from '../lib/firebase';
-import { collection, addDoc, getDocs, doc, updateDoc, query, where, orderBy, serverTimestamp } from 'firebase/firestore';
 
 interface WorkspaceFile {
   path: string;
@@ -45,25 +29,17 @@ export function RepositoriesPage() {
   const [activeTab, setActiveTab] = useState<'chat' | 'code' | 'preview'>('chat');
   
   // Active Sidebar Mode
-  const [sidebarMode, setSidebarMode] = useState<'chats' | 'explorer' | 'search' | 'e2b' | 'settings'>('explorer');
+  const [sidebarMode, setSidebarMode] = useState<'explorer' | 'search' | 'e2b' | 'settings'>('explorer');
 
   // Input code command prompt
   const [promptInput, setPromptInput] = useState('');
   const [isLlmGenerating, setIsLlmGenerating] = useState(false);
   const [isMultiAgent, setIsMultiAgent] = useState(false); // fast direct code vs slow multi-agent plan
-  const [agentStatus, setAgentStatus] = useState<string>('Thinking...');
 
   // State keys stored in state (BYOK keys for E2B / Gemini)
-  const [e2bApiKey, setE2bApiKey] = useState(() => localStorage.getItem('dc_e2b_api_key') || import.meta.env.VITE_E2B_API_KEY || '');
-  const [geminiApiKey, setGeminiApiKey] = useState(() => localStorage.getItem('dc_custom_gemini_api_key') || import.meta.env.VITE_GEMINI_API_KEY || '');
-  const [claudeApiKey, setClaudeApiKey] = useState(() => localStorage.getItem('dc_custom_claude_api_key') || '');
-  const [gptApiKey, setGptApiKey] = useState(() => localStorage.getItem('dc_custom_gpt_api_key') || '');
-  const [customModelEndpoint, setCustomModelEndpoint] = useState(() => localStorage.getItem('dc_custom_endpoint') || '');
-  const [customModelKey, setCustomModelKey] = useState(() => localStorage.getItem('dc_custom_key') || '');
+  const [e2bApiKey, setE2bApiKey] = useState(() => localStorage.getItem('dc_e2b_api_key') || '');
+  const [geminiApiKey, setGeminiApiKey] = useState(() => localStorage.getItem('dc_custom_gemini_api_key') || '');
   const [isKeysSaved, setIsKeysSaved] = useState(false);
-
-  // Model Selection
-  const [selectedModel, setSelectedModel] = useState<string>('gemini-3.1-pro');
 
   // E2B Cloud instance simulator metrics
   const [e2bSandboxStatus, setE2bSandboxStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
@@ -86,7 +62,7 @@ export function RepositoriesPage() {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Docscraft-pro agent studio</title>
+    <title>Sovereign Sandbox Platform</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @keyframes pulse-glow {
@@ -157,7 +133,7 @@ console.log("Enterprise agent cloud sandbox initialized.");
       {
         id: 'initial',
         role: 'assistant',
-        content: "Welcome to Docscraft-pro agent studio 💻\n\nI can build complex, interactive full-stack modules, HTML/JS/CSS websites, HTML5 games, and specialized APIs using the **E2B Enterprise AI Agent Cloud** sandbox instances.",
+        content: "Welcome to your Sovereign E2B Sandbox workspace! 💻\n\nI can build complex, interactive full-stack modules, HTML/JS/CSS websites, HTML5 games, and specialized APIs using the **E2B Enterprise AI Agent Cloud** sandbox instances. \n\nWhat would you like to build today? Try asking me to write a **Tic Tac Toe, Snake game, or a Pomodoro timer**!",
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }
     ];
@@ -166,35 +142,6 @@ console.log("Enterprise agent cloud sandbox initialized.");
   // File explorer search term
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Active file creation model and project name
-  const [newFileNameInput, setNewFileNameInput] = useState('');
-  const [showFileCreate, setShowFileCreate] = useState(false);
-  const [previewKey, setPreviewKey] = useState(0);
-  const [projectName, setProjectName] = useState('My Awesome Project');
-  const [showShortcuts, setShowShortcuts] = useState(true);
-  const [showInstructionsModal, setShowInstructionsModal] = useState(false);
-
-  // Firebase Chat Sessions
-  const [chatSessionsList, setChatSessionsList] = useState<any[]>([]);
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!user) return;
-    const loadSessions = async () => {
-      try {
-        const q = query(collection(db, 'chat_sessions'), where('ownerId', '==', user.uid), where('appType', '==', 'agentStudio'));
-        const snapshot = await getDocs(q);
-        const sessions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        // Sort manually by createdAt if available, else local
-        sessions.sort((a: any, b: any) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
-        setChatSessionsList(sessions);
-      } catch (err) {
-        console.error("Failed to load chat sessions from Firebase", err);
-      }
-    };
-    loadSessions();
-  }, [user]);
-
   // Synchronize files to localstorage
   useEffect(() => {
     localStorage.setItem('dc_repos_files', JSON.stringify(files));
@@ -202,16 +149,7 @@ console.log("Enterprise agent cloud sandbox initialized.");
 
   useEffect(() => {
     localStorage.setItem('dc_repos_chat', JSON.stringify(chatMessages));
-    
-    // Also save to Firebase if we have a session
-    if (user && currentSessionId) {
-      updateDoc(doc(db, 'chat_sessions', currentSessionId), {
-        messages: JSON.stringify(chatMessages),
-        updatedAt: serverTimestamp(),
-        title: projectName
-      }).catch(e => console.error("Firebase update failed:", e));
-    }
-  }, [chatMessages, projectName, user, currentSessionId]);
+  }, [chatMessages]);
 
   // Synchronize edit code buffer when active file changes
   useEffect(() => {
@@ -239,6 +177,9 @@ console.log("Enterprise agent cloud sandbox initialized.");
   const filteredFiles = files.filter(f => f.path.toLowerCase().includes(searchTerm.toLowerCase()));
 
   // Active file creation model
+  const [newFileNameInput, setNewFileNameInput] = useState('');
+  const [showFileCreate, setShowFileCreate] = useState(false);
+
   const handleCreateNewFile = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newFileNameInput.trim()) return;
@@ -303,10 +244,6 @@ console.log("Enterprise agent cloud sandbox initialized.");
     e.preventDefault();
     localStorage.setItem('dc_e2b_api_key', e2bApiKey);
     localStorage.setItem('dc_custom_gemini_api_key', geminiApiKey);
-    localStorage.setItem('dc_custom_claude_api_key', claudeApiKey);
-    localStorage.setItem('dc_custom_gpt_api_key', gptApiKey);
-    localStorage.setItem('dc_custom_endpoint', customModelEndpoint);
-    localStorage.setItem('dc_custom_key', customModelKey);
     setIsKeysSaved(true);
     appendSystemLog("Enterprise configuration keys saved and verified.");
     triggerE2bCloudConnect();
@@ -367,11 +304,9 @@ console.log("Enterprise agent cloud sandbox initialized.");
       appendSystemLog("E2B cloud instance spawning interactive bash console context...");
     }
 
-    const isQuestionOnly = userMsg.trim().startsWith('/question') || userMsg.trim().startsWith('/btw');
-
     // Prompt compilation context
     const contextOverview = files.map(f => `--- FILE: ${f.path} ---\n${f.content}`).join('\n\n');
-    let systemInstructions = `You are a world-class Full Stack Software Developer Coding Agent integrated inside a visual workspace sandboxed with E2B agent cloud.
+    const systemInstructions = `You are a world-class Full Stack Software Developer Coding Agent integrated inside a visual workspace sandboxed with E2B agent cloud.
 Your task is to respond to the user's coding request by generating, updating, or expanding the file structure to build working apps, games, utilities, dashboards, etc.
 
 You MUST reply with a valid global JSON block of files that we can write to the workspace, alongside a friendly developer message explaining what you built.
@@ -389,25 +324,9 @@ The JSON block you return MUST look exactly like this:
 \`\`\`
 DO NOT return any text outside the JSON block. Let the JSON block stand alone in your response, so we can parse it programmatically. Give full complete runnable implementations, write beautiful design, clean UI and color gradients!`;
 
-    if (isQuestionOnly) {
-      systemInstructions = `You are a world-class Full Stack Software Developer Coding Agent integrated inside a visual workspace sandboxed with E2B agent cloud.
-The user asked a question starting with /question or /btw. You MUST only answer the question and DO NOT generate any files.
-
-The JSON block you return MUST look exactly like this:
-\`\`\`json
-{
-  "files": [],
-  "message": "Your helpful response here."
-}
-\`\`\`
-DO NOT return any text outside the JSON block. Let the JSON block stand alone in your response.`;
-    }
-
     const fullPrompt = `System Context:\n${systemInstructions}\n\nExisting files in sandbox workspace:\n${contextOverview}\n\nUser instructions: ${userMsg}`;
 
     try {
-      setAgentStatus('Thinking and analyzing instructions...');
-      
       const resp = await fetch('/api/ai/generate', {
         method: 'POST',
         headers: {
@@ -416,37 +335,21 @@ DO NOT return any text outside the JSON block. Let the JSON block stand alone in
         body: JSON.stringify({
           prompt: fullPrompt,
           customApiKey: geminiApiKey || undefined,
-          claudeApiKey: claudeApiKey || undefined,
-          gptApiKey: gptApiKey || undefined,
-          customModelEndpoint: customModelEndpoint || undefined,
-          customModelKey: customModelKey || undefined,
-          selectedModel: selectedModel,
           isComplex: isMultiAgent
         })
       });
 
-      let resData;
       if (!resp.ok) {
-        let errMessage = resp.statusText || 'Unknown server error';
-        try {
-          const errBody = await resp.json();
-          if (errBody && errBody.error) errMessage = errBody.error;
-        } catch (e) {}
-        throw new Error(`Failed to contact API: ${errMessage}`);
+        throw new Error(`Failed to contact API: ${resp.statusText}`);
       }
 
-      setAgentStatus('Compiling source code...');
+      const resData = await resp.json();
+      const rawText = resData.text || '';
       
-      try {
-        resData = await resp.json();
-      } catch (e: any) {
-        throw new Error(`Invalid JSON response from server: ${e.message}`);
-      }
-      
-      const rawText = resData.text || resData.result || '';
-      
+      // Attempt to extract and parse the JSON block
       let parsedResponse: { files?: WorkspaceFile[]; message?: string } = {};
       try {
+        // Clean markdown code blocks if present
         let cleanText = rawText;
         if (cleanText.includes('```json')) {
           cleanText = cleanText.split('```json')[1].split('```')[0];
@@ -455,30 +358,17 @@ DO NOT return any text outside the JSON block. Let the JSON block stand alone in
         }
         parsedResponse = JSON.parse(cleanText.trim());
       } catch (parseErr) {
+        console.warn("Failed to parse AI response as JSON block, falling back to simple presentation:", parseErr);
         parsedResponse = {
           message: rawText,
           files: []
         };
       }
 
+      // If we received compiled files, update the sandbox files list directory!
       if (parsedResponse.files && parsedResponse.files.length > 0) {
-        // Simulate live creation step-by-step
-        for (const file of parsedResponse.files) {
-          const dirMatch = file.path.match(/^(.*)\/[^/]+$/);
-          if (dirMatch) {
-            setAgentStatus(`Creating directory ${dirMatch[1]}...`);
-            await new Promise(r => setTimeout(r, 600));
-          }
-          setAgentStatus(`Writing file ${file.path}...`);
-          await new Promise(r => setTimeout(r, 800));
-        }
-        
-        setAgentStatus('Executing npm install...');
-        await new Promise(r => setTimeout(r, 1500));
-        setAgentStatus('Starting dev server on port 3000...');
-        await new Promise(r => setTimeout(r, 1000));
-
         setFiles(prev => {
+          // Merge or replace files from AI
           const updated = [...prev];
           parsedResponse.files?.forEach(newFile => {
             const idx = updated.findIndex(f => f.path.toLowerCase() === newFile.path.toLowerCase());
@@ -491,6 +381,7 @@ DO NOT return any text outside the JSON block. Let the JSON block stand alone in
           return updated;
         });
 
+        // Automatically focus HTML or JS file
         const createdPaths = parsedResponse.files.map(f => f.path);
         if (createdPaths.includes('index.html')) {
           setActiveFilePath('index.html');
@@ -498,6 +389,7 @@ DO NOT return any text outside the JSON block. Let the JSON block stand alone in
           setActiveFilePath(createdPaths[0]);
         }
 
+        // Auto switch tab to show the wonderful preview result if index.html is updated!
         if (createdPaths.includes('index.html') || createdPaths.some(p => p.endsWith('.html'))) {
           setActiveTab('preview');
         } else {
@@ -507,6 +399,7 @@ DO NOT return any text outside the JSON block. Let the JSON block stand alone in
         appendSystemLog(`Agent successfully completed compilation and file deployment inside current Sandbox environment. Files modified: ${createdPaths.join(', ')}`);
       }
 
+      // Append Agent Response
       const assistantMessageObj: ChatMessage = {
         id: Math.random().toString(),
         role: 'assistant',
@@ -529,48 +422,21 @@ DO NOT return any text outside the JSON block. Let the JSON block stand alone in
     }
   };
 
-  const handleNewChatSession = async () => {
-    const initialMessage = {
-      id: 'initial',
-      role: 'assistant',
-      content: "Welcome to Docscraft-pro agent studio 💻\n\nI can build complex, interactive full-stack modules, HTML/JS/CSS websites, HTML5 games, and specialized APIs using the **E2B Enterprise AI Agent Cloud** sandbox instances.",
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-    setChatMessages([initialMessage as ChatMessage]);
-    setFiles([]);
-    setProjectName("New Project");
-    
-    if (user) {
-      try {
-        const docRef = await addDoc(collection(db, 'chat_sessions'), {
-          title: "New Project",
-          appType: "agentStudio",
-          messages: JSON.stringify([initialMessage]),
-          ownerId: user.uid,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        });
-        setCurrentSessionId(docRef.id);
-        const newSession = {
-          id: docRef.id,
-          title: "New Project",
-          appType: "agentStudio",
-          messages: JSON.stringify([initialMessage]),
-          ownerId: user.uid,
-          createdAt: { toMillis: () => Date.now() }
-        };
-        setChatSessionsList(prev => [newSession, ...prev]);
-      } catch (err) {
-        console.error("Failed to create chat session", err);
+  const clearChatHistory = () => {
+    setChatMessages([
+      {
+        id: 'initial',
+        role: 'assistant',
+        content: "Welcome to your Sovereign E2B Sandbox workspace! 💻\n\nI can build complex, interactive full-stack modules, HTML/JS/CSS websites, HTML5 games, and specialized APIs using the **E2B Enterprise AI Agent Cloud** sandbox instances. \n\nWhat would you like to build today? Try asking me to write a **Tic Tac Toe, Snake game, or a Pomodoro timer**!",
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }
-    }
-    
-    appendSystemLog("Started new chat session container.");
+    ]);
+    appendSystemLog("Chat history cleared.");
   };
 
   return (
-    <div className="h-[100dvh] overflow-hidden bg-transparent text-slate-800 flex flex-col font-sans select-none antialiased selection:bg-indigo-600 selection:text-white relative z-10">
-      <AgentStudioBackground />
+    <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans select-none antialiased selection:bg-indigo-600 selection:text-white">
+      
       {/* 1. TOP HEADER MENU BAR LAYOUT */}
       <header className="h-13 bg-slate-900 text-white flex items-center justify-between px-4 text-xs font-semibold shrink-0 select-none border-b border-slate-950">
         
@@ -584,23 +450,22 @@ DO NOT return any text outside the JSON block. Let the JSON block stand alone in
           <div className="h-4 w-px bg-slate-800" />
           
           <div className="flex items-center gap-1.5 overflow-x-auto max-w-[280px] sm:max-w-none scrollbar-none">
-            <button onClick={() => { setSidebarMode('explorer'); setShowFileCreate(true); }} className="hover:bg-slate-800 px-2.5 py-1.5 rounded-md transition-colors text-slate-200">File</button>
-            <button onClick={() => setShowInstructionsModal(true)} className="hover:bg-slate-800 px-2.5 py-1.5 rounded-md transition-colors text-slate-200">Edit</button>
-            <button onClick={() => setActiveTab('preview')} className="hover:bg-slate-800 px-2.5 py-1.5 rounded-md transition-colors text-slate-200">View</button>
-            <button onClick={() => setSidebarMode('e2b')} className="hover:bg-slate-800 px-2.5 py-1.5 rounded-md transition-colors text-slate-200">Terminal</button>
-            <button onClick={() => setSidebarMode('settings')} className="hover:bg-slate-800 px-2.5 py-1.5 rounded-md transition-colors text-slate-200">Help</button>
+            {['File', 'Edit', 'View', 'Terminal', 'Help'].map((menu) => (
+              <button 
+                key={menu} 
+                onClick={() => appendSystemLog(`Simulated menu interaction - ${menu}`)}
+                className="hover:bg-slate-800 px-2.5 py-1.5 rounded-md transition-colors text-slate-200"
+              >
+                {menu}
+              </button>
+            ))}
           </div>
         </div>
 
         {/* Center Name Title */}
-        <div className="flex items-center justify-center gap-2 text-slate-100 font-mono font-bold text-sm bg-slate-950 px-5 py-2 rounded-xl border border-slate-700 shadow-inner group w-1/3 md:w-auto">
-          <Terminal className="w-4 h-4 text-indigo-400" />
-          <input
-             value={projectName}
-             onChange={e => setProjectName(e.target.value)}
-             className="bg-transparent border-none outline-none text-center uppercase tracking-widest min-w-[120px] w-full text-white placeholder-slate-500 group-hover:bg-slate-900 px-2 py-0.5 rounded transition-colors"
-             placeholder="Project Name"
-          />
+        <div className="hidden md:flex items-center justify-center gap-2 text-slate-100 uppercase tracking-widest font-mono font-bold text-[11px] bg-slate-950 px-4 py-1.5 rounded-full border border-slate-800 shadow-inner">
+          <Terminal className="w-3.5 h-3.5 text-indigo-400" />
+          Agent Studio - workspace
         </div>
 
         {/* Right Side Settings Buttons */}
@@ -627,21 +492,8 @@ DO NOT return any text outside the JSON block. Let the JSON block stand alone in
       <div className="flex-1 flex overflow-hidden min-h-0 relative">
         
         {/* Sidebar Mini Action Rails (Left aligned columns) */}
-        <div className="w-14 bg-slate-900 shrink-0 flex flex-col items-center py-4 border-r border-slate-950 justify-between overflow-hidden">
+        <div className="w-14 bg-slate-900 shrink-0 flex flex-col items-center py-4 border-r border-slate-950 justify-between">
           <div className="space-y-4 w-full flex flex-col items-center">
-            {/* Chats / History */}
-            <button 
-              onClick={() => setSidebarMode('chats')}
-              title="Chat Sessions"
-              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-                sidebarMode === 'chats' 
-                  ? 'bg-indigo-600 shadow-lg text-white font-bold' 
-                  : 'hover:bg-slate-800 text-slate-400 hover:text-white'
-              }`}
-            >
-              <Bot className="w-5 h-5" />
-            </button>
-
             {/* Active page Explorer */}
             <button 
               onClick={() => setSidebarMode('explorer')}
@@ -712,55 +564,6 @@ DO NOT return any text outside the JSON block. Let the JSON block stand alone in
         <AnimatePresence mode="wait">
           <div className="w-72 bg-white shrink-0 flex flex-col border-r border-slate-200 overflow-hidden select-none">
             
-            {/* CHATS DRAWER CONTENT */}
-            {sidebarMode === 'chats' && (
-              <div className="flex-1 flex flex-col overflow-hidden">
-                <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-                  <span className="text-xs uppercase tracking-wider font-extrabold text-slate-500 flex items-center gap-1.5">
-                    <Bot className="w-4 h-4 text-indigo-500" /> Chat Sessions
-                  </span>
-                  <button 
-                    onClick={handleNewChatSession}
-                    title="New Chat Session"
-                    className="p-1 hover:bg-slate-100 rounded text-slate-600 hover:text-indigo-600 transition-colors"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </div>
-                <div className="flex-1 overflow-y-auto p-2 space-y-1">
-                  
-                  {chatSessionsList.length === 0 && (
-                    <div className="p-2 rounded-lg bg-indigo-50 border border-indigo-100 cursor-pointer">
-                      <h4 className="text-xs font-bold text-indigo-900 truncate">Current Session</h4>
-                      <p className="text-[10px] text-indigo-700 truncate">{projectName}</p>
-                    </div>
-                  )}
-
-                  {chatSessionsList.map((session, idx) => (
-                    <div 
-                      key={session.id} 
-                      onClick={() => {
-                        setCurrentSessionId(session.id);
-                        setProjectName(session.title || "Untitled Project");
-                        if (session.messages) {
-                          try {
-                            setChatMessages(JSON.parse(session.messages));
-                          } catch (e) {
-                            setChatMessages([]);
-                          }
-                        }
-                      }}
-                      className={`p-2 rounded-lg cursor-pointer ${currentSessionId === session.id ? 'bg-indigo-50 border border-indigo-100' : 'hover:bg-slate-50'}`}
-                    >
-                      <h4 className={`text-xs font-bold truncate ${currentSessionId === session.id ? 'text-indigo-900' : 'text-slate-700'}`}>{session.title || "Untitled Project"}</h4>
-                      <p className="text-[10px] text-slate-500 truncate">{new Date(session.createdAt?.toMillis?.() || Date.now()).toLocaleDateString()}</p>
-                    </div>
-                  ))}
-
-                </div>
-              </div>
-            )}
-
             {/* EXPLORER DRAWER CONTENT */}
             {sidebarMode === 'explorer' && (
               <div className="flex-1 flex flex-col overflow-hidden">
@@ -770,73 +573,12 @@ DO NOT return any text outside the JSON block. Let the JSON block stand alone in
                   </span>
                   
                   <div className="flex gap-1.5">
-                    <label 
-                      title="Upload Zip File" 
-                      className="p-1 hover:bg-slate-100 rounded text-slate-600 hover:text-indigo-600 transition-colors cursor-pointer"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <input type="file" accept=".zip" className="hidden" onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        appendSystemLog("Extracting zip file...");
-                        const jszip = new JSZip();
-                        try {
-                          const zip = await jszip.loadAsync(file);
-                          const newFiles: WorkspaceFile[] = [];
-                          for (const relativePath in zip.files) {
-                            const zipEntry = zip.files[relativePath];
-                            if (!zipEntry.dir) {
-                              // Skip binary formats that shouldn't be read as string
-                              if (relativePath.match(/\.(png|jpe?g|gif|svg|ico|pdf|zip|mp4|webm|wav|mp3|eot|ttf|woff|woff2)$/i)) {
-                                continue;
-                              }
-                              try {
-                                const content = await zipEntry.async("string");
-                                if (content !== null && content !== undefined) {
-                                  newFiles.push({ path: relativePath, content });
-                                }
-                              } catch(e) { console.error("Could not read " + relativePath) }
-                            }
-                          }
-                          setFiles(prev => {
-                            const combined = [...prev];
-                            newFiles.forEach(nf => {
-                              const existingIdx = combined.findIndex(pf => pf.path === nf.path);
-                              if (existingIdx !== -1) combined[existingIdx] = nf;
-                              else combined.push(nf);
-                            });
-                            return combined;
-                          });
-                          appendSystemLog(`Successfully extracted ${newFiles.length} files from ${file.name}`);
-                        } catch (err) {
-                          console.error(err);
-                          appendSystemLog("Failed to extract zip file.");
-                        }
-                      }} />
-                    </label>
-                    <button 
-                      onClick={async () => {
-                        appendSystemLog("Preparing zip download...");
-                        const zip = new JSZip();
-                        files.forEach(file => {
-                          zip.file(file.path, file.content);
-                        });
-                        const blob = await zip.generateAsync({ type: "blob" });
-                        const safeName = projectName.toLowerCase().replace(/\s+/g, '-');
-                        saveAs(blob, `${safeName}.zip`);
-                        appendSystemLog(`Downloaded ${safeName}.zip`);
-                      }} 
-                      title="Download Zip" 
-                      className="p-1 hover:bg-slate-100 rounded text-slate-600 hover:text-indigo-600 transition-colors"
-                    >
-                      <ArrowLeft className="w-3.5 h-3.5 rotate-[-90deg]" />
-                    </button>
                     <button 
                       onClick={() => setShowFileCreate(!showFileCreate)} 
                       title="New sandbox file" 
                       className="p-1 hover:bg-slate-100 rounded text-slate-600 hover:text-indigo-600 transition-colors"
                     >
-                      <FileCode className="w-4 h-4" />
+                      <Plus className="w-4 h-4" />
                     </button>
                     <button 
                       onClick={() => appendSystemLog("Reloaded code layout tree")} 
@@ -1009,39 +751,18 @@ DO NOT return any text outside the JSON block. Let the JSON block stand alone in
                   )}
 
                   {/* Live Simulation Console logs in tray */}
-                  <div className="space-y-1.5 flex flex-col flex-1 pb-4">
-                    <div className="flex justify-between items-center shrink-0">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Native Terminal</span>
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">VM Execution logs</span>
                       <button onClick={() => setE2bLogs([])} className="text-[9px] text-indigo-600 font-bold hover:underline">Clear</button>
                     </div>
-                    <div className="flex-1 min-h-[120px] bg-slate-950 rounded-t-xl p-2.5 font-mono text-[9px] text-emerald-400 overflow-y-auto space-y-1 scrollbar-thin shadow-inner select-text">
+                    <div className="h-32 bg-slate-900 rounded-xl p-2.5 font-mono text-[9px] text-slate-300 overflow-y-auto space-y-1 scrollbar-thin shadow-inner select-text">
                       {e2bLogs.length === 0 ? (
-                        <p className="text-slate-600 italic">No output. Type a command below.</p>
+                        <p className="text-slate-500 italic">No logs yet. VM idling.</p>
                       ) : (
                         e2bLogs.map((log, lIdx) => <div key={lIdx} className="break-all">{log}</div>)
                       )}
                     </div>
-                    <form 
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        const input = e.currentTarget.elements.namedItem('cmd') as HTMLInputElement;
-                        if (input.value.trim()) {
-                          const cmd = input.value;
-                          setE2bLogs(prev => [...prev, `$ ${cmd}`, `> e2b: executing ${cmd}...`, "Command execution simulated in dev environment."]);
-                          input.value = '';
-                        }
-                      }}
-                      className="flex border border-slate-900 bg-slate-900 rounded-b-xl overflow-hidden shadow-inner shrink-0"
-                    >
-                      <span className="text-emerald-500 font-mono text-[10px] font-bold pl-2.5 py-1.5">$&nbsp;</span>
-                      <input 
-                        name="cmd"
-                        type="text"
-                        autoComplete="off"
-                        placeholder="npm install..."
-                        className="bg-transparent flex-1 text-slate-300 font-mono text-[10px] outline-none px-1 py-1.5"
-                      />
-                    </form>
                   </div>
                 </div>
               </div>
@@ -1055,189 +776,283 @@ DO NOT return any text outside the JSON block. Let the JSON block stand alone in
                 </span>
 
                 <div className="space-y-4 text-xs">
-                  <div className="space-y-1.5 overflow-y-auto max-h-[60vh] pr-2">
+                  <div className="space-y-1.5">
                     <label className="font-extrabold text-slate-700 block">E2B API Key (BYOK)</label>
                     <input 
                       type="password" 
                       placeholder="e2b_api_key_..."
                       value={e2bApiKey}
                       onChange={e => setE2bApiKey(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 font-mono font-medium focus:outline-indigo-500 mb-4"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 font-mono font-medium focus:outline-indigo-500"
                     />
+                    <span className="text-[10px] text-slate-400 leading-normal block">
+                      Enables secure deployment VMs for server-side execution. Fallback simulation runs locally if kept empty.
+                    </span>
+                  </div>
 
+                  <div className="space-y-1.5">
                     <label className="font-extrabold text-slate-700 block">Gemini API Key (BYOK)</label>
                     <input 
                       type="password" 
                       placeholder="AIzaSy..."
                       value={geminiApiKey}
                       onChange={e => setGeminiApiKey(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 font-mono font-medium focus:outline-indigo-500 mb-4"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 font-mono font-medium focus:outline-indigo-500"
                     />
-
-                    <label className="font-extrabold text-slate-700 block">Claude API Key (BYOK)</label>
-                    <input 
-                      type="password" 
-                      placeholder="sk-ant-..."
-                      value={claudeApiKey}
-                      onChange={e => setClaudeApiKey(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 font-mono font-medium focus:outline-indigo-500 mb-4"
-                    />
-
-                    <label className="font-extrabold text-slate-700 block">GPT API Key (BYOK)</label>
-                    <input 
-                      type="password" 
-                      placeholder="sk-proj-..."
-                      value={gptApiKey}
-                      onChange={e => setGptApiKey(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 font-mono font-medium focus:outline-indigo-500 mb-4"
-                    />
-
-                    <div className="p-3 bg-slate-100 rounded-lg mt-4 mb-2 border border-slate-200">
-                      <label className="font-extrabold text-slate-700 block mb-2">Custom Model Details</label>
-                      
-                      <label className="font-semibold text-slate-600 block text-[10px]">Endpoint URL</label>
-                      <input 
-                        type="text" 
-                        placeholder="https://your-custom-endpoint/v1/chat/completions"
-                        value={customModelEndpoint}
-                        onChange={e => setCustomModelEndpoint(e.target.value)}
-                        className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 font-mono font-medium focus:outline-indigo-500 mb-3"
-                      />
-                      
-                      <label className="font-semibold text-slate-600 block text-[10px]">API Key / Schema</label>
-                      <input 
-                        type="password" 
-                        placeholder="Bearer token or custom key"
-                        value={customModelKey}
-                        onChange={e => setCustomModelKey(e.target.value)}
-                        className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 font-mono font-medium focus:outline-indigo-500"
-                      />
-                    </div>
-
-                    <div className="p-3 bg-slate-100 rounded-lg mt-4 mb-2 border border-slate-200">
-                      <label className="font-extrabold text-slate-700 block mb-2">Agent Config & System Rules</label>
-                      <label className="font-semibold text-slate-600 block text-[10px]">Instructions / Persona</label>
-                      <textarea
-                        className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 font-mono text-[10px] text-slate-600 h-24"
-                        placeholder="System instructions..."
-                      />
-                      <button onClick={handleSaveKeys} className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg mt-2 shadow-sm">
-                        {isKeysSaved ? 'Saved to LocalStorage' : 'Save Keys'}
-                      </button>
-                    </div>
+                    <span className="text-[10px] text-slate-400 leading-normal block">
+                      Use your own Gemini Developer API Key to process sandboxing prompts with custom limits.
+                    </span>
                   </div>
+
+                  <button 
+                    type="submit"
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-4 rounded-xl w-full flex items-center justify-center gap-2 transition-transform active:scale-97"
+                  >
+                    <Key className="w-3.5 h-3.5" />
+                    Save & Test Sandbox Connection
+                  </button>
+
+                  <AnimatePresence>
+                    {isKeysSaved && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        className="p-3 bg-emerald-50 border border-emerald-100/70 text-emerald-800 rounded-xl flex items-center gap-2 font-semibold text-[11px]"
+                      >
+                        <Check className="w-4 h-4 text-emerald-600 shrink-0" /> Settings updated securely!
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </form>
             )}
+
+            {/* Profile Workspace status bottom element */}
+            <div className="mt-auto p-4 border-t border-slate-100 bg-slate-50/50 flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs uppercase shadow-sm">
+                {user?.email?.charAt(0) || 'U'}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-bold text-slate-800 truncate leading-none mb-1">{user?.email || 'Active Developer'}</p>
+                <p className="text-[9px] font-mono text-slate-400 leading-none">Sandbox admin session</p>
+              </div>
+            </div>
+
           </div>
         </AnimatePresence>
 
-        {/* MAIN WORKSPACE CONTENT */}
-        <div className="flex-1 flex flex-col min-w-0 bg-[#FDFBF7] relative">
+        {/* MAIN DESIGN PANEL: Tab Navigation inside white-themed environment */}
+        <div className="flex-1 bg-white flex flex-col overflow-hidden relative">
           
-          <header className="h-14 border-b border-slate-200 bg-white flex items-center justify-between px-4 shrink-0">
-             <div className="flex items-center gap-4">
-                <input
-                   value={projectName}
-                   onChange={e => setProjectName(e.target.value)}
-                   className="bg-transparent border-none outline-none font-bold text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 rounded px-2 py-1"
-                />
-             </div>
-             <div className="flex items-center gap-4">
-                <ModelSelector selectedModel={selectedModel} setSelectedModel={setSelectedModel} />
-             </div>
-          </header>
+          {/* Main Action Tab Switchers on Left Side of workspace frame */}
+          <div className="h-12 bg-slate-50 border-b border-slate-200/80 flex items-center justify-between px-4 shrink-0 select-none">
+            <div className="flex gap-1">
+              {[
+                { id: 'chat', label: 'Chat Agent', icon: <Send className="w-3.5 h-3.5" /> },
+                { id: 'code', label: 'Code Editor', icon: <Code2 className="w-3.5 h-3.5" /> },
+                { id: 'preview', label: 'Live Preview', icon: <PlayCircle className="w-3.5 h-3.5" /> }
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-t-lg transition-all ${
+                    activeTab === tab.id
+                      ? 'bg-white border-t-2 border-indigo-600 text-indigo-700 font-extrabold shadow-sm'
+                      : 'hover:bg-slate-100 text-slate-500'
+                  }`}
+                >
+                  {tab.icon}
+                  {tab.label}
+                </button>
+              ))}
+            </div>
 
-          <div className="flex-1 flex overflow-hidden">
+            {/* Current Active File label on top of code context */}
+            <div className="flex items-center gap-2 text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider bg-white/70 px-2.5 py-1 rounded border border-slate-200/50">
+              <File className="w-3 h-3 text-indigo-500" />
+              {activeFilePath}
+            </div>
+          </div>
+
+          {/* TAB DETAILED PANELS */}
+          <div className="flex-1 overflow-hidden relative bg-white">
+            
+            {/* 1. CHAT CANVAS VIEW */}
             {activeTab === 'chat' && (
-              <div className="flex-1 flex flex-col bg-white">
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                  {chatMessages.length === 0 && (
-                    <div className="flex flex-col items-center justify-center h-full text-slate-500">
-                       <Bot className="w-12 h-12 mb-4 text-indigo-300" />
-                       <h2 className="text-xl font-bold">Start a conversation</h2>
-                    </div>
-                  )}
-                  {chatMessages.map(msg => (
-                      <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                         <div className={`max-w-2xl p-4 rounded-2xl text-sm whitespace-pre-wrap break-words ${msg.role === 'user' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-800'}`}>
-                           {msg.content}
-                         </div>
-                      </div>
-                  ))}
-                  {isLlmGenerating && (
-                    <div className="flex justify-start">
-                       <div className="p-4 bg-slate-100/70 border border-slate-200/50 rounded-2xl rounded-tl-none flex items-center gap-1.5 w-24 h-[52px]">
-                         <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.6, ease: "easeInOut", delay: 0 }} className="w-2 h-2 bg-indigo-500 rounded-full" />
-                         <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.6, ease: "easeInOut", delay: 0.2 }} className="w-2 h-2 bg-purple-500 rounded-full" />
-                         <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.6, ease: "easeInOut", delay: 0.4 }} className="w-2 h-2 bg-indigo-400 rounded-full" />
-                       </div>
-                    </div>
-                  )}
-                </div>
+              <div className="h-full flex flex-col relative bg-white">
                 
-                <div className="p-4 bg-white border-t border-slate-200 shrink-0">
-                  <form onSubmit={handleSendPromptMessage} className="flex bg-slate-50 border border-slate-200 rounded-2xl p-1.5 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent transition-all">
-                      <div className="relative flex-1">
-                        <textarea 
-                        required
-                        rows={1}
-                        disabled={isLlmGenerating}
-                        value={promptInput}
-                        onChange={e => setPromptInput(e.target.value)}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            handleSendPromptMessage();
-                          }
-                        }}
-                        placeholder="E.g., /question How does this work? or Initialize a new Express server..."
-                        className="w-full bg-transparent border-none outline-none resize-none px-4 py-3 text-xs md:text-sm text-slate-800 placeholder-slate-400 max-h-24 scrollbar-thin font-medium"
-                      />
-                      <AnimatePresence>
-                        {promptInput.startsWith('/') && promptInput.length < 5 && (
-                          <motion.div 
-                            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
-                            className="absolute bottom-full left-0 mb-2 w-64 bg-white border border-slate-200 shadow-xl rounded-xl p-2 z-[100]"
-                          >
-                             <div className="text-[10px] uppercase font-bold text-slate-400 px-2 py-1">Commands</div>
-                             <button type="button" onClick={() => setPromptInput('/fix ')} className="flex flex-col w-full text-left px-3 py-1.5 hover:bg-slate-50 rounded-lg">
-                               <span className="text-xs font-bold text-slate-700">/fix</span>
-                               <span className="text-[10px] text-slate-500">Fix code or errors</span>
-                             </button>
-                             <button type="button" onClick={() => setPromptInput('/explain ')} className="flex flex-col w-full text-left px-3 py-1.5 hover:bg-slate-50 rounded-lg">
-                               <span className="text-xs font-bold text-slate-700">/explain</span>
-                               <span className="text-[10px] text-slate-500">Explain how code works</span>
-                             </button>
-                             <button type="button" onClick={() => setPromptInput('/refactor ')} className="flex flex-col w-full text-left px-3 py-1.5 hover:bg-slate-50 rounded-lg">
-                               <span className="text-xs font-bold text-slate-700">/refactor</span>
-                               <span className="text-[10px] text-slate-500">Clean up and optimize</span>
-                             </button>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                {/* Scrollable messages container */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-6 max-w-4xl mx-auto w-full">
+                  
+                  {/* Greeting header layout */}
+                  {chatMessages.length <= 1 && (
+                    <div className="py-12 flex flex-col items-center text-center space-y-4">
+                      <div className="w-16 h-16 bg-slate-100 border border-slate-200 rounded-2xl flex items-center justify-center text-slate-700 shadow-md transform hover:scale-105 transition-transform duration-300">
+                        <Cpu className="w-8 h-8 text-indigo-600 animate-pulse" />
                       </div>
+                      
+                      <h2 className="text-3xl font-black text-slate-900 tracking-tight">What do you want to build?</h2>
+                      <p className="text-sm text-slate-500 max-w-sm">Chat with the enterprise agent to create, edit, or execute code in your secure sandbox.</p>
+                      
+                      {/* Pill style toggles requested exactly by image layout */}
+                      <div className="flex flex-wrap justify-center gap-3 pt-4">
+                        <button 
+                          onClick={() => setIsMultiAgent(false)}
+                          className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-extrabold transition-all border ${
+                            !isMultiAgent 
+                              ? 'bg-slate-900 text-white border-slate-950 shadow-md' 
+                              : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                          }`}
+                        >
+                          <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
+                          ⚡ Fast Direct Code
+                        </button>
+                        <button 
+                          onClick={() => setIsMultiAgent(true)}
+                          className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-extrabold transition-all border ${
+                            isMultiAgent 
+                              ? 'bg-slate-900 text-white border-slate-950 shadow-md' 
+                              : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                          }`}
+                        >
+                          <BrainCircuit className="w-3.5 h-3.5 text-indigo-400" />
+                          🧠 Multi-Agent Plan (Slow)
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
-                      <div className="flex items-center gap-1.5 pr-1">
-                        {isLlmGenerating ? (
-                          <button 
-                            type="button" 
-                            onClick={() => setIsLlmGenerating(false)}
-                            className="p-3 bg-red-100 text-red-600 hover:bg-red-200 rounded-xl transition-all shadow-sm"
-                            title="Stop Agent"
-                          >
-                             <div className="w-3.5 h-3.5 bg-red-500 rounded-sm"></div>
-                          </button>
-                        ) : (
-                          <button 
-                            type="submit"
-                            disabled={!promptInput.trim()}
-                            className="p-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-200 disabled:text-slate-400 text-white rounded-xl shadow-md transition-all flex items-center justify-center active:scale-95"
-                          >
-                            <Send className="w-4 h-4" />
-                          </button>
-                        )}
+                  {/* Render Message Logs */}
+                  <div className="space-y-4">
+                    {chatMessages.map((msg) => {
+                      const isUser = msg.role === 'user';
+                      const isSys = msg.role === 'system';
+                      
+                      if (isSys) {
+                        return (
+                          <div key={msg.id} className="p-3 bg-red-50 border border-red-100 text-red-900 text-xs rounded-xl flex items-start gap-2 max-w-3xl">
+                            <Info className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                            <div className="space-y-1">
+                              <p className="font-bold">Sandbox System Issue</p>
+                              <p className="leading-relaxed font-mono">{msg.content}</p>
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div 
+                          key={msg.id} 
+                          className={`flex gap-3 max-w-3xl ${isUser ? 'ml-auto flex-row-reverse' : ''}`}
+                        >
+                          {/* Profile Circle Icon */}
+                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-xs font-bold text-xs border ${
+                            isUser 
+                              ? 'bg-indigo-600 text-white border-indigo-700' 
+                              : 'bg-slate-100 text-slate-800 border-slate-200'
+                          }`}>
+                            {isUser ? 'U' : 'A'}
+                          </div>
+
+                          <div className="space-y-1 w-full">
+                            <div className="flex items-center gap-2 text-[10px] text-slate-400 font-mono">
+                              <span className="font-bold text-slate-600">{isUser ? 'You' : 'DocCraft Agent'}</span>
+                              <span>&bull;</span>
+                              <span>{msg.timestamp}</span>
+                            </div>
+
+                            {/* Message text block */}
+                            <div className={`p-4 rounded-2xl text-xs md:text-sm leading-relaxed whitespace-pre-wrap ${
+                              isUser 
+                                ? 'bg-indigo-600 text-white rounded-tr-none shadow-md' 
+                                : 'bg-slate-100/70 text-slate-800 rounded-tl-none border border-slate-200/50'
+                            }`}>
+                              {msg.content}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {/* Loader */}
+                    {isLlmGenerating && (
+                      <div className="flex gap-3 max-w-2xl">
+                        <div className="w-8 h-8 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-800 font-bold text-xs shrink-0 animate-bounce">
+                          A
+                        </div>
+                        <div className="space-y-2 flex-1">
+                          <div className="text-[10px] text-slate-400 font-mono">DocCraft Agent is writing code...</div>
+                          <div className="p-4 bg-slate-100/70 border border-slate-200/50 rounded-2xl rounded-tl-none space-y-1.5 w-full">
+                            <div className="h-2.5 bg-slate-250 rounded-full w-4/5 animate-pulse" />
+                            <div className="h-2.5 bg-slate-250 rounded-full w-full animate-pulse" style={{ animationDelay: '0.2s' }} />
+                            <div className="h-2.5 bg-slate-255 rounded-full w-2/3 animate-pulse" style={{ animationDelay: '0.4s' }} />
+                          </div>
+                        </div>
                       </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Bottom Prompt entry workspace bar */}
+                <div className="border-t border-slate-200 bg-white p-4 shrink-0 mt-auto">
+                  
+                  {/* Shortcut recommendations inline */}
+                  <div className="max-w-4xl mx-auto flex gap-2 overflow-x-auto pb-3 mb-1 shrink-0 scrollbar-none">
+                    {[
+                      { text: "Build a Tic Tac Toe game", label: "🎮 TicTacToe" },
+                      { text: "Create a simple timer", label: "⏰ Timer" },
+                      { text: "Make a CSS drawing canvas website", label: "🎨 DrawCanvas" },
+                      { text: "Write an interactive calculators layout", label: "🧮 Calculator" }
+                    ].map(rec => (
+                      <button 
+                        key={rec.text}
+                        onClick={() => setPromptInput(rec.text)}
+                        className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-full text-[10px] font-bold text-slate-600 hover:bg-slate-100 hover:text-indigo-600 transition-all shrink-0 font-mono"
+                      >
+                        {rec.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Typing input tray panel form */}
+                  <form onSubmit={handleSendPromptMessage} className="max-w-4xl mx-auto flex bg-slate-50 border border-slate-200 rounded-2xl p-1.5 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent transition-all">
+                    <textarea 
+                      required
+                      rows={1}
+                      disabled={isLlmGenerating}
+                      value={promptInput}
+                      onChange={e => setPromptInput(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSendPromptMessage();
+                        }
+                      }}
+                      placeholder="E.g., Initialize a new Express server and install mongoose..."
+                      className="flex-1 bg-transparent border-none outline-none resize-none px-4 py-3 text-xs md:text-sm text-slate-800 placeholder-slate-400 max-h-24 scrollbar-thin font-medium"
+                    />
+
+                    <div className="flex items-center gap-1.5 pr-1">
+                      {chatMessages.length > 2 && (
+                        <button 
+                          type="button" 
+                          onClick={clearChatHistory}
+                          className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                          title="Clear whole chat log"
+                        >
+                          <Trash2 className="w-4.5 h-4.5" />
+                        </button>
+                      )}
+
+                      <button 
+                        type="submit"
+                        disabled={!promptInput.trim() || isLlmGenerating}
+                        className="p-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-200 disabled:text-slate-400 text-white rounded-xl shadow-md transition-all flex items-center justify-center active:scale-95"
+                      >
+                        <Send className="w-4 h-4" />
+                      </button>
+                    </div>
                   </form>
                 </div>
               </div>
@@ -1274,37 +1089,13 @@ DO NOT return any text outside the JSON block. Let the JSON block stand alone in
                   </div>
 
                   {/* Live textarea element with high capability */}
-                  <div className="flex-1 h-full bg-white overflow-auto relative">
-                    <Editor
-                      value={editingCode}
-                      onValueChange={code => setEditingCode(code)}
-                      highlight={code => {
-                        const safeCode = code || '';
-                        let lang = 'javascript';
-                        if (activeFilePath.endsWith('.css')) lang = 'css';
-                        if (activeFilePath.endsWith('.html')) lang = 'markup';
-                        if (activeFilePath.endsWith('.json')) lang = 'json';
-                        if (activeFilePath.endsWith('.ts') || activeFilePath.endsWith('.tsx')) lang = 'typescript';
-                        
-                        const grammar = Prism.languages[lang] || Prism.languages.javascript || Prism.languages.markup;
-                        if (!grammar) return safeCode;
-                        
-                        try {
-                          return Prism.highlight(safeCode, grammar, lang);
-                        } catch (e) {
-                          return safeCode;
-                        }
-                      }}
-                      padding={16}
-                      className="min-h-full font-mono text-xs md:text-sm leading-5 text-slate-850 tab-size-[4] select-text selection:bg-slate-200"
-                      style={{
-                        fontFamily: '"Fira code", "Fira Mono", monospace',
-                        fontSize: 12,
-                        minHeight: '100%',
-                        outline: 'none'
-                      }}
-                    />
-                  </div>
+                  <textarea 
+                    value={editingCode}
+                    onChange={e => setEditingCode(e.target.value)}
+                    className="flex-1 h-full bg-white p-4 focus:outline-none resize-none font-mono text-xs md:text-sm leading-5 text-slate-850 tab-size-[4] select-text selection:bg-slate-200"
+                    placeholder="// write code snippet here..."
+                    spellCheck={false}
+                  />
                 </div>
               </div>
             )}
@@ -1326,10 +1117,7 @@ DO NOT return any text outside the JSON block. Let the JSON block stand alone in
 
                   <div className="flex gap-2">
                     <button 
-                      onClick={() => {
-                        appendSystemLog("Forcing iframe render cache reload...");
-                        setPreviewKey(k => k + 1);
-                      }}
+                      onClick={() => appendSystemLog("Forcing iframe render cache reload...")}
                       title="Refresh Preview Workspace"
                       className="p-1 hover:bg-white rounded border border-slate-300 hover:border-slate-400 text-slate-600 transition-colors"
                     >
@@ -1352,7 +1140,6 @@ DO NOT return any text outside the JSON block. Let the JSON block stand alone in
                 {/* Preview secure iframe sandbox container */}
                 <div className="flex-1 bg-white relative">
                   <iframe 
-                    key={previewKey}
                     title="Docscraft Active Sandbox Preview Frame"
                     srcDoc={previewFrameContent}
                     sandbox="allow-scripts allow-popups allow-modals allow-same-origin"
@@ -1374,80 +1161,6 @@ DO NOT return any text outside the JSON block. Let the JSON block stand alone in
         </div>
 
       </div>
-
-      {/* Instructions / Researcher Schema Modal */}
-      <AnimatePresence>
-        {showInstructionsModal && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm"
-            onClick={() => setShowInstructionsModal(false)}
-          >
-            <motion.div 
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              onClick={e => e.stopPropagation()}
-              className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col"
-            >
-              <div className="bg-indigo-50 border-b border-indigo-100 p-5 flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-black text-indigo-900 flex items-center gap-2">
-                    <Bot className="w-5 h-5 text-indigo-600" />
-                    Agent Skill Instructions & Researcher Schema
-                  </h3>
-                  <p className="text-xs text-indigo-600/80 font-medium mt-1">Configure how the agent plans tasks, writes code, and researches.</p>
-                </div>
-                <button onClick={() => setShowInstructionsModal(false)} className="text-indigo-400 hover:text-indigo-700 font-bold p-2">✕</button>
-              </div>
-              <div className="p-6 overflow-y-auto max-h-[60vh] space-y-5 text-sm text-slate-700">
-                
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                  <h4 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-amber-500"/> Core Working Language & Mode
-                  </h4>
-                  <p className="mb-2"><strong>Language:</strong> The agent must use TypeScript/JavaScript strictly unless requested otherwise. React components should be preferred for UI generation.</p>
-                  <p><strong>Execution Strategy:</strong> The agent MUST make a structured plan before executing any code. It should present the plan in the chat to the user first.</p>
-                </div>
-
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                  <h4 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
-                    <Search className="w-4 h-4 text-blue-500"/> Researcher Schema
-                  </h4>
-                  <p className="mb-2">When encountering new technologies, APIs, or complex requirements, the agent must enter <strong>Research Mode</strong>.</p>
-                  <ul className="list-disc pl-5 space-y-1">
-                    <li>Query latest documentation and best practices.</li>
-                    <li>Avoid hallucinating outdated syntax.</li>
-                    <li>Synthesize findings into the pre-execution plan.</li>
-                  </ul>
-                </div>
-
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                  <h4 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
-                    <Code2 className="w-4 h-4 text-emerald-500"/> Code Quality Guidelines
-                  </h4>
-                  <ul className="list-disc pl-5 space-y-1">
-                    <li>Generate functional, zero-mock UI where possible.</li>
-                    <li>Rely on Tailwind CSS for inline rapid styling.</li>
-                    <li>Follow single-view constraint for basic apps unless expanded by user.</li>
-                  </ul>
-                </div>
-
-              </div>
-              <div className="p-5 border-t border-slate-100 bg-slate-50 flex justify-end">
-                <button 
-                  onClick={() => setShowInstructionsModal(false)}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg transition-colors shadow-sm"
-                >
-                  Save & Apply Instructions
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
     </div>
   );

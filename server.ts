@@ -722,52 +722,6 @@ Requirements:
     }
   });
 
-  // VIBECODING CUSTOM DOCKER ARCHITECTURE ROUTES (Replaces E2B)
-  
-  // 1. Dynamic Proxy for Hardware/Software preview iframe
-  // Routes matching /preview/session-uuid/ to the specific docker container (assuming it's available internally on port 3000)
-  app.use('/preview/:sessionUuid', async (req, res, next) => {
-    // In a real environment, you'd use a robust proxy like http-proxy.
-    // For this architectural implementation, we simulate the proxy mapping:
-    const sessionUuid = req.params.sessionUuid;
-    console.log(`[Reverse Proxy] Routing traffic for session ${sessionUuid} to internal Docker container...`);
-    // Example: proxy.web(req, res, { target: `http://vibe-${sessionUuid}:3000` });
-    // Since we don't have http-proxy installed here, we return a mock success for the architectural demo:
-    res.send(`<!DOCTYPE html><html><head><title>Vibecoding Preview (${sessionUuid})</title></head><body><h1>Live Preview Connected</h1><p>Rendering application from container vibe-${sessionUuid} on port 3000.</p></body></html>`);
-  });
-
-  // 2. The Agent Loop API Route
-  app.post('/api/vibecoding/run', async (req, res) => {
-    try {
-      // Lazy load to avoid module issues if not used
-      const { backendOrchestrator } = await import('./src/lib/vibecoding/BackendOrchestrator.ts');
-      
-      const { sessionUuid, prompt, chatHistory } = req.body;
-      const authHeader = req.headers.authorization || '';
-      const apiKey = authHeader.replace('Bearer ', '').trim();
-      
-      if (!apiKey) throw new Error("Missing Authorization header with Gemini API Key");
-      
-      const result = await backendOrchestrator.runAgentLoop(sessionUuid, prompt, apiKey, chatHistory || []);
-      res.json(result);
-    } catch (e: any) {
-      console.error("[Vibecoding Run Error]", e);
-      res.status(500).json({ error: e.message || "Failed to run vibecoding agent" });
-    }
-  });
-
-  // 3. The Agent Loop Resume Route
-  app.post('/api/vibecoding/resume', async (req, res) => {
-    try {
-      const { backendOrchestrator } = await import('./src/lib/vibecoding/BackendOrchestrator.ts');
-      const { sessionUuid } = req.body;
-      backendOrchestrator.resetStepCount(sessionUuid);
-      res.json({ success: true, message: "Agent loop resumed" });
-    } catch (e: any) {
-      res.status(500).json({ error: e.message || "Failed to resume" });
-    }
-  });
-
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

@@ -299,6 +299,11 @@ export function EditorPage() {
   const [isCreatingDivider, setIsCreatingDivider] = useState(false);
   // --- END OF INTERACTIVE DOCUMENT BUILDER STATE ---
 
+  // --- FREEFORM BLOCK ENGINE STATES ---
+  const [isFreeformModeEnabled, setIsFreeformModeEnabled] = useState(false);
+  const [freeformBlocks, setFreeformBlocks] = useState<{ id: string; x: number; y: number; content: string }[]>([]);
+  const [slashMenuIndex, setSlashMenuIndex] = useState(0);
+
   const [showRedirectModal, setShowRedirectModal] = useState(false);
   const [redirectTargetUrl, setRedirectTargetUrl] = useState('');
   const [redirectTargetText, setRedirectTargetText] = useState('');
@@ -452,6 +457,57 @@ export function EditorPage() {
       setShowAffidavitDrawer(true);
     }
   };
+
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+
+  const handleBlockDragStart = (e: React.MouseEvent, block: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const canvasEl = document.getElementById('editor-canvas-container');
+    if (!canvasEl) return;
+    const rect = canvasEl.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+    
+    setActiveDragId(block.id);
+    setDragOffset({
+      x: clickX - block.x,
+      y: clickY - block.y
+    });
+  };
+
+  // Dragging global effect inside document coordinates
+  useEffect(() => {
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      if (!activeDragId) return;
+      const canvasEl = document.getElementById('editor-canvas-container');
+      if (!canvasEl) return;
+      const rect = canvasEl.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+      
+      const newX = Math.max(10, Math.min(rect.width - 150, clickX - dragOffset.x));
+      const newY = Math.max(10, Math.min(rect.height - 40, clickY - dragOffset.y));
+      
+      setFreeformBlocks(prev => prev.map(b => 
+        b.id === activeDragId ? { ...b, x: newX, y: newY } : b
+      ));
+    };
+    
+    const handleGlobalMouseUp = () => {
+      setActiveDragId(null);
+    };
+    
+    if (activeDragId) {
+      window.addEventListener('mousemove', handleGlobalMouseMove);
+      window.addEventListener('mouseup', handleGlobalMouseUp);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleGlobalMouseMove);
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [activeDragId, dragOffset]);
 
   const handlePanMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     // Enable panning when clicking on the outer background container
@@ -1397,11 +1453,39 @@ Requirements:
       if (currentLineText.endsWith('/')) {
          setShowSlashMenu(true);
          setSlashMenuQuery('');
+         setSlashMenuIndex(0);
+         try {
+           const coords = editor.view.coordsAtPos($from.pos);
+           const canvasEl = document.getElementById('editor-canvas-container');
+           if (canvasEl) {
+             const rect = canvasEl.getBoundingClientRect();
+             setSlashMenuPos({
+               x: coords.left - rect.left,
+               y: coords.bottom - rect.top + 10
+             });
+           } else {
+             setSlashMenuPos({ x: coords.left, y: coords.bottom });
+           }
+         } catch (e) {
+           setSlashMenuPos({ x: 100, y: 100 });
+         }
       } else if (showSlashMenu) {
          const slashIndex = currentLineText.lastIndexOf('/');
          if (slashIndex !== -1) {
             const query = currentLineText.substring(slashIndex + 1);
             setSlashMenuQuery(query);
+            setSlashMenuIndex(0);
+            try {
+              const coords = editor.view.coordsAtPos($from.pos);
+              const canvasEl = document.getElementById('editor-canvas-container');
+              if (canvasEl) {
+                const rect = canvasEl.getBoundingClientRect();
+                setSlashMenuPos({
+                  x: coords.left - rect.left,
+                  y: coords.bottom - rect.top + 10
+                });
+              }
+            } catch (e) {}
          } else {
             setShowSlashMenu(false);
          }
@@ -1436,6 +1520,38 @@ Requirements:
     editorProps: {
       attributes: {
         class: 'prose dark:prose-invert focus:outline-none max-w-none min-h-[700px] outline-none',
+      },
+      handleKeyDown: (view, event) => {
+        if (showSlashMenuRef.current) {
+          const cmds = filteredCommandsRef.current;
+          const count = cmds.length;
+          if (count > 0) {
+            if (event.key === 'ArrowDown') {
+              event.preventDefault();
+              setSlashMenuIndex(prev => (prev + 1) % count);
+              return true;
+            }
+            if (event.key === 'ArrowUp') {
+              event.preventDefault();
+              setSlashMenuIndex(prev => (prev - 1 + count) % count);
+              return true;
+            }
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              const activeCmd = cmds[slashMenuIndexRef.current];
+              if (activeCmd) {
+                executeSlashCommand(activeCmd.id);
+              }
+              return true;
+            }
+            if (event.key === 'Escape') {
+              event.preventDefault();
+              setShowSlashMenu(false);
+              return true;
+            }
+          }
+        }
+        return false;
       },
       handleClick: (view, pos, event) => {
         const target = event.target as HTMLElement;
@@ -1543,6 +1659,54 @@ Requirements:
      }
   }, [selectedFormat, editor]);
 
+  // Synchronize freeform blocks and slash commands to refs to prevent closure captures
+  const freeformBlocksRef = useRef(freeformBlocks);
+  useEffect(() => {
+    freeformBlocksRef.current = freeformBlocks;
+  }, [freeformBlocks]);
+
+  const showSlashMenuRef = useRef(showSlashMenu);
+  const slashMenuIndexRef = useRef(slashMenuIndex);
+  const filteredCommandsRef = useRef<any[]>([]);
+
+  useEffect(() => {
+    showSlashMenuRef.current = showSlashMenu;
+  }, [showSlashMenu]);
+  useEffect(() => {
+    slashMenuIndexRef.current = slashMenuIndex;
+  }, [slashMenuIndex]);
+
+  // Synchronize filtered commands based on slashMenuQuery
+  useEffect(() => {
+    const q = slashMenuQuery.toLowerCase();
+    const filtered = slashCommands.filter(cmd => 
+      cmd.label.toLowerCase().includes(q) || 
+      cmd.desc.toLowerCase().includes(q) || 
+      cmd.shortcut.toLowerCase().includes(q) ||
+      (cmd.aliases && cmd.aliases.some(alias => alias.toLowerCase().includes(q)))
+    );
+    filteredCommandsRef.current = filtered;
+  }, [slashMenuQuery]);
+
+  // Auto-save freeform blocks when modified
+  useEffect(() => {
+    if (!id || id === 'new' || !isDocumentLoadedRef.current) return;
+    const activeId = id;
+    const timeout = setTimeout(async () => {
+      try {
+        setSyncStatus('Saving...');
+        await updateDoc(doc(db, 'documents', activeId), {
+          freeformBlocks: freeformBlocksRef.current,
+          updatedAt: serverTimestamp()
+        });
+        setSyncStatus('All changes saved');
+      } catch (e) {
+        setSyncStatus('Error saving');
+      }
+    }, 1500);
+    return () => clearTimeout(timeout);
+  }, [freeformBlocks, id]);
+
   const handleDocSave = async () => {
     const activeId = idRef.current;
     if (!activeId || !editor || activeId === 'new') return;
@@ -1600,6 +1764,11 @@ Requirements:
           setDocTitle(data.title || 'Untitled Document');
           setIsStarred(data.isStarred || false);
           setIsShared(data.isShared || false);
+          if (data.freeformBlocks) {
+            setFreeformBlocks(data.freeformBlocks);
+          } else {
+            setFreeformBlocks([]);
+          }
           if (editor && !editor.isDestroyed) {
              isIncomingLoadRef.current = true;
              editor.commands.setContent(decryptData(data.content || ''));
@@ -3910,6 +4079,30 @@ Target Compiled Output:`;
                       setShowDividerPopup(true);
                     }
                     return;
+                  }
+
+
+                  if (isFreeformModeEnabled && editor) {
+                    const canvasEl = document.getElementById('editor-canvas-container');
+                    if (canvasEl) {
+                      const rect = canvasEl.getBoundingClientRect();
+                      const clickX = e.clientX - rect.left;
+                      const clickY = e.clientY - rect.top;
+                      
+                      // Ignore clicks on existing blocks or actions
+                      if (target.closest('[data-freeform-block]') || target.closest('button')) {
+                        return;
+                      }
+                      
+                      const newBlock = {
+                        id: `freeform-${Date.now()}`,
+                        x: clickX,
+                        y: clickY - 12,
+                        content: 'Start typing...'
+                      };
+                      setFreeformBlocks(prev => [...prev, newBlock]);
+                      return;
+                    }
                   }
 
                   const isCanvasBg = target.id === 'editor-canvas-container' || target.classList.contains('ProseMirror') || (target.tagName === 'DIV' && target.className.includes('w-full relative'));

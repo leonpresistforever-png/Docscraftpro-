@@ -57,8 +57,20 @@ export function OfflineNotepad({ isOpen, onClose, editor }: OfflineNotepadProps)
 
   // Save notes helper
   const saveNotes = (updatedNotes: Note[]) => {
-    setNotes(updatedNotes);
-    localStorage.setItem('doccraft_offline_notepad_notes', JSON.stringify(updatedNotes));
+    let finalNotes = updatedNotes;
+    if (updatedNotes.length === 0) {
+      finalNotes = [
+        {
+          id: "welcome-doccraft-note",
+          title: "💡 Welcome to Docscraft Pro",
+          content: "Welcome to Docscraft! This is your beautiful local Diary and Notepad. You can use this offline scratchpad to record thoughts, track notes, and save outline drafts securely on your device.\n\nEnjoy writing documents with elegant layouts, robust features, and local offline persistence!",
+          updatedAt: Date.now()
+        }
+      ];
+      setActiveNoteId("welcome-doccraft-note");
+    }
+    setNotes(finalNotes);
+    localStorage.setItem('doccraft_offline_notepad_notes', JSON.stringify(finalNotes));
   };
 
   const activeNote = notes.find(n => n.id === activeNoteId) || notes[0];

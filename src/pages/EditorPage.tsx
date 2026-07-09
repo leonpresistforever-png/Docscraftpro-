@@ -23,6 +23,28 @@ import Link from '@tiptap/extension-link';
 import FontFamily from '@tiptap/extension-font-family';
 import { all, createLowlight } from 'lowlight';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
+import { jsPDF } from 'jspdf';
+
+const SUPPORTED_FORMATS = [
+  { id: 'pdf', name: 'Fixed Portable Document', extension: 'pdf', category: 'document', mimeType: 'application/pdf' },
+  { id: 'docx', name: 'Word Processing Document', extension: 'docx', category: 'document', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' },
+  { id: 'html', name: 'Interactive Webpage', extension: 'html', category: 'code', mimeType: 'text/html' },
+  { id: 'pptx', name: 'PowerPoint Presentation', extension: 'pptx', category: 'presentation', mimeType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' },
+  { id: 'txt', name: 'Plain Text File', extension: 'txt', category: 'document', mimeType: 'text/plain' },
+  { id: 'jpg', name: 'JPEG Image', extension: 'jpg', category: 'image', mimeType: 'image/jpeg' },
+  { id: 'png', name: 'PNG Image', extension: 'png', category: 'image', mimeType: 'image/png' },
+  { id: 'excel', name: 'Excel Spreadsheet', extension: 'xlsx', category: 'spreadsheet', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
+  { id: 'xlsx', name: 'Office Spreadsheet XML', extension: 'xlsx', category: 'spreadsheet', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
+  { id: 'zip', name: 'ZIP Compressed Archive', extension: 'zip', category: 'archive', mimeType: 'application/zip' },
+  { id: 'csv', name: 'Comma Separated Values', extension: 'csv', category: 'spreadsheet', mimeType: 'text/csv' },
+  { id: 'xml', name: 'Extensible XML Data', extension: 'xml', category: 'code', mimeType: 'application/xml' },
+  { id: 'rtf', name: 'Rich Text Format', extension: 'rtf', category: 'document', mimeType: 'application/rtf' },
+  { id: 'ods', name: 'OpenDocument Spreadsheet', extension: 'ods', category: 'spreadsheet', mimeType: 'application/vnd.oasis.opendocument.spreadsheet' },
+  { id: 'odp', name: 'OpenDocument Presentation', extension: 'odp', category: 'presentation', mimeType: 'application/vnd.oasis.opendocument.presentation' },
+  { id: 'odt', name: 'OpenDocument Text Writer', extension: 'odt', category: 'document', mimeType: 'application/vnd.oasis.opendocument.text' },
+  { id: 'odr', name: 'OpenDocument Report', extension: 'odr', category: 'document', mimeType: 'application/vnd.oasis.opendocument.report' },
+  { id: 'wordpress', name: 'WordPress XML Import', extension: 'xml', category: 'code', mimeType: 'application/rss+xml' },
+];
 import { FontSize } from '../lib/fontSizeExtension';
 import { SpacingExtension } from '../lib/SpacingExtension';
 import { StrokeExtension } from '../lib/StrokeExtension';
@@ -45,8 +67,9 @@ import { cn } from '@/src/lib/utils';
 import { Button } from '../components/ui/Button';
 import { signInForGoogleDocs, createGoogleDoc, exportHtmlToGoogleDoc, getDocsToken, setDocsToken } from '../utils/googleDocs';
 import { signInForGoogleSlides, createGoogleSlidePresentation, getSlidesToken, setSlidesToken } from '../utils/googleSlides';
+import { signInForGoogleSheets, createGoogleSheet, getSheetsToken } from '../utils/googleSheets';
 import { 
-  Wand2, Save, MessageSquare, Send, Bold, Italic, Underline as UnderlineIcon, 
+  Award, Wand2, Save, MessageSquare, Send, Bold, Italic, Underline as UnderlineIcon, 
   AlignLeft, AlignCenter, AlignRight, Strikethrough, Superscript as SuperIcon, Subscript as SubIcon,
   Eraser, List, ListOrdered, CheckSquare, Quote, Code, Minus, Link as LinkIcon, Download, Undo, Redo, Eye,
   Palette, Highlighter, Sparkles, PenTool, Languages, MousePointer2, Settings, Type, LayoutList, 
@@ -59,7 +82,7 @@ import { LocalGemmaTerminal } from '../components/LocalGemmaTerminal';
 import { runLocalChain } from '../utils/langchainLocal';
 import { marked } from 'marked';
 import { HexColorPicker } from 'react-colorful';
-import { AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 
 import { RobotDictator } from '../components/RobotDictator';
 import { OfflineNotepad } from '../components/OfflineNotepad';
@@ -198,6 +221,34 @@ export function EditorPage() {
   const [showFormatMenu, setShowFormatMenu] = useState(false);
   const [showToolsMenu, setShowToolsMenu] = useState(false);
 
+  // Zoom level state for desktop viewport
+  const [canvasZoom, setCanvasZoom] = useState(100);
+
+  // Page Dividers & Compliance Affidavit Tools state
+  const [separators, setSeparators] = useState<any[]>([]);
+  const [showDividerDrawer, setShowDividerDrawer] = useState(false);
+  const [showAffidavitDrawer, setShowAffidavitDrawer] = useState(false);
+  
+  // Page Separator custom properties
+  const [sepType, setSepType] = useState<'horizontal' | 'vertical'>('horizontal');
+  const [sepColor, setSepColor] = useState('#D4AF37');
+  const [sepCustomColor, setSepCustomColor] = useState('#D4AF37');
+  const [sepThickness, setSepThickness] = useState(2);
+  const [sepOffsetX, setSepOffsetX] = useState(0);
+  const [sepOffsetY, setSepOffsetY] = useState(15);
+  const [sepLength, setSepLength] = useState(100);
+
+  // Compliance Affidavit properties
+  const [isAffidavitSigned, setIsAffidavitSigned] = useState(false);
+  const [signerName, setSignerName] = useState('');
+  const [signerTitle, setSignerTitle] = useState('');
+  const [signerOrg, setSignerOrg] = useState('');
+  const [approvedZeroTrust, setApprovedZeroTrust] = useState(false);
+  const [approvedSovereignty, setApprovedSovereignty] = useState(false);
+  const [affidavitDate, setAffidavitDate] = useState('');
+  const [affidavitState, setAffidavitState] = useState('New York');
+  const [affidavitCounty, setAffidavitCounty] = useState('New York');
+
   const [linkUrl, setLinkUrl] = useState('');
   const [linkText, setLinkText] = useState('');
   const [showLinkModal, setShowLinkModal] = useState(false);
@@ -218,9 +269,35 @@ export function EditorPage() {
   const [showPopupMediaViewer, setShowPopupMediaViewer] = useState(false);
   const [popupMediaUrl, setPopupMediaUrl] = useState('');
   const [popupMediaTitle, setPopupMediaTitle] = useState('');
+  const [showAiExportModal, setShowAiExportModal] = useState(false);
+  const [aiExportFormat, setAiExportFormat] = useState('pdf');
+  const [aiExportProcessing, setAiExportProcessing] = useState(false);
+  const [aiExportResult, setAiExportResult] = useState('');
+  const [aiExportGoogleUrl, setAiExportGoogleUrl] = useState('');
   const [popupMediaType, setPopupMediaType] = useState<'image' | 'pdf' | 'other'>('other');
   const [loadingPopupMedia, setLoadingPopupMedia] = useState(false);
   const [popupPhotoScale, setPopupPhotoScale] = useState(1);
+
+  // --- INTERACTIVE DOCUMENT BUILDER STATE FOR LEGALDOC PRO / DOCSCRAFT ---
+  const [showSlashMenu, setShowSlashMenu] = useState(false);
+  const [slashMenuQuery, setSlashMenuQuery] = useState('');
+  const [slashMenuPos, setSlashMenuPos] = useState<{ x: number, y: number } | null>(null);
+  
+  const [showDividerPopup, setShowDividerPopup] = useState(false);
+  const [clickedDividerId, setClickedDividerId] = useState<string | null>(null);
+  const [clickedDividerColor, setClickedDividerColor] = useState('#4F46E5');
+  const [clickedDividerThickness, setClickedDividerThickness] = useState(4);
+  const [clickedDividerLength, setClickedDividerLength] = useState(80);
+  const [clickedDividerOpacity, setClickedDividerOpacity] = useState(0.8);
+  
+  const [showSignModal, setShowSignModal] = useState(false);
+  const [uploadedAssets, setUploadedAssets] = useState<any[]>([
+    { id: 'stamp-default', name: 'Official Notary Seal stamp.png', type: 'stamp', dataUrl: 'https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?auto=format&fit=crop&q=80&w=200' },
+  ]);
+  const [activeAffidavitStyle, setActiveAffidavitStyle] = useState<string>('truth');
+  const [showAffidavitTemplatesModal, setShowAffidavitTemplatesModal] = useState(false);
+  const [isCreatingDivider, setIsCreatingDivider] = useState(false);
+  // --- END OF INTERACTIVE DOCUMENT BUILDER STATE ---
 
   const [showRedirectModal, setShowRedirectModal] = useState(false);
   const [redirectTargetUrl, setRedirectTargetUrl] = useState('');
@@ -242,6 +319,173 @@ export function EditorPage() {
   const [docSearchQuery, setDocSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const saveTimeoutRef = useRef<any>(null);
+  
+  // Outer viewport panning states
+  const outerScrollContainerRef = useRef<HTMLDivElement>(null);
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
+
+  // --- INTERACTIVE DOCUMENT BUILDER FUNCTIONS ---
+  const slashCommands = [
+    { id: 'divider', label: 'Insert Separator Divider', desc: 'Create a custom divider block with adjustable color, length, and opacity.', shortcut: '/seperate', aliases: ['separate', 'divider'], icon: 'Minus' },
+    { id: 'field', label: 'Form Fillable Blank', desc: 'Insert an underline fillable blank (e.g. Place: _______).', shortcut: '/name', aliases: ['field', 'blank', 'name'], icon: 'UnderlineIcon' },
+    { id: 'sign', label: 'Hand-drawn Signature', desc: 'Draw your legal signature live on a vector canvas and insert.', shortcut: '/sign', aliases: ['signature', 'draw'], icon: 'PenTool' },
+    { id: 'sigblock', label: 'Signature Block', desc: 'Formal signature line with deponent/signatory subtext.', shortcut: '/sigblock', aliases: ['witness', 'seal'], icon: 'Award' },
+    { id: 'leader', label: 'Leader Lines (Tab Leaders)', desc: 'Inserts dotted/dashed connector lines across whitespace.', shortcut: '/leader', icon: 'Layers' },
+    { id: 'affidavit', label: 'Official Affidavit Paper', desc: 'Apply from 6 professional A4 legal templates instantly.', shortcut: '/affidavit', aliases: ['template'], icon: 'Scale' },
+    { id: 'table', label: 'Interactive Table Matrix', desc: 'Structured itemization layout with headers.', shortcut: '/table', aliases: ['grid'], icon: 'TableIcon' },
+    { id: 'upload', label: 'Upload Stamp, Sign, Passport or ID', desc: 'Attach verified passport identity copies, legal stamps, and seals.', shortcut: '/upload', icon: 'Download' }
+  ];
+
+  const affidavitTemplates = [
+    {
+      id: 'truth',
+      name: 'General Affidavit of Facts & Truth',
+      desc: 'Standard legal swear of fact and truth.',
+      html: `<div class="legal-template p-8 border-[3px] border-double border-stone-400 bg-[#FAF9F6] font-serif leading-relaxed text-stone-800 rounded-sm shadow-md my-4 relative" style="font-family: 'Times New Roman', Garamond, Georgia, serif; min-height: 500px;">\n  <div class="absolute inset-0 flex items-center justify-center pointer-events-none select-none opacity-[0.03] overflow-hidden" style="transform: rotate(-30deg); font-size: 5rem; font-weight: 900; letter-spacing: 0.2em; color: #000;">\n    SWORN AFFIDAVIT\n  </div>\n  <h2 class="text-center text-xl font-bold uppercase tracking-widest mb-1 font-serif text-stone-950">Affidavit of Facts & Truth</h2>\n  <div class="w-32 h-0.5 bg-amber-600/60 mx-auto mb-4"></div>\n  <p class="text-center text-[10px] font-mono mb-6 text-stone-500 uppercase tracking-widest">STATE OF <span class="bg-amber-100/60 px-1 border-b border-dashed border-stone-500" contenteditable="true" placeholder="[State]">_______________</span> &bull; COUNTY OF <span class="bg-amber-100/60 px-1 border-b border-dashed border-stone-500" contenteditable="true" placeholder="[County]">_______________</span></p>\n  <div class="border-t border-stone-300 border-b py-0.5 mb-6 flex justify-between text-[9px] font-bold text-stone-500 font-mono tracking-wider">\n    <span>RECORD ID: SWN-FACTS-${Math.floor(100000 + Math.random() * 900000)}</span>\n    <span>A4 LEGAL FORMAT</span>\n  </div>\n  <p class="mb-4">I, <span class="bg-amber-100/60 px-1.5 py-0.5 font-bold border-b-2 border-dashed border-amber-600 rounded-sm cursor-text" contenteditable="true" placeholder="[Full Name]">[Full Name]</span>, residing at <span class="bg-amber-100/60 px-1.5 py-0.5 font-bold border-b-2 border-dashed border-amber-600 rounded-sm cursor-text" contenteditable="true" placeholder="[Address]">[Address]</span>, being first duly sworn, depose and state as follows under penalty of perjury:</p>\n  <ol class="list-decimal pl-5 space-y-4 mb-6 text-sm text-stone-800">\n    <li class="pl-1">That I am the affiant named herein, and I have personal knowledge of all matters set forth in this affidavit.</li>\n    <li class="pl-1">That the following facts are true, accurate, and complete to the best of my knowledge and belief: <span class="bg-amber-100/60 px-1.5 py-0.5 border-b-2 border-dashed border-amber-600 rounded-sm font-semibold cursor-text" contenteditable="true" placeholder="[Type details of the facts here]">[Type details of the facts here]</span>.</li>\n    <li class="pl-1">That this statement is made freely and voluntarily, and not under duress or undue influence.</li>\n  </ol>\n  <div class="bg-stone-100/80 p-3 rounded-lg border border-stone-200/60 text-xs text-stone-600 italic mb-6">\n    "I declare under penalty of perjury under the laws of this jurisdiction that the foregoing statements are true and correct, and that this declaration is executed on the date specified below."\n  </div>\n  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 border-t border-dashed border-stone-300 pt-6" contenteditable="false">\n    <div>\n      <p class="text-[10px] uppercase tracking-wider font-extrabold mb-2 text-stone-600">Sworn Deponent:</p>\n      <div class="h-10 flex items-end pl-2 font-serif text-md italic text-indigo-700 select-text">/s/ <span class="bg-amber-100/60 px-1 border-b border-dashed border-amber-600" contenteditable="true" placeholder="[Deponent Signature]">[Deponent Signature]</span></div>\n      <div class="border-t border-stone-400 mt-1 pt-1 text-[9px] text-stone-400 uppercase font-mono tracking-wider">Deponent Signature</div>\n    </div>\n    <div>\n      <p class="text-[10px] uppercase tracking-wider font-extrabold mb-2 text-stone-600">Notary Validation:</p>\n      <p class="text-[11px] text-stone-600 font-mono">Date: <span class="bg-amber-100/60 px-1 border-b border-dashed border-amber-600" contenteditable="true" placeholder="[Date]">[Date]</span></p>\n      <div class="border-t border-stone-400 mt-10 pt-1 text-[9px] text-stone-400 uppercase font-mono tracking-wider">Notary Public Signature</div>\n    </div>\n    <div>\n      <p class="text-[10px] uppercase tracking-wider font-extrabold mb-1 text-stone-600">Notary Stamp Area:</p>\n      <div class="border-2 border-dashed border-amber-500/30 hover:border-amber-500 rounded-xl p-2.5 flex flex-col items-center justify-center text-center bg-amber-50/20 hover:bg-amber-50/40 transition-all cursor-pointer min-h-[90px]">\n        <span class="text-[8px] font-mono tracking-widest text-amber-700/60 uppercase font-bold">NOTARY PUBLIC SEAL</span>\n        <span class="text-[7px] text-stone-400 mt-1">Select uploaded stamp/seal in sidebar to overlay</span>\n      </div>\n    </div>\n  </div>\n</div><p><br></p>`
+    },
+    {
+      id: 'translation',
+      name: 'Affidavit of Translation Accuracy',
+      desc: 'Certify translated foreign documents.',
+      html: `<div class="legal-template p-8 border-[3px] border-double border-stone-400 bg-[#FAF9F6] font-serif leading-relaxed text-stone-800 rounded-sm shadow-md my-4 relative" style="font-family: 'Times New Roman', Garamond, Georgia, serif; min-height: 500px;">\n  <div class="absolute inset-0 flex items-center justify-center pointer-events-none select-none opacity-[0.03] overflow-hidden" style="transform: rotate(-30deg); font-size: 5rem; font-weight: 900; letter-spacing: 0.15em; color: #000;">\n    TRANSLATION ACCURACY\n  </div>\n  <h2 class="text-center text-xl font-bold uppercase tracking-widest mb-1 font-serif text-stone-950">Affidavit of Translation Accuracy</h2>\n  <div class="w-32 h-0.5 bg-indigo-600/60 mx-auto mb-4"></div>\n  <p class="text-center text-[10px] font-mono mb-6 text-stone-500 uppercase tracking-widest">STATE OF <span class="bg-amber-100/60 px-1 border-b border-dashed border-stone-500" contenteditable="true" placeholder="[State]">_______________</span> &bull; COUNTY OF <span class="bg-amber-100/60 px-1 border-b border-dashed border-stone-500" contenteditable="true" placeholder="[County]">_______________</span></p>\n  <div class="border-t border-stone-300 border-b py-0.5 mb-6 flex justify-between text-[9px] font-bold text-stone-500 font-mono tracking-wider">\n    <span>COMPLIANCE ID: TRN-ACC-${Math.floor(100000 + Math.random() * 900000)}</span>\n    <span>A4 CERTIFIED LANGUAGE</span>\n  </div>\n  <p class="mb-4">I, <span class="bg-amber-100/60 px-1.5 py-0.5 font-bold border-b-2 border-dashed border-amber-600 rounded-sm cursor-text" contenteditable="true" placeholder="[Translator Name]">[Translator Name]</span>, residing at <span class="bg-amber-100/60 px-1.5 py-0.5 font-bold border-b-2 border-dashed border-amber-600 rounded-sm cursor-text" contenteditable="true" placeholder="[City, Country]">[City, Country]</span>, being first duly sworn, depose and state as follows:</p>\n  <p class="mb-4">That I am well versed, fluent, and fully competent in both the <span class="bg-amber-100/60 px-1.5 py-0.5 border-b border-dashed border-amber-500 font-bold" contenteditable="true" placeholder="[Source Language, e.g., German]">[Source Language]</span> and <span class="bg-amber-100/60 px-1.5 py-0.5 border-b border-dashed border-amber-500 font-bold" contenteditable="true" placeholder="[Target Language, e.g., English]">[Target Language]</span> languages, and have extensive experience in translating certificates, passports, and official legal documents.</p>\n  <p class="mb-4">That I have carefully and accurately translated the attached document titled <span class="bg-amber-100/60 px-1.5 py-0.5 border-b-2 border-dashed border-amber-600 rounded-sm font-semibold cursor-text" contenteditable="true" placeholder="[Document Title]">[Document Title]</span> from the source language to the target language, and certify that the translated text is a true, faithful, and complete translation of the original document.</p>\n  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 border-t border-dashed border-stone-300 pt-6" contenteditable="false">\n    <div>\n      <p class="text-[10px] uppercase tracking-wider font-extrabold mb-2 text-stone-600">Translator Signature:</p>\n      <div class="h-10 flex items-end pl-2 font-serif text-md italic text-indigo-700 select-text">/s/ <span class="bg-amber-100/60 px-1 border-b border-dashed border-amber-600" contenteditable="true" placeholder="[Translator Name]">[Translator Name]</span></div>\n      <div class="border-t border-stone-400 mt-1 pt-1 text-[9px] text-stone-400 uppercase font-mono tracking-wider">Translator Signature</div>\n    </div>\n    <div>\n      <p class="text-[10px] uppercase tracking-wider font-extrabold mb-2 text-stone-600">Notarization:</p>\n      <p class="text-[11px] text-stone-600 font-mono">Sworn to on: <span class="bg-amber-100/60 px-1 border-b border-dashed border-amber-600" contenteditable="true" placeholder="[Date]">[Date]</span></p>\n      <div class="border-t border-stone-400 mt-10 pt-1 text-[9px] text-stone-400 uppercase font-mono tracking-wider">Notary Public Signature</div>\n    </div>\n    <div>\n      <p class="text-[10px] uppercase tracking-wider font-extrabold mb-1 text-stone-600">Notary Stamp/Seal:</p>\n      <div class="border-2 border-dashed border-indigo-500/30 hover:border-indigo-500 rounded-xl p-2.5 flex flex-col items-center justify-center text-center bg-indigo-50/10 hover:bg-indigo-50/30 transition-all cursor-pointer min-h-[90px]">\n        <span class="text-[8px] font-mono tracking-widest text-indigo-700/60 uppercase font-bold">TRANSLATOR STAMP</span>\n        <span class="text-[7px] text-stone-400 mt-1">Select uploaded stamp/seal in sidebar to overlay</span>\n      </div>\n    </div>\n  </div>\n</div><p><br></p>`
+    },
+    {
+      id: 'marriage',
+      name: 'Affidavit of No Impediment to Marriage',
+      desc: 'Verify unmarried single status.',
+      html: `<div class="legal-template p-8 border-[3px] border-double border-stone-400 bg-[#FAF9F6] font-serif leading-relaxed text-stone-800 rounded-sm shadow-md my-4 relative" style="font-family: 'Times New Roman', Garamond, Georgia, serif; min-height: 500px;">\n  <div class="absolute inset-0 flex items-center justify-center pointer-events-none select-none opacity-[0.03] overflow-hidden" style="transform: rotate(-30deg); font-size: 5rem; font-weight: 900; letter-spacing: 0.15em; color: #000;">\n    SINGLE STATUS CERTIFICATE\n  </div>\n  <h2 class="text-center text-xl font-bold uppercase tracking-widest mb-1 font-serif text-stone-950">Affidavit of No Impediment to Marriage</h2>\n  <div class="w-32 h-0.5 bg-rose-600/60 mx-auto mb-4"></div>\n  <p class="text-center text-[10px] font-mono mb-6 text-stone-500 uppercase tracking-widest">STATE OF <span class="bg-amber-100/60 px-1 border-b border-dashed border-stone-500" contenteditable="true" placeholder="[State]">_______________</span> &bull; COUNTY OF <span class="bg-amber-100/60 px-1 border-b border-dashed border-stone-500" contenteditable="true" placeholder="[County]">_______________</span></p>\n  <div class="border-t border-stone-300 border-b py-0.5 mb-6 flex justify-between text-[9px] font-bold text-stone-500 font-mono tracking-wider">\n    <span>MARRIAGE STATUS: MAR-IMP-${Math.floor(100000 + Math.random() * 900000)}</span>\n    <span>A4 CERTIFICATE OF FREEDOM</span>\n  </div>\n  <p class="mb-4">I, <span class="bg-amber-100/60 px-1.5 py-0.5 font-bold border-b-2 border-dashed border-amber-600 rounded-sm cursor-text" contenteditable="true" placeholder="[Your Name]">[Your Name]</span>, holding Passport No. <span class="bg-amber-100/60 px-1.5 py-0.5 border-b border-dashed border-amber-500 font-bold" contenteditable="true" placeholder="[Passport No]">[Passport No]</span>, born on <span class="bg-amber-100/60 px-1.5 py-0.5 border-b border-dashed border-amber-500 font-bold" contenteditable="true" placeholder="[Date of Birth]">[Date of Birth]</span>, declare on oath that:</p>\n  <ol class="list-decimal pl-5 space-y-4 mb-6 text-sm text-stone-800">\n    <li class="pl-1">I am a legal citizen of my home country and have the legal capacity to enter into marriage.</li>\n    <li class="pl-1">My current marital status is Single. I have never been married, or am legally divorced/widowed as of <span class="bg-amber-100/60 px-1 border-b border-dashed border-amber-600" contenteditable="true" placeholder="[Divorce Date or N/A]">[Divorce Date or N/A]</span>.</li>\n    <li class="pl-1">There is no legal impediment, obstruction, or lawful objection of any kind to my entering into marriage with <span class="bg-amber-100/60 px-1.5 py-0.5 border-b-2 border-dashed border-amber-600 rounded-sm font-semibold cursor-text" contenteditable="true" placeholder="[Fiancé Name]">[Fiancé Name]</span> in <span class="bg-amber-100/60 px-1.5 py-0.5 border-b-2 border-dashed border-amber-600 rounded-sm font-semibold cursor-text" contenteditable="true" placeholder="[Marriage Country]">[Marriage Country]</span>.</li>\n  </ol>\n  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 border-t border-dashed border-stone-300 pt-6" contenteditable="false">\n    <div>\n      <p class="text-[10px] uppercase tracking-wider font-extrabold mb-2 text-stone-600">Affiant Signature:</p>\n      <div class="h-10 flex items-end pl-2 font-serif text-md italic text-indigo-700 select-text">/s/ <span class="bg-amber-100/60 px-1 border-b border-dashed border-amber-600" contenteditable="true" placeholder="[Your Name]">[Your Name]</span></div>\n      <div class="border-t border-stone-400 mt-1 pt-1 text-[9px] text-stone-400 uppercase font-mono tracking-wider">Deponent Signature</div>\n    </div>\n    <div>\n      <p class="text-[10px] uppercase tracking-wider font-extrabold mb-2 text-stone-600">Notary Public:</p>\n      <p class="text-[11px] text-stone-600 font-mono">Sworn to on: <span class="bg-amber-100/60 px-1 border-b border-dashed border-amber-600" contenteditable="true" placeholder="[Date]">[Date]</span></p>\n      <div class="border-t border-stone-400 mt-10 pt-1 text-[9px] text-stone-400 uppercase font-mono tracking-wider">Notary Signature</div>\n    </div>\n    <div>\n      <p class="text-[10px] uppercase tracking-wider font-extrabold mb-1 text-stone-600">Notary Seal Area:</p>\n      <div class="border-2 border-dashed border-rose-500/30 hover:border-rose-500 rounded-xl p-2.5 flex flex-col items-center justify-center text-center bg-rose-50/10 hover:bg-rose-50/30 transition-all cursor-pointer min-h-[90px]">\n        <span class="text-[8px] font-mono tracking-widest text-rose-700/60 uppercase font-bold">SINGLE SEAL STAMP</span>\n        <span class="text-[7px] text-stone-400 mt-1">Select uploaded stamp/seal in sidebar to overlay</span>\n      </div>\n    </div>\n  </div>\n</div>\n<p><br></p>`
+    },
+    {
+      id: 'heirship',
+      name: 'Affidavit of Foreign Heirship',
+      desc: 'Identify heirs for estate matters.',
+      html: `<div class="legal-template p-8 border-[3px] border-double border-stone-400 bg-[#FAF9F6] font-serif leading-relaxed text-stone-800 rounded-sm shadow-md my-4 relative" style="font-family: 'Times New Roman', Garamond, Georgia, serif; min-height: 500px;">\n  <div class="absolute inset-0 flex items-center justify-center pointer-events-none select-none opacity-[0.03] overflow-hidden" style="transform: rotate(-30deg); font-size: 5rem; font-weight: 900; letter-spacing: 0.15em; color: #000;">\n    HEIRSHIP CERTIFICATION\n  </div>\n  <h2 class="text-center text-xl font-bold uppercase tracking-widest mb-1 font-serif text-stone-950">Affidavit of Foreign Heirship</h2>\n  <div class="w-32 h-0.5 bg-purple-600/60 mx-auto mb-4"></div>\n  <p class="text-center text-[10px] font-mono mb-6 text-stone-500 uppercase tracking-widest">STATE OF <span class="bg-amber-100/60 px-1 border-b border-dashed border-stone-500" contenteditable="true" placeholder="[State]">_______________</span> &bull; COUNTY OF <span class="bg-amber-100/60 px-1 border-b border-dashed border-stone-500" contenteditable="true" placeholder="[County]">_______________</span></p>\n  <div class="border-t border-stone-300 border-b py-0.5 mb-6 flex justify-between text-[9px] font-bold text-stone-500 font-mono tracking-wider">\n    <span>ESTATE REGISTRY: HRS-FGN-${Math.floor(100000 + Math.random() * 900000)}</span>\n    <span>A4 CERTIFIED ESTATE PAPER</span>\n  </div>\n  <p class="mb-4">I, <span class="bg-amber-100/60 px-1.5 py-0.5 font-bold border-b-2 border-dashed border-amber-600 rounded-sm cursor-text" contenteditable="true" placeholder="[Affiant Name]">[Affiant Name]</span>, having personal knowledge of the family history, lineage, and probate affairs of the deceased, <span class="bg-amber-100/60 px-1.5 py-0.5 border-b border-dashed border-stone-600 font-bold" contenteditable="true" placeholder="[Deceased Name]">[Deceased Name]</span>, declare under oath that:</p>\n  <ol class="list-decimal pl-5 space-y-4 mb-6 text-sm text-stone-800">\n    <li class="pl-1">The deceased passed away on <span class="bg-amber-100/60 px-1.5 py-0.5 border-b border-dashed border-stone-500" contenteditable="true" placeholder="[Date of Death]">[Date of Death]</span> in <span class="bg-amber-100/60 px-1.5 py-0.5 border-b border-dashed border-stone-500" contenteditable="true" placeholder="[Place of Death]">[Place of Death]</span>.</li>\n    <li class="pl-1">At the time of passing, the deceased was survived by the following lawful heirs, next of kin, and descendants:\n      <table class="w-full text-xs mt-3 border-collapse border border-stone-300 rounded-md overflow-hidden bg-white shadow-xs">\n        <thead>\n          <tr class="bg-stone-100 border-b border-stone-300">\n            <th class="p-2 border border-stone-200 text-left font-serif font-bold text-stone-700">Heir Full Name</th>\n            <th class="p-2 border border-stone-200 text-left font-serif font-bold text-stone-700">Relationship</th>\n            <th class="p-2 border border-stone-200 text-left font-serif font-bold text-stone-700">Age & Present Address</th>\n          </tr>\n        </thead>\n        <tbody>\n          <tr>\n            <td class="p-2 border border-stone-200 font-serif" contenteditable="true">[Heir Name 1]</td>\n            <td class="p-2 border border-stone-200 font-serif" contenteditable="true">[Spouse / Child]</td>\n            <td class="p-2 border border-stone-200 font-serif" contenteditable="true">[Age, Address]</td>\n          </tr>\n        </tbody>\n      </table>\n    </li>\n  </ol>\n  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 border-t border-dashed border-stone-300 pt-6" contenteditable="false">\n    <div>\n      <p class="text-[10px] uppercase tracking-wider font-extrabold mb-2 text-stone-600">Affiant Signature:</p>\n      <div class="h-10 flex items-end pl-2 font-serif text-md italic text-indigo-700 select-text">/s/ <span class="bg-amber-100/60 px-1 border-b border-dashed border-amber-600" contenteditable="true" placeholder="[Affiant Name]">[Affiant Name]</span></div>\n      <div class="border-t border-stone-400 mt-1 pt-1 text-[9px] text-stone-400 uppercase font-mono tracking-wider">Deponent Signature</div>\n    </div>\n    <div>\n      <p class="text-[10px] uppercase tracking-wider font-extrabold mb-2 text-stone-600">Notary Public:</p>\n      <p class="text-[11px] text-stone-600 font-mono">Sworn to on: <span class="bg-amber-100/60 px-1 border-b border-dashed border-amber-600" contenteditable="true" placeholder="[Date]">[Date]</span></p>\n      <div class="border-t border-stone-400 mt-10 pt-1 text-[9px] text-stone-400 uppercase font-mono tracking-wider">Notary Signature</div>\n    </div>\n    <div>\n      <p class="text-[10px] uppercase tracking-wider font-extrabold mb-1 text-stone-600">Estate Seal Box:</p>\n      <div class="border-2 border-dashed border-purple-500/30 hover:border-purple-500 rounded-xl p-2.5 flex flex-col items-center justify-center text-center bg-purple-50/10 hover:bg-purple-50/30 transition-all cursor-pointer min-h-[90px]">\n        <span class="text-[8px] font-mono tracking-widest text-purple-700/60 uppercase font-bold">ESTATE STAMP</span>\n        <span class="text-[7px] text-stone-400 mt-1">Select uploaded stamp/seal in sidebar to overlay</span>\n      </div>\n    </div>\n  </div>\n</div>\n<p><br></p>`
+    },
+    {
+      id: 'residency',
+      name: 'Affidavit of Residency (Tax Treaty)',
+      desc: 'Declare tax residency status.',
+      html: `<div class="legal-template p-8 border-[3px] border-double border-stone-400 bg-[#FAF9F6] font-serif leading-relaxed text-stone-800 rounded-sm shadow-md my-4 relative" style="font-family: 'Times New Roman', Garamond, Georgia, serif; min-height: 500px;">\n  <div class="absolute inset-0 flex items-center justify-center pointer-events-none select-none opacity-[0.03] overflow-hidden" style="transform: rotate(-30deg); font-size: 5rem; font-weight: 900; letter-spacing: 0.15em; color: #000;">\n    TAX RESIDENCY STATUS\n  </div>\n  <h2 class="text-center text-xl font-bold uppercase tracking-widest mb-1 font-serif text-stone-950">Affidavit of Tax Residency & Standing</h2>\n  <div class="w-32 h-0.5 bg-emerald-600/60 mx-auto mb-4"></div>\n  <p class="text-center text-[10px] font-mono mb-6 text-stone-500 uppercase tracking-widest">STATE OF <span class="bg-amber-100/60 px-1 border-b border-dashed border-stone-500" contenteditable="true" placeholder="[State]">_______________</span> &bull; COUNTY OF <span class="bg-amber-100/60 px-1 border-b border-dashed border-stone-500" contenteditable="true" placeholder="[County]">_______________</span></p>\n  <div class="border-t border-stone-300 border-b py-0.5 mb-6 flex justify-between text-[9px] font-bold text-stone-500 font-mono tracking-wider">\n    <span>TAX CODES ID: TAX-RES-${Math.floor(100000 + Math.random() * 900000)}</span>\n    <span>A4 TAX AGREEMENT</span>\n  </div>\n  <p class="mb-4">I, <span class="bg-amber-100/60 px-1.5 py-0.5 font-bold border-b-2 border-dashed border-amber-600 rounded-sm cursor-text" contenteditable="true" placeholder="[Full Name]">[Full Name]</span>, holding Tax Identification Reference <span class="bg-amber-100/60 px-1.5 py-0.5 border-b border-dashed border-amber-500 font-bold" contenteditable="true" placeholder="[TIN Number]">[TIN Number]</span>, declare under penalty of perjury:</p>\n  <ol class="list-decimal pl-5 space-y-4 mb-6 text-sm text-stone-800">\n    <li class="pl-1">That I am a permanent tax resident of the nation of <span class="bg-amber-100/60 px-1.5 py-0.5 border-b-2 border-dashed border-amber-600 rounded-sm font-semibold cursor-text" contenteditable="true" placeholder="[Country]">[Country]</span>.</li>\n    <li class="pl-1">That I qualify for foreign source income tax treaties and exemptions under the bilateral Double Tax Avoidance Treaty of <span class="bg-amber-100/60 px-1.5 py-0.5 border-b-2 border-dashed border-amber-600 rounded-sm font-semibold cursor-text" contenteditable="true" placeholder="[Agreement Year]">[Agreement Year]</span>.</li>\n  </ol>\n  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 border-t border-dashed border-stone-300 pt-6" contenteditable="false">\n    <div>\n      <p class="text-[10px] uppercase tracking-wider font-extrabold mb-2 text-stone-600">Declarant Signature:</p>\n      <div class="h-10 flex items-end pl-2 font-serif text-md italic text-indigo-700 select-text">/s/ <span class="bg-amber-100/60 px-1 border-b border-dashed border-amber-600" contenteditable="true" placeholder="[Full Name]">[Full Name]</span></div>\n      <div class="border-t border-stone-400 mt-1 pt-1 text-[9px] text-stone-400 uppercase font-mono tracking-wider">Declarant Signature</div>\n    </div>\n    <div>\n      <p class="text-[10px] uppercase tracking-wider font-extrabold mb-2 text-stone-600">Notary Validation:</p>\n      <p class="text-[11px] text-stone-600 font-mono">Sworn to on: <span class="bg-amber-100/60 px-1 border-b border-dashed border-amber-600" contenteditable="true" placeholder="[Date]">[Date]</span></p>\n      <div class="border-t border-stone-400 mt-10 pt-1 text-[9px] text-stone-400 uppercase font-mono tracking-wider">Notary Signature</div>\n    </div>\n    <div>\n      <p class="text-[10px] uppercase tracking-wider font-extrabold mb-1 text-stone-600">Notary/Embassy Stamp:</p>\n      <div class="border-2 border-dashed border-emerald-500/30 hover:border-emerald-500 rounded-xl p-2.5 flex flex-col items-center justify-center text-center bg-emerald-50/10 hover:bg-emerald-50/30 transition-all cursor-pointer min-h-[90px]">\n        <span class="text-[8px] font-mono tracking-widest text-emerald-700/60 uppercase font-bold">RESIDENCY SEAL</span>\n        <span class="text-[7px] text-stone-400 mt-1">Select uploaded stamp/seal in sidebar to overlay</span>\n      </div>\n    </div>\n  </div>\n</div>\n<p><br></p>`
+    },
+    {
+      id: 'apostille',
+      name: 'Affidavit for Apostille Authentication',
+      desc: 'Certify authority stamps & signatures.',
+      html: `<div class="legal-template p-8 border-[3px] border-double border-stone-400 bg-[#FAF9F6] font-serif leading-relaxed text-stone-800 rounded-sm shadow-md my-4 relative" style="font-family: 'Times New Roman', Garamond, Georgia, serif; min-height: 500px;">\n  <div class="absolute inset-0 flex items-center justify-center pointer-events-none select-none opacity-[0.03] overflow-hidden" style="transform: rotate(-30deg); font-size: 5rem; font-weight: 900; letter-spacing: 0.15em; color: #000;">\n    APOSTILLE AUTHENTIC\n  </div>\n  <h2 class="text-center text-xl font-bold uppercase tracking-widest mb-1 font-serif text-stone-950">Apostille Cover & Jurat Affidavit</h2>\n  <div class="w-32 h-0.5 bg-blue-600/60 mx-auto mb-4"></div>\n  <p class="text-center text-[10px] font-mono mb-6 text-stone-500 uppercase tracking-widest">STATE OF <span class="bg-amber-100/60 px-1 border-b border-dashed border-stone-500" contenteditable="true" placeholder="[State]">_______________</span> &bull; COUNTY OF <span class="bg-amber-100/60 px-1 border-b border-dashed border-stone-500" contenteditable="true" placeholder="[County]">_______________</span></p>\n  <div class="border-t border-stone-300 border-b py-0.5 mb-6 flex justify-between text-[9px] font-bold text-stone-500 font-mono tracking-wider">\n    <span>APOSTILLE CODES: APS-AUTH-${Math.floor(100000 + Math.random() * 900000)}</span>\n    <span>A4 CERTIFIED HAGUE CONVENTION</span>\n  </div>\n  <p class="mb-4">This cover document declares that the attached public record titled <span class="bg-amber-100/60 px-1.5 py-0.5 border-b border-dashed border-amber-500 font-bold" contenteditable="true" placeholder="[Document Title]">[Document Title]</span> has been signed by <span class="bg-amber-100/60 px-1.5 py-0.5 border-b border-dashed border-amber-500 font-bold" contenteditable="true" placeholder="[Officer Name]">[Officer Name]</span>, acting in the capacity of <span class="bg-amber-100/60 px-1.5 py-0.5 border-b border-dashed border-amber-500 font-bold" contenteditable="true" placeholder="[Officer Capacity/Title]">[Officer Capacity]</span>, and bears the seal/stamp of the official authority of <span class="bg-amber-100/60 px-1.5 py-0.5 border-b-2 border-dashed border-amber-600 rounded-sm font-semibold cursor-text" contenteditable="true" placeholder="[Authority Name]">[Authority Name]</span>.</p>\n  <p class="mb-6 font-mono text-xs text-stone-500 bg-stone-100 p-2.5 rounded-lg border border-stone-200">Certified in accordance with the Hague Convention Abolishing the Requirement of Legalisation for Foreign Public Documents of 5 October 1961.</p>\n  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 border-t border-dashed border-stone-300 pt-6" contenteditable="false">\n    <div>\n      <p class="text-[10px] uppercase tracking-wider font-extrabold mb-2 text-stone-600">Attesting Official:</p>\n      <div class="h-10 flex items-end pl-2 font-serif text-md italic text-indigo-700 select-text">/s/ <span class="bg-amber-100/60 px-1 border-b border-dashed border-amber-600" contenteditable="true" placeholder="[Attesting Name]">[Attesting Name]</span></div>\n      <div class="border-t border-stone-400 mt-1 pt-1 text-[9px] text-stone-400 uppercase font-mono tracking-wider">Official Signature</div>\n    </div>\n    <div>\n      <p class="text-[10px] uppercase tracking-wider font-extrabold mb-2 text-stone-600">Date & Location:</p>\n      <p class="text-[11px] text-stone-600 font-mono">Certified on: <span class="bg-amber-100/60 px-1 border-b border-dashed border-amber-600" contenteditable="true" placeholder="[Date]">[Date]</span></p>\n      <div class="border-t border-stone-400 mt-10 pt-1 text-[9px] text-stone-400 uppercase font-mono tracking-wider">Attestation Timestamp</div>\n    </div>\n    <div>\n      <p class="text-[10px] uppercase tracking-wider font-extrabold mb-1 text-stone-600">Apostille Stamp Area:</p>\n      <div class="border-2 border-dashed border-blue-500/30 hover:border-blue-500 rounded-xl p-2.5 flex flex-col items-center justify-center text-center bg-blue-50/10 hover:bg-blue-50/30 transition-all cursor-pointer min-h-[90px]">\n        <span class="text-[8px] font-mono tracking-widest text-blue-700/60 uppercase font-bold">APOSTILLE SEAL</span>\n        <span class="text-[7px] text-stone-400 mt-1">Select uploaded stamp/seal in sidebar to overlay</span>\n      </div>\n    </div>\n  </div>\n</div>\n<p><br></p>`
+    }
+  ];
+
+  const getSlashIcon = (iconName: string) => {
+    switch (iconName) {
+      case 'Minus': return Minus;
+      case 'UnderlineIcon': return UnderlineIcon;
+      case 'PenTool': return PenTool;
+      case 'Award': return Award;
+      case 'Layers': return Layers;
+      case 'Scale': return Scale;
+      case 'TableIcon': return TableIcon;
+      case 'Download': return Download;
+      default: return Sparkles;
+    }
+  };
+
+  const handleAssetUpload = (e: React.ChangeEvent<HTMLInputElement>, type: string) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const dataUrl = reader.result as string;
+      const newAsset = {
+        id: `asset-${Date.now()}`,
+        name: file.name,
+        type: type,
+        dataUrl: dataUrl
+      };
+      setUploadedAssets(prev => [...prev, newAsset]);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const executeSlashCommand = (cmdId: string) => {
+    if (!editor) return;
+
+    // First delete the slash and query text
+    const selection = editor.state.selection;
+    const offset = slashMenuQuery.length + 1;
+    editor.chain().deleteRange({ from: selection.from - offset, to: selection.from }).run();
+    setShowSlashMenu(false);
+
+    if (cmdId === 'divider') {
+      setIsCreatingDivider(true);
+      setClickedDividerId(null);
+      setClickedDividerColor('#4F46E5');
+      setClickedDividerThickness(4);
+      setClickedDividerLength(80);
+      setClickedDividerOpacity(0.8);
+      setShowDividerPopup(true);
+    } 
+    else if (cmdId === 'field') {
+      const fieldHtml = ` <span class="bg-amber-50/50 border-b border-dashed border-amber-500/80 px-2 py-0.5 mx-1 rounded-sm font-semibold cursor-text font-serif select-text hover:bg-amber-100/50" contenteditable="true" placeholder="Enter here">____________</span> `;
+      editor.chain().focus().insertContent(fieldHtml).run();
+    } 
+    else if (cmdId === 'sign') {
+      setShowSignModal(true);
+    } 
+    else if (cmdId === 'sigblock') {
+      const sigBlockHtml = `<div class="my-6 max-w-sm" contenteditable="false"><div class="border-b border-stone-400 w-64 h-12 flex items-end pl-2 font-serif text-md italic text-indigo-700 select-text">/s/ <span class="bg-amber-50/60 px-1 border-b border-dashed border-amber-500" contenteditable="true" placeholder="[Type Name]">[Sign Here]</span></div><div class="pt-1 text-[10px] text-stone-500 uppercase font-bold tracking-wider">DEPONENT / NOTARY PUBLIC / AUTHORIZED SIGNATORY</div><div class="text-[9px] text-stone-400 mt-0.5" contenteditable="true">Title / Subtext details here...</div></div><p></p>`;
+      editor.chain().focus().insertContent(sigBlockHtml).run();
+    } 
+    else if (cmdId === 'leader') {
+      const leaderHtml = ` <span class="font-mono text-stone-400 tracking-widest px-2" contenteditable="false">......................................................................</span> `;
+      editor.chain().focus().insertContent(leaderHtml).run();
+    } 
+    else if (cmdId === 'affidavit') {
+      setShowAffidavitTemplatesModal(true);
+    } 
+    else if (cmdId === 'table') {
+      const tableHtml = `<table class="w-full text-left border-collapse border border-stone-200 font-serif my-4"><thead><tr class="bg-stone-50"><th class="p-2 border border-stone-200 text-xs font-bold uppercase text-stone-600">Particulars / Description</th><th class="p-2 border border-stone-200 text-xs font-bold uppercase text-stone-600">Verification Code</th><th class="p-2 border border-stone-200 text-xs font-bold uppercase text-stone-600">Status</th></tr></thead><tbody><tr><td class="p-2 border border-stone-200 text-sm" contenteditable="true">[Item 1 Description]</td><td class="p-2 border border-stone-200 text-sm font-mono" contenteditable="true">REF-8902</td><td class="p-2 border border-stone-200 text-sm text-green-600 font-bold" contenteditable="true">VERIFIED</td></tr><tr><td class="p-2 border border-stone-200 text-sm" contenteditable="true">[Item 2 Description]</td><td class="p-2 border border-stone-200 text-sm font-mono" contenteditable="true">REF-1204</td><td class="p-2 border border-stone-200 text-sm text-amber-600 font-bold" contenteditable="true">PENDING</td></tr></tbody></table><p></p>`;
+      editor.chain().focus().insertContent(tableHtml).run();
+    } 
+    else if (cmdId === 'upload') {
+      setShowAffidavitDrawer(true);
+    }
+  };
+
+  const handlePanMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Enable panning when clicking on the outer background container
+    if (e.target !== e.currentTarget && !(e.target as HTMLElement).classList.contains('panner-bg-hook')) return;
+    setIsPanning(true);
+    const container = outerScrollContainerRef.current;
+    if (container) {
+      setPanStart({
+        x: e.clientX,
+        y: e.clientY,
+        scrollLeft: container.scrollLeft,
+        scrollTop: container.scrollTop
+      });
+    }
+  };
+
+  const handlePanMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isPanning) return;
+    const container = outerScrollContainerRef.current;
+    if (container) {
+      const dx = e.clientX - panStart.x;
+      const dy = e.clientY - panStart.y;
+      container.scrollLeft = panStart.scrollLeft - dx;
+      container.scrollTop = panStart.scrollTop - dy;
+    }
+  };
+
+  const handlePanMouseUp = () => {
+    setIsPanning(false);
+  };
+
+  const handlePanMouseLeave = () => {
+    setIsPanning(false);
+  };
   
   // Background pre-render engine for format-agnostic internal compilation
   const internalPreRenderCache = useRef<{ html: string, text: string, format: string, timestamp: number }>({
@@ -1149,6 +1393,20 @@ Requirements:
          }
       }
 
+      // / Trigger Logic (Notion style Command Bar)
+      if (currentLineText.endsWith('/')) {
+         setShowSlashMenu(true);
+         setSlashMenuQuery('');
+      } else if (showSlashMenu) {
+         const slashIndex = currentLineText.lastIndexOf('/');
+         if (slashIndex !== -1) {
+            const query = currentLineText.substring(slashIndex + 1);
+            setSlashMenuQuery(query);
+         } else {
+            setShowSlashMenu(false);
+         }
+      }
+
       // Internal background pre-render engine execution
       // Processes the document asynchronously into memory when user writes
       internalPreRenderCache.current = {
@@ -1921,6 +2179,162 @@ Requirements:
     document.body.removeChild(link);
   };
 
+  const handleAiStudioExport = async (formatId: string) => {
+    const editorContent = editor?.getHTML() || '';
+    if (!editorContent.trim()) {
+      alert("Document is empty.");
+      return;
+    }
+
+    setAiExportProcessing(true);
+    setAiExportResult('');
+    setAiExportGoogleUrl('');
+
+    let provider = 'gemini';
+    let apiKey = '';
+    let modelName = 'gemini-2.5-flash';
+    const saved = localStorage.getItem('docscraft_byok_config');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        provider = parsed.provider || 'gemini';
+        apiKey = parsed.apiKey || '';
+        modelName = parsed.modelName || 'gemini-2.5-flash';
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    if (!apiKey) {
+      alert("Bring Your Own Key (BYOK) API Key is missing. Please set it in the AI Export panel.");
+      setAiExportProcessing(false);
+      return;
+    }
+
+    const formatLabel = formatId.toUpperCase();
+    const promptText = `You are the master core compiler of Agent Studio. Translate and convert the following document HTML context into a fully synthesized, perfect, native ${formatLabel} document representation.
+
+DOCUMENT HTML CONTENT:
+${editorContent}
+
+INSTRUCTIONS BY FORMAT CATEGORY:
+1. CODE / HTML / XML: Return valid, robust, beautifully styled code. If HTML, write single-page interactive layouts with gorgeous styling.
+2. SPREADSHEETS / CSV / EXCEL / ODS: Compile raw data, metrics, or paragraphs into structured table values with columns and rows, formatted strictly as standard CSV text.
+3. PRESENTATIONS / SLIDES / ODP: Format as slide-by-slide titles and bullet-point content outlines, structured clearly so we can render pages.
+4. WORD / TEXT / RTF / ODT: Provide rich professional prose with high-end typography formatting.
+5. NO WRAPPERS: Respond strictly with the formatted data. No conversational introductory meta-text.
+6. NO EMOJIS.
+
+Target Compiled Output:`;
+
+    try {
+      let responseText = "";
+      if (provider === 'gemini') {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: promptText }] }],
+            generationConfig: { temperature: 0.1, topP: 0.95 }
+          })
+        });
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err?.error?.message || `HTTP error ${response.status}`);
+        }
+        const data = await response.json();
+        responseText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      } else if (provider === 'openai') {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+          },
+          body: JSON.stringify({
+            model: modelName,
+            messages: [
+              { role: "system", content: "You are the ultimate file compilation engine." },
+              { role: "user", content: promptText }
+            ],
+            temperature: 0.1
+          })
+        });
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err?.error?.message || `HTTP error ${response.status}`);
+        }
+        const data = await response.json();
+        responseText = data?.choices?.[0]?.message?.content || "";
+      } else if (provider === 'anthropic') {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01',
+            'dangerously-allow-the-api-key-in-the-browser': 'true'
+          },
+          body: JSON.stringify({
+            model: modelName,
+            max_tokens: 4000,
+            messages: [{ role: "user", content: promptText }]
+          })
+        });
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err?.error?.message || `HTTP error ${response.status}`);
+        }
+        const data = await response.json();
+        responseText = data?.content?.[0]?.text || "";
+      }
+
+      if (!responseText) {
+        throw new Error("Empty response received.");
+      }
+
+      let cleaned = responseText;
+      if (cleaned.startsWith('```')) {
+        cleaned = cleaned.replace(/^```[a-zA-Z]*\n/, '').replace(/\n```$/, '');
+      }
+
+      setAiExportResult(cleaned);
+
+      if (['pptx', 'slides', 'odp'].includes(formatId)) {
+        const token = getSlidesToken();
+        if (token) {
+          try {
+            const slideId = await createGoogleSlidePresentation(docTitle || "AI Slides Presentation", [{ heading: docTitle || "AI Slides Presentation", bullets: [cleaned] }], token);
+            const link = `https://docs.google.com/presentation/d/${slideId}/edit`;
+            setAiExportGoogleUrl(link);
+          } catch (e) {
+            console.error("Slides export error", e);
+          }
+        }
+      }
+
+      if (['excel', 'xlsx', 'csv', 'ods', 'spreadsheets'].includes(formatId)) {
+        const token = getSheetsToken();
+        if (token) {
+          try {
+            const rows = cleaned.split('\n').map(line => line.split(',').map(cell => cell.trim().replace(/^"|"$/g, '')));
+            const sheetUrl = await createGoogleSheet(docTitle || "AI Spreadsheets Dataset", rows, token);
+            setAiExportGoogleUrl(sheetUrl);
+          } catch (e) {
+            console.error("Sheets export error", e);
+          }
+        }
+      }
+
+    } catch (err: any) {
+      console.error(err);
+      alert(`AI Export Failed: ${err.message || err}`);
+    } finally {
+      setAiExportProcessing(false);
+    }
+  };
+
   const handleExport = async (format: string) => {
     // Attempt standard download flow utilizing the Background Pre-Renderer Cache
     const contentHtml = internalPreRenderCache.current.html || editor?.getHTML() || '';
@@ -2299,9 +2713,9 @@ Requirements:
                 
                 {/* View Menu */}
                 <div className="relative">
-                  <span className="cursor-pointer hover:text-black py-1 font-medium transition-colors" onClick={() => { setShowViewMenu(!showViewMenu); setShowInsertMenu(false); setShowFormatMenu(false); }}>View</span>
+                  <span className="cursor-pointer hover:text-black py-1 font-medium transition-colors" onClick={() => { setShowViewMenu(!showViewMenu); setShowInsertMenu(false); setShowFormatMenu(false); setShowToolsMenu(false); }}>View</span>
                   {showViewMenu && (
-                    <div className="absolute top-full left-0 mt-1 w-56 bg-white border border-gray-200 shadow-xl rounded-xl py-1 z-[60] overflow-hidden">
+                    <div className="absolute top-full left-0 mt-1 w-60 bg-white border border-gray-200 shadow-xl rounded-xl py-1.5 z-[60] overflow-hidden">
                       <div className="px-4 py-2 text-[10px] uppercase text-gray-500 font-bold tracking-widest bg-gray-50/50">Interface settings</div>
                       <button onClick={() => setFocusMode(!focusMode)} className="w-full text-left px-4 py-2.5 hover:bg-dc-gold/10 hover:text-dc-gold transition-colors flex items-center justify-between text-sm font-medium">
                         Focus Mode <span className="text-xs text-gray-400 font-mono">⌘.</span>
@@ -2310,6 +2724,24 @@ Requirements:
                       <button onClick={() => { setDragDropEditMode(!dragDropEditMode); setShowViewMenu(false); }} className="w-full text-left px-4 py-2.5 hover:bg-dc-gold/10 hover:text-dc-gold transition-colors flex items-center justify-between text-sm font-medium">
                          Text Drag & Drop {dragDropEditMode && <CheckCircle className="w-4 h-4 text-green-500" />}
                       </button>
+                      
+                      <div className="my-1 border-t border-gray-100"></div>
+                      <div className="px-4 py-2 text-[10px] uppercase text-gray-500 font-bold tracking-widest bg-gray-50/50 flex justify-between items-center">
+                        <span>Canvas Zoom</span>
+                        <span className="text-xs text-indigo-600 font-bold font-mono">{canvasZoom}%</span>
+                      </div>
+                      <div className="px-4 py-2 flex items-center gap-2">
+                        <input 
+                          type="range" 
+                          min="50" 
+                          max="150" 
+                          step="10"
+                          value={canvasZoom} 
+                          onChange={(e) => setCanvasZoom(Number(e.target.value))}
+                          className="w-full h-1.5 accent-indigo-600 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        />
+                      </div>
+
                       <div className="my-1 border-t border-gray-100"></div>
                       <div className="px-4 py-2 text-[10px] uppercase text-gray-500 font-bold tracking-widest bg-gray-50/50">Preview formatting</div>
                       {['pdf', 'html', 'txt', 'md'].map(fmt => (
@@ -2359,7 +2791,7 @@ Requirements:
                   )}
                 </div>
 
-                <span className="cursor-pointer hover:text-black py-1" onClick={() => { setShowFormatMenu(!showFormatMenu); setShowEditMenu(false); setShowViewMenu(false); setShowInsertMenu(false); }}>Format</span>
+                <span className="cursor-pointer hover:text-black py-1" onClick={() => { setShowFormatMenu(!showFormatMenu); setShowEditMenu(false); setShowViewMenu(false); setShowInsertMenu(false); setShowToolsMenu(false); }}>Format</span>
                 {showFormatMenu && (
                   <div className="absolute top-full left-32 mt-1 w-48 bg-white border border-gray-200 shadow-xl rounded-md py-1 z-50">
                       <div className="px-4 py-1 text-[10px] uppercase text-gray-400 font-bold tracking-wider">Valid Formats</div>
@@ -2370,6 +2802,46 @@ Requirements:
                       ))}
                   </div>
                 )}
+
+                {/* Tools Menu with Separators and Affidavit */}
+                <div className="relative">
+                  <span className="cursor-pointer hover:text-black py-1 font-medium transition-colors" onClick={() => { setShowToolsMenu(!showToolsMenu); setShowFormatMenu(false); setShowEditMenu(false); setShowViewMenu(false); setShowInsertMenu(false); }}>Tools</span>
+                  {showToolsMenu && (
+                    <div className="absolute top-full left-48 mt-1 w-64 bg-white border border-gray-200 shadow-2xl rounded-xl py-1.5 z-50 text-left">
+                      <div className="px-4 py-2 text-[10px] uppercase text-gray-500 font-bold tracking-widest bg-gray-50/50">Compliance & Layout</div>
+                      <button 
+                        onClick={() => { 
+                          setIsCreatingDivider(true);
+                          setClickedDividerId(null);
+                          setClickedDividerColor('#4F46E5');
+                          setClickedDividerThickness(4);
+                          setClickedDividerLength(80);
+                          setClickedDividerOpacity(0.8);
+                          setShowDividerPopup(true); 
+                          setShowToolsMenu(false); 
+                        }}
+                        className="w-full text-left px-4 py-2.5 hover:bg-indigo-50 hover:text-indigo-700 transition-colors flex items-center gap-2.5 text-sm font-medium"
+                      >
+                        <Sliders className="w-4 h-4 text-indigo-500" />
+                        Configure Page Dividers
+                      </button>
+                      <button 
+                        onClick={() => { setShowAffidavitTemplatesModal(true); setShowToolsMenu(false); }}
+                        className="w-full text-left px-4 py-2.5 hover:bg-emerald-50 hover:text-emerald-700 transition-colors flex items-center gap-2.5 text-sm font-medium"
+                      >
+                        <FileText className="w-4 h-4 text-emerald-500" />
+                        Affidavit Templates
+                      </button>
+                      <button 
+                        onClick={() => { setShowAffidavitDrawer(true); setShowToolsMenu(false); }}
+                        className="w-full text-left px-4 py-2.5 hover:bg-amber-50 hover:text-amber-700 transition-colors flex items-center gap-2.5 text-sm font-medium"
+                      >
+                        <PenTool className="w-4 h-4 text-amber-500" />
+                        Sign Sovereignty Affidavit
+                      </button>
+                    </div>
+                  )}
+                </div>
 
                 <span className="text-gray-300 ml-2">|</span>
                 <span className={`flex items-center gap-1.5 ${syncStatus === 'Saving...' ? 'text-amber-500' : 'text-dc-gold'} transition-colors ml-1`}>
@@ -2528,6 +3000,9 @@ Requirements:
                {showExportMenu && (
                  <div className="absolute top-full right-0 mt-2 w-48 bg-white border border-gray-200 shadow-xl rounded-xl py-1 z-[90]">
                    <p className="px-4 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-50">Select Format</p>
+										<button onClick={() => { setShowAiExportModal(true); setShowExportMenu(false); }} className="w-full text-left px-4 py-2 text-sm text-purple-700 hover:bg-purple-50 font-bold flex items-center gap-2">
+											<Sparkles className="w-4 h-4 text-purple-500 animate-pulse" /> AI Studio Exporter
+										</button>
                    <button onClick={() => { handleExportToGoogleSlides(); setShowExportMenu(false); }} className="w-full text-left px-4 py-2 text-sm text-amber-700 hover:bg-amber-50 font-bold flex items-center gap-2">
                      <Layers className="w-4 h-4 text-amber-500 animate-pulse" /> Google Slides Present
                    </button>
@@ -3256,8 +3731,17 @@ Requirements:
         )}
 
         <div 
-          className="flex-1 overflow-y-auto flex justify-center items-start relative print:bg-white print:p-0 print:overflow-visible transition-all duration-300"
+          ref={outerScrollContainerRef}
+          className={cn(
+            "flex-1 overflow-auto flex relative print:bg-white print:p-0 print:overflow-visible transition-all duration-300 panner-bg-hook",
+            isPanning ? "cursor-grabbing select-none" : "cursor-grab",
+            canvasZoom === 100 ? "justify-center items-start" : "justify-start items-start p-12"
+          )}
           style={{ backgroundColor: DOCUMENT_THEMES[docThemeKey]?.outerBgValue || '#EFEFEF' }}
+          onMouseDown={handlePanMouseDown}
+          onMouseMove={handlePanMouseMove}
+          onMouseUp={handlePanMouseUp}
+          onMouseLeave={handlePanMouseLeave}
         >
           <div 
              id="editor-canvas-container"
@@ -3278,7 +3762,11 @@ Requirements:
                paddingBottom: selectedFormat === 'jpg' ? '0px' : (isMobileScreen ? '16px' : `${editorVerticalMargin}px`),
                backgroundColor: DOCUMENT_THEMES[docThemeKey]?.bgValue || '#FFFFFF',
                color: DOCUMENT_THEMES[docThemeKey]?.textValue || '#111827',
-               borderColor: DOCUMENT_THEMES[docThemeKey]?.borderValue || '#E5E7EB'
+               borderColor: DOCUMENT_THEMES[docThemeKey]?.borderValue || '#E5E7EB',
+               transform: canvasZoom !== 100 ? `scale(${canvasZoom / 100})` : undefined,
+               transformOrigin: 'top left',
+               width: canvasZoom !== 100 ? `calc(${10000 / canvasZoom}% - 48px)` : undefined,
+               minWidth: canvasZoom > 100 ? '900px' : undefined,
              }}
           >
              {/* Physical page lines are internal metadata and are not drawn inside the clean canvas block */}
@@ -3404,7 +3892,53 @@ Requirements:
              )}
              <div 
                onClick={(e) => {
-                 const target = e.target as HTMLElement;
+                                   const target = e.target as HTMLElement;
+
+                  // --- CLICK HANDLER FOR DIVIDERS & CLICK-ANYWHERE-TO-TYPE ---
+                  const dividerWrapper = target.closest('[data-id^="divider-"]');
+                  if (dividerWrapper) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const dividerId = dividerWrapper.getAttribute('data-id') || '';
+                    const lineEl = dividerWrapper.querySelector('.docscraft-divider-line') as HTMLElement;
+                    if (lineEl) {
+                      setClickedDividerId(dividerId);
+                      setClickedDividerColor(lineEl.style.backgroundColor || '#4F46E5');
+                      setClickedDividerThickness(parseInt(lineEl.style.height) || 4);
+                      setClickedDividerLength(parseInt(lineEl.style.width) || 80);
+                      setClickedDividerOpacity(parseFloat(lineEl.style.opacity) || 0.8);
+                      setShowDividerPopup(true);
+                    }
+                    return;
+                  }
+
+                  const isCanvasBg = target.id === 'editor-canvas-container' || target.classList.contains('ProseMirror') || (target.tagName === 'DIV' && target.className.includes('w-full relative'));
+                  if (isCanvasBg && editor) {
+                    const rect = target.getBoundingClientRect();
+                    const clickX = e.clientX - rect.left;
+                    const clickY = e.clientY - rect.top;
+                    
+                    const scrollHeight = target.scrollHeight;
+                    if (clickY > scrollHeight - 120) {
+                      editor.chain().focus('end').run();
+                      const lines = Math.min(10, Math.floor((clickY - scrollHeight) / 24));
+                      for (let i = 0; i < Math.max(1, lines); i++) {
+                        editor.chain().insertContent('<p><br></p>').run();
+                      }
+                    }
+                    
+                    const spaces = Math.floor(clickX / 10);
+                    if (spaces > 4) {
+                      let spacesStr = '';
+                      for (let i = 0; i < spaces; i++) {
+                        spacesStr += '&nbsp;';
+                      }
+                      editor.chain().focus('end').insertContent(spacesStr).run();
+                    } else {
+                      editor.chain().focus().run();
+                    }
+                  }
+                  // --- END OF INTERACTIVE CANVAS CLICKS ---
                  const anchor = target.closest('a');
                  if (anchor) {
                    const href = anchor.getAttribute('href');
@@ -3462,6 +3996,113 @@ Requirements:
              </div>
 
              {/* 10 Modern Doc Features Toolbar */}
+
+              {/* Dynamic Custom Separators */}
+              {separators.map((sep) => (
+                <div 
+                  key={sep.id}
+                  className="absolute pointer-events-none z-10 animate-fade-in"
+                  style={{
+                    top: `${sep.offsetY}%`,
+                    left: `${sep.offsetX}%`,
+                    width: sep.type === 'horizontal' ? `${sep.length}%` : `${sep.thickness}px`,
+                    height: sep.type === 'horizontal' ? `${sep.thickness}px` : `${sep.length}px`,
+                    backgroundColor: sep.color,
+                  }}
+                />
+              ))}
+
+              {/* Sovereignty Compliance Affidavit Seal Stamp */}
+              {isAffidavitSigned && (
+                <div className="mt-16 pt-8 border-t border-gray-300 flex flex-col gap-6 bg-amber-50/30 p-8 rounded-xl border border-amber-600/10 font-serif text-slate-800 select-none" contentEditable={false}>
+                  {/* Title */}
+                  <div className="text-center space-y-1">
+                    <h3 className="text-base font-bold tracking-widest uppercase text-slate-900 font-serif">Affidavit of Compliance & Authenticity</h3>
+                    <div className="w-32 h-0.5 bg-amber-600/40 mx-auto" />
+                  </div>
+
+                  {/* Jurisdiction venue block */}
+                  <div className="flex justify-start text-xs font-mono font-bold tracking-wide uppercase text-slate-600">
+                    <div className="border border-slate-300 p-3 bg-white/60 rounded flex flex-col gap-1">
+                      <div>State of: <span className="text-amber-800 font-extrabold">{affidavitState || 'New York'}</span></div>
+                      <div>County of: <span className="text-amber-800 font-extrabold">{affidavitCounty || 'New York'}</span></div>
+                    </div>
+                  </div>
+
+                  {/* Preamble */}
+                  <p className="text-xs sm:text-sm text-slate-700 leading-relaxed text-left">
+                    Before me, the undersigned notary public, personally appeared the Affiant, <strong className="text-slate-900">{signerName}</strong>, who holds the capacity of <strong className="text-slate-900">{signerTitle}</strong> at <strong className="text-slate-900">{signerOrg}</strong>, and who, being first duly sworn, deposes and states under penalty of perjury as follows:
+                  </p>
+
+                  {/* Numbered averments */}
+                  <div className="space-y-3.5 pl-4 border-l-2 border-amber-600/20 text-xs sm:text-sm text-slate-700 text-left">
+                    <div className="flex gap-2">
+                      <span className="font-mono font-bold text-amber-700">1.</span>
+                      <p className="leading-relaxed">
+                        The Affiant has personal knowledge of all facts, records, and contents set forth within this document and certifies they are true, correct, and complete.
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className="font-mono font-bold text-amber-700">2.</span>
+                      <p className="leading-relaxed">
+                        This document is a human-authored, authentic work, and has been securely locked against modifications as of the date of formal signing.
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className="font-mono font-bold text-amber-700">3.</span>
+                      <p className="leading-relaxed">
+                        The Affiant executes this affidavit freely, voluntarily, and for the purposes expressed herein, under solemn oath.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Signature and Seal line */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-end pt-4 mt-4 border-t border-dashed border-slate-300">
+                    
+                    {/* Affiant Signature */}
+                    <div className="space-y-2 text-left">
+                      <div className="h-10 flex items-end pl-2 font-serif text-lg italic text-indigo-700 font-semibold select-text">
+                        /s/ {signerName}
+                      </div>
+                      <div className="border-t border-slate-400 pt-1.5">
+                        <p className="text-[11px] font-mono font-bold tracking-wide uppercase text-slate-500">Signature of Affiant</p>
+                        <h4 className="text-xs font-bold text-slate-800 mt-1">{signerName}</h4>
+                        <p className="text-[10px] text-slate-500">{signerTitle}, {signerOrg}</p>
+                      </div>
+                    </div>
+
+                    {/* Notary Jurat Stamp & Seal */}
+                    <div className="flex flex-row items-center gap-4 justify-between bg-white/50 p-4 rounded-lg border border-amber-500/10 shadow-2xs">
+                      <div className="text-left space-y-1 flex-1">
+                        <p className="text-[9px] font-mono text-slate-400 uppercase font-bold tracking-wider">Notary Public Jurat</p>
+                        <p className="text-[10px] text-slate-600 leading-normal">
+                          Subscribed and sworn before me on <strong className="text-slate-800">{affidavitDate || new Date().toLocaleDateString()}</strong>.
+                        </p>
+                        <div className="h-6 flex items-end font-serif text-[11px] italic text-slate-500">
+                          Digital Notary Signature Attached
+                        </div>
+                        <div className="border-t border-slate-300 pt-1 text-[9px] text-slate-400 font-mono">
+                          Commission Permanent Archive
+                        </div>
+                      </div>
+
+                      {/* Notary Gold Stamp Seal */}
+                      <div className="relative w-24 h-24 shrink-0 flex items-center justify-center select-none">
+                        <div className="absolute inset-0 rounded-full border-4 border-double border-amber-600 animate-[spin_32s_linear_infinite]" />
+                        <div className="absolute inset-1.5 rounded-full border border-dashed border-amber-500" />
+                        <div className="z-10 flex flex-col items-center justify-center text-center p-1 text-amber-700">
+                          <span className="text-[5.5px] font-mono uppercase tracking-widest font-black text-amber-800">{affidavitState.substring(0, 10)}</span>
+                          <Award className="w-5 h-5 text-amber-600 my-0.5 animate-[pulse_2.5s_ease-in-out_infinite]" />
+                          <span className="text-[5.5px] font-mono uppercase tracking-widest font-black text-amber-800">NOTARY SEAL</span>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              )}
+
+              {/* */}
              <div className="absolute bottom-[-60px] left-1/2 -translate-x-1/2 bg-white border border-gray-200 shadow-xl rounded-full px-4 py-2 flex items-center gap-4 z-[50] print:hidden w-max mx-auto h-[48px]">
                 {/* Live Statistics Counters */}
                 {(() => {
@@ -4276,11 +4917,1263 @@ Requirements:
         </div>
       )}
 
+      {showAiExportModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[9999] flex items-center justify-center p-4">
+          <div className="bg-white border border-gray-100 rounded-3xl p-8 max-w-2xl w-full shadow-2xl overflow-hidden text-gray-800">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-6">
+              <div>
+                <h3 className="text-lg font-black uppercase tracking-wider text-purple-900 flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-purple-500 animate-pulse" /> AI Studio Multi-Exporter
+                </h3>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Compile document HTML into 15+ native file formats using BYOK synthesis
+                </p>
+              </div>
+              <button 
+                onClick={() => setShowAiExportModal(false)}
+                className="text-gray-400 hover:text-gray-600 font-bold text-sm uppercase tracking-widest"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {/* Select target format */}
+              <div>
+                <label className="block text-[10px] uppercase text-gray-500 font-bold tracking-wider mb-2">
+                  Target File Format
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-60 overflow-y-auto p-1 border border-gray-100 rounded-xl">
+                  {[
+                    { id: 'pdf', name: 'PDF Document' },
+                    { id: 'docx', name: 'Word (.docx)' },
+                    { id: 'html', name: 'Webpage (.html)' },
+                    { id: 'xlsx', name: 'Excel (.xlsx)' },
+                    { id: 'csv', name: 'CSV Tables' },
+                    { id: 'pptx', name: 'PowerPoint (.pptx)' },
+                    { id: 'zip', name: 'ZIP Archive' },
+                    { id: 'xml', name: 'XML Schema' },
+                    { id: 'rtf', name: 'Rich Text (.rtf)' },
+                    { id: 'txt', name: 'Plain Text (.txt)' },
+                    { id: 'jpg', name: 'JPEG Image' },
+                    { id: 'png', name: 'PNG Image' },
+                    { id: 'ods', name: 'OpenDoc Sheet' },
+                    { id: 'odp', name: 'OpenDoc Slide' },
+                    { id: 'odt', name: 'OpenDoc Text' },
+                    { id: 'odr', name: 'OpenDoc Report' },
+                    { id: 'wordpress', name: 'WordPress Import' }
+                  ].map(fmt => (
+                    <button
+                      key={fmt.id}
+                      onClick={() => setAiExportFormat(fmt.id)}
+                      className={`p-3 border rounded-xl text-left transition ${
+                        aiExportFormat === fmt.id
+                          ? 'border-purple-600 bg-purple-50/50 text-purple-900 font-bold shadow-xs'
+                          : 'border-gray-200 hover:border-gray-300 text-gray-600 text-xs'
+                      }`}
+                    >
+                      <p className="text-xs font-bold uppercase tracking-wider">{fmt.id}</p>
+                      <p className="text-[10px] opacity-70 truncate mt-0.5">{fmt.name}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Status and Action block */}
+              <div className="p-5 bg-gray-50 border border-gray-100 rounded-2xl">
+                {aiExportProcessing ? (
+                  <div className="flex flex-col items-center justify-center py-6">
+                    <RefreshCw className="w-6 h-6 text-purple-600 animate-spin mb-2" />
+                    <p className="text-xs font-bold text-purple-900 uppercase tracking-widest animate-pulse">
+                      Synthesizing formatting layers...
+                    </p>
+                  </div>
+                ) : aiExportResult ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between text-xs text-emerald-800 font-bold bg-emerald-50 border border-emerald-100 p-3.5 rounded-xl">
+                      <span>✓ Conversion Compilation Completed Natively</span>
+                      <span>{aiExportResult.length} bytes</span>
+                    </div>
+
+                    <div className="flex gap-3">
+                      {aiExportGoogleUrl && (
+                        <a
+                          href={aiExportGoogleUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex-1 py-3 bg-neutral-900 hover:bg-neutral-800 text-white rounded-xl text-xs font-black uppercase tracking-wider text-center flex items-center justify-center gap-1.5 shadow-sm transition"
+                        >
+                          Open Live Workspace <Globe className="w-4 h-4" />
+                        </a>
+                      )}
+                      
+                      <button
+                        onClick={async () => {
+                          const baseName = (docTitle || 'document').replace(/[^a-zA-Z0-9]/g, '_');
+                          const target = SUPPORTED_FORMATS.find(f => f.id === aiExportFormat) || SUPPORTED_FORMATS[0];
+                          const filename = `${baseName}.${target.extension}`;
+                          
+                          if (aiExportFormat === 'pdf') {
+                            const doc = new jsPDF();
+                            doc.setFont('Helvetica', 'normal');
+                            doc.setFontSize(11);
+                            const splitText = doc.splitTextToSize(aiExportResult, 170);
+                            let y = 20;
+                            splitText.forEach((line: string) => {
+                              if (y > 275) { doc.addPage(); y = 20; }
+                              doc.text(line, 20, y);
+                              y += 6;
+                            });
+                            doc.save(filename);
+                            return;
+                          }
+
+                          const blob = new Blob([aiExportResult], { type: target.mimeType });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = filename;
+                          a.click();
+                        }}
+                        className="flex-1 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md transition"
+                      >
+                        Download Converted File <Download className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-6 text-center">
+                    <Sparkles className="w-6 h-6 text-purple-400 mb-2" />
+                    <p className="text-xs text-gray-500 max-w-md leading-relaxed">
+                      Click the compilation button below to initiate high-fidelity AI document conversion. All headers, tables, and prose will be rewritten for your selected format.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex gap-3 justify-end mt-6 pt-4 border-t border-gray-100">
+              <button
+                onClick={() => setShowAiExportModal(false)}
+                className="px-5 py-2.5 text-xs font-bold text-gray-500 hover:bg-gray-50 rounded-xl transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleAiStudioExport(aiExportFormat)}
+                disabled={aiExportProcessing}
+                className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:opacity-90 rounded-xl text-xs font-bold uppercase tracking-wider shadow-md disabled:opacity-50 transition"
+              >
+                Compile Format Output
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 1. Page Divider & Canvas Lines Configuration Drawer */}
+      <AnimatePresence>
+        {showDividerDrawer && (
+          <div className="fixed inset-0 z-[99999] flex justify-end">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowDividerDrawer(false)}
+              className="absolute inset-0 bg-black/50 backdrop-blur-xs"
+            />
+            
+            {/* Side Drawer Panel */}
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="relative w-full max-w-md h-full bg-[#FAF9F6] border-l border-gray-200 shadow-2xl flex flex-col z-10 text-left"
+            >
+              <div className="p-5 border-b border-gray-200 bg-white flex items-center justify-between">
+                <div>
+                  <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">
+                    <Sliders className="w-5 h-5 text-indigo-600" />
+                    Page Dividers & Lines
+                  </h3>
+                  <p className="text-[11px] text-gray-500 mt-0.5">Configure vertical or horizontal structural dividing lines on the canvas.</p>
+                </div>
+                <button
+                  onClick={() => setShowDividerDrawer(false)}
+                  className="p-1.5 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-700 transition"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Drawer Scrollable Content */}
+              <div className="flex-1 overflow-y-auto p-5 space-y-6">
+                {/* Add New Separator Section */}
+                <div className="bg-white border border-gray-200/80 rounded-xl p-4 shadow-xs space-y-4">
+                  <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Create New Layout Separator</h4>
+                  
+                  {/* Segmented Line Type */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-gray-500 block">Line Direction</label>
+                    <div className="grid grid-cols-2 gap-2 bg-gray-100 p-1 rounded-lg">
+                      <button
+                        onClick={() => setSepType('horizontal')}
+                        className={cn(
+                          "py-1.5 text-xs font-bold rounded-md transition-all",
+                          sepType === 'horizontal' ? "bg-white text-indigo-600 shadow-xs" : "text-gray-500 hover:text-gray-800"
+                        )}
+                      >
+                        Horizontal Line
+                      </button>
+                      <button
+                        onClick={() => setSepType('vertical')}
+                        className={cn(
+                          "py-1.5 text-xs font-bold rounded-md transition-all",
+                          sepType === 'vertical' ? "bg-white text-indigo-600 shadow-xs" : "text-gray-500 hover:text-gray-800"
+                        )}
+                      >
+                        Vertical Line
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Math Coordinate Slider: Y-Offset */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
+                      <span>Y-Offset (Vertical position)</span>
+                      <span className="font-mono text-indigo-600">{sepOffsetY}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={sepOffsetY}
+                      onChange={(e) => setSepOffsetY(parseInt(e.target.value))}
+                      className="w-full accent-indigo-600 cursor-pointer h-1.5 bg-gray-200 rounded-lg"
+                    />
+                    <span className="text-[9px] text-gray-400 block font-mono">Distance from the top margin of the document canvas</span>
+                  </div>
+
+                  {/* Math Coordinate Slider: X-Offset */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
+                      <span>X-Offset (Horizontal alignment)</span>
+                      <span className="font-mono text-indigo-600">{sepOffsetX}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={sepOffsetX}
+                      onChange={(e) => setSepOffsetX(parseInt(e.target.value))}
+                      className="w-full accent-indigo-600 cursor-pointer h-1.5 bg-gray-200 rounded-lg"
+                    />
+                    <span className="text-[9px] text-gray-400 block font-mono">Distance from the left margin of the document canvas</span>
+                  </div>
+
+                  {/* Length of Line */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
+                      <span>Length of separator</span>
+                      <span className="font-mono text-indigo-600">{sepLength}{sepType === 'horizontal' ? '%' : 'px'}</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={sepType === 'horizontal' ? "5" : "50"}
+                      max={sepType === 'horizontal' ? "100" : "1500"}
+                      value={sepLength}
+                      onChange={(e) => setSepLength(parseInt(e.target.value))}
+                      className="w-full accent-indigo-600 cursor-pointer h-1.5 bg-gray-200 rounded-lg"
+                    />
+                  </div>
+
+                  {/* Line Thickness */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
+                      <span>Thickness (Weight)</span>
+                      <span className="font-mono text-indigo-600">{sepThickness}px</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="1"
+                      max="12"
+                      value={sepThickness}
+                      onChange={(e) => setSepThickness(parseInt(e.target.value))}
+                      className="w-full accent-indigo-600 cursor-pointer h-1.5 bg-gray-200 rounded-lg"
+                    />
+                  </div>
+
+                  {/* Color Preset Palette */}
+                  <div className="space-y-1.5">
+                    <label className="text-[11px] font-bold text-gray-500 block">Separator Color (15 Dynamic Presets)</label>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {[
+                        { color: '#D4AF37', name: 'Gold' },
+                        { color: '#4F46E5', name: 'Royal Purple' },
+                        { color: '#334155', name: 'Slate Gray' },
+                        { color: '#E11D48', name: 'Crimson Rose' },
+                        { color: '#059669', name: 'Emerald' },
+                        { color: '#10B981', name: 'Green' },
+                        { color: '#D97706', name: 'Bronze' },
+                        { color: '#1D4ED8', name: 'Sapphire Blue' },
+                        { color: '#0F766E', name: 'Deep Teal' },
+                        { color: '#F97316', name: 'Tangy Coral' },
+                        { color: '#8B5CF6', name: 'Lavender' },
+                        { color: '#94A3B8', name: 'Silver Mist' },
+                        { color: '#BE123C', name: 'Ruby Red' },
+                        { color: '#34D399', name: 'Cool Mint' },
+                        { color: '#701A75', name: 'Dark Plum' }
+                      ].map((p) => (
+                        <button
+                          key={p.color}
+                          title={p.name}
+                          onClick={() => setSepColor(p.color)}
+                          className={cn(
+                            "w-5 h-5 rounded-full border border-gray-300 relative shrink-0 transition hover:scale-110",
+                            sepColor === p.color ? "ring-2 ring-indigo-500 ring-offset-1" : ""
+                          )}
+                          style={{ backgroundColor: p.color }}
+                        />
+                      ))}
+                      
+                      {/* Hex input */}
+                      <input
+                        type="text"
+                        value={sepColor}
+                        onChange={(e) => setSepColor(e.target.value)}
+                        placeholder="#HEX"
+                        className="w-16 px-1.5 py-0.5 text-[10px] border border-gray-250 rounded font-mono text-center focus:outline-none focus:border-indigo-500"
+                      />
+                    </div>
+                  </div>
+ 
+                  {/* Add Button */}
+                  <button
+                    onClick={() => {
+                      // Insert directly inline into the rich text editor
+                      if (editor) {
+                        const spacerHtml = `<hr style="border: none; height: ${sepThickness}px; background-color: ${sepColor}; width: ${sepLength}%; margin: 20px auto; border-radius: 9999px;" /><p></p>`;
+                        editor.chain().insertContent(spacerHtml).focus().run();
+                      }
+
+                      // Also add to separators state for coordinate drawing layer
+                      const newLine = {
+                        id: Date.now(),
+                        type: sepType,
+                        color: sepColor,
+                        thickness: sepThickness,
+                        offsetX: sepOffsetX,
+                        offsetY: sepOffsetY,
+                        length: sepLength
+                      };
+                      setSeparators([...separators, newLine]);
+                      setShowDividerDrawer(false);
+                    }}
+                    className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold uppercase tracking-wider shadow-sm transition"
+                  >
+                    Add Divider & Start Typing Below
+                  </button>
+                </div>
+
+                {/* Active Lines List */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Active Separator Lines ({separators.length})</h4>
+                    {separators.length > 0 && (
+                      <button
+                        onClick={() => setSeparators([])}
+                        className="text-[10px] text-red-500 hover:text-red-700 font-bold uppercase tracking-wider"
+                      >
+                        Clear All
+                      </button>
+                    )}
+                  </div>
+
+                  {separators.length === 0 ? (
+                    <div className="text-center py-8 border border-dashed border-gray-200 rounded-xl bg-white text-gray-400">
+                      <p className="text-xs">No active page separators added yet.</p>
+                      <p className="text-[10px] mt-1 text-gray-400">Use the form above to add custom lines to your canvas layout.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {separators.map((sep) => (
+                        <div
+                          key={sep.id}
+                          className="p-3 bg-white border border-gray-200 rounded-xl flex items-center justify-between shadow-xs"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <span 
+                              className="w-3.5 h-3.5 rounded border border-gray-300 shrink-0 shadow-xs" 
+                              style={{ backgroundColor: sep.color }}
+                            />
+                            <div>
+                              <p className="text-xs font-bold text-gray-800 capitalize">{sep.type} Separator</p>
+                              <p className="text-[9px] text-gray-400 font-mono mt-0.5">
+                                X: {sep.offsetX}% | Y: {sep.offsetY}% | W: {sep.thickness}px | L: {sep.length}{sep.type === 'horizontal' ? '%' : 'px'}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <button
+                            onClick={() => setSeparators(separators.filter(item => item.id !== sep.id))}
+                            className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Drawer Footer */}
+              <div className="p-4 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
+                <span className="text-[10px] font-mono text-gray-400 select-none">Layout Coordinate System v1.0</span>
+                <button
+                  onClick={() => setShowDividerDrawer(false)}
+                  className="px-4 py-1.5 bg-white hover:bg-gray-100 border border-gray-200 rounded-lg text-xs font-bold text-gray-700 transition"
+                >
+                  Done
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* 2. Sovereignty Notary Sign-off & Affidavit Drawer */}
+      <AnimatePresence>
+        {showAffidavitDrawer && (
+          <div className="fixed inset-0 z-[99999] flex justify-end">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowAffidavitDrawer(false)}
+              className="absolute inset-0 bg-black/50 backdrop-blur-xs"
+            />
+            
+            {/* Side Drawer Panel */}
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="relative w-full max-w-md h-full bg-[#FAF9F6] border-l border-gray-200 shadow-2xl flex flex-col z-10 text-left"
+            >
+              <div className="p-5 border-b border-gray-200 bg-white flex items-center justify-between">
+                <div>
+                  <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">
+                    <Award className="w-5 h-5 text-amber-600" />
+                    Sovereign Notary Sign-off
+                  </h3>
+                  <p className="text-[11px] text-gray-500 mt-0.5">Affix a cryptographic affidavit of compliance and formal signature block.</p>
+                </div>
+                <button
+                  onClick={() => setShowAffidavitDrawer(false)}
+                  className="p-1.5 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-700 transition"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Drawer Scrollable Content */}
+              <div className="flex-1 overflow-y-auto p-5 space-y-6">
+                
+                {/* A4 Legal Template Library */}
+                <div className="space-y-3.5 bg-white border border-stone-200 rounded-2xl p-4 shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <Scale className="w-4 h-4 text-amber-600" />
+                    <h4 className="text-xs font-bold text-stone-700 uppercase tracking-wider">A4 Legal Stamp Plates</h4>
+                  </div>
+                  <p className="text-[10px] text-stone-500">Click a professional style layout to instantly insert into your document canvas.</p>
+                  
+                  <div className="grid grid-cols-2 gap-2 max-h-[220px] overflow-y-auto pr-1">
+                    {affidavitTemplates.map(tpl => (
+                      <button
+                        key={tpl.id}
+                        onClick={() => {
+                          setActiveAffidavitStyle(tpl.id);
+                          if (editor) {
+                            editor.chain().focus().insertContent(tpl.html).run();
+                          }
+                        }}
+                        className={cn(
+                          "p-2.5 rounded-xl border text-left transition-all duration-200 hover:border-amber-500 hover:bg-amber-50/10 group flex flex-col justify-between h-[100px]",
+                          activeAffidavitStyle === tpl.id ? "border-amber-500 bg-amber-50/20 ring-1 ring-amber-500" : "border-stone-200 bg-stone-50"
+                        )}
+                      >
+                        <div className="min-w-0">
+                          <span className="text-[8px] font-mono text-amber-600 bg-amber-50 px-1 py-0.5 rounded font-bold uppercase tracking-wider border border-amber-100">Template</span>
+                          <h5 className="font-bold text-stone-850 text-[11px] mt-1 line-clamp-2 leading-snug group-hover:text-amber-900">{tpl.name}</h5>
+                        </div>
+                        <p className="text-[9px] text-stone-400 mt-1 truncate">{tpl.desc}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Identity proofing uploads & seals */}
+                <div className="space-y-3.5 bg-white border border-stone-200 rounded-2xl p-4 shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <Paperclip className="w-4 h-4 text-amber-600" />
+                    <h4 className="text-xs font-bold text-stone-700 uppercase tracking-wider">Attached Proofs & ID Seals</h4>
+                  </div>
+                  <p className="text-[10px] text-stone-500">Upload passport copies, signatures, and stamps. Click an asset to embed it into your document.</p>
+                  
+                  {/* File Upload Trigger */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <label className="border border-dashed border-stone-300 hover:border-indigo-500 bg-stone-50 hover:bg-indigo-50/20 p-2 rounded-xl flex flex-col items-center justify-center cursor-pointer transition text-center min-h-[70px]">
+                      <FileImage className="w-4 h-4 text-stone-400 group-hover:text-indigo-600" />
+                      <span className="text-[9px] font-bold text-stone-600 mt-1">Upload Passport / ID</span>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={(e) => handleAssetUpload(e, 'id-proof')} 
+                      />
+                    </label>
+
+                    <label className="border border-dashed border-stone-300 hover:border-indigo-500 bg-stone-50 hover:bg-indigo-50/20 p-2 rounded-xl flex flex-col items-center justify-center cursor-pointer transition text-center min-h-[70px]">
+                      <Award className="w-4 h-4 text-stone-400 group-hover:text-indigo-600" />
+                      <span className="text-[9px] font-bold text-stone-600 mt-1">Upload Stamp / Seal</span>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={(e) => handleAssetUpload(e, 'stamp')} 
+                      />
+                    </label>
+                  </div>
+
+                  {/* Uploaded assets grid */}
+                  <div className="space-y-1.5 max-h-[200px] overflow-y-auto pr-1">
+                    {uploadedAssets.map(asset => (
+                      <button
+                        key={asset.id}
+                        onClick={() => {
+                          if (editor) {
+                            if (asset.type === 'stamp') {
+                              editor.chain().focus().insertContent(`<img src="${asset.dataUrl}" alt="Legal Stamp" class="max-w-[120px] h-auto my-2 border border-stone-300 rounded shadow-xs" style="mix-blend-mode: multiply;" />`).run();
+                            } else {
+                              const idHtml = `<div class="legal-asset-attachment p-4 border-2 border-dashed border-stone-300 rounded-2xl bg-stone-50 my-6 text-center max-w-md mx-auto" contenteditable="false"><div class="flex items-center justify-between mb-2"><span class="text-[10px] font-mono text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border border-emerald-200">Exhibits Reference Verified</span><span class="text-[10px] font-mono text-stone-400">ID: SEC-EXH-${Math.floor(1000 + Math.random() * 9000)}</span></div><img src="${asset.dataUrl}" alt="${asset.name}" class="max-h-[180px] object-contain rounded-lg border border-stone-200 mx-auto bg-white shadow-sm" /><p class="text-xs font-bold text-stone-700 mt-2">${asset.name}</p><p class="text-[10px] text-stone-400">Attached legal identification proof under zero-trust custody protocols.</p></div><p></p>`;
+                              editor.chain().focus().insertContent(idHtml).run();
+                            }
+                          }
+                        }}
+                        className="w-full text-left p-2 hover:bg-stone-100 rounded-lg border border-stone-200 transition flex items-center gap-2.5"
+                      >
+                        <img 
+                          src={asset.dataUrl} 
+                          alt={asset.name} 
+                          className="w-10 h-10 object-contain rounded border border-stone-200 bg-white" 
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[10px] font-bold text-stone-700 truncate">{asset.name}</p>
+                          <span className="text-[8px] font-mono text-stone-400 uppercase tracking-wider">{asset.type}</span>
+                        </div>
+                        <Plus className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Visual Status Banner */}
+                {isAffidavitSigned ? (
+                  <div className="p-4 bg-amber-50 border border-amber-500/30 rounded-xl flex items-start gap-3 shadow-xs">
+                    <CheckCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5 animate-pulse" />
+                    <div>
+                      <h4 className="text-xs font-bold text-amber-800 uppercase tracking-wider">Affidavit Sign-off Active</h4>
+                      <p className="text-[11px] text-amber-700 mt-1 leading-relaxed">
+                        This document is certified. The gold compliance seal is successfully overlayed at the bottom margin of the canvas.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4 bg-slate-100 border border-slate-200 rounded-xl flex items-start gap-3 shadow-xs">
+                    <Award className="w-5 h-5 text-slate-500 shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Uncertified Document</h4>
+                      <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                        Provide signer credentials below to authorize compliance certification.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Form Fields */}
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">Signer's Full Legal Name</label>
+                    <input
+                      type="text"
+                      value={signerName}
+                      onChange={(e) => setSignerName(e.target.value)}
+                      placeholder="e.g. Jonathan Vance, Esq."
+                      disabled={isAffidavitSigned}
+                      className="w-full px-3 py-2 border border-gray-250 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-amber-500 bg-white disabled:bg-gray-100 disabled:text-gray-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">Official Corporate Capacity / Title</label>
+                    <input
+                      type="text"
+                      value={signerTitle}
+                      onChange={(e) => setSignerTitle(e.target.value)}
+                      placeholder="e.g. Chief Legal Officer"
+                      disabled={isAffidavitSigned}
+                      className="w-full px-3 py-2 border border-gray-250 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-amber-500 bg-white disabled:bg-gray-100 disabled:text-gray-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">Organization / Department</label>
+                    <input
+                      type="text"
+                      value={signerOrg}
+                      onChange={(e) => setSignerOrg(e.target.value)}
+                      placeholder="e.g. Apex Global Operations"
+                      disabled={isAffidavitSigned}
+                      className="w-full px-3 py-2 border border-gray-250 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-amber-500 bg-white disabled:bg-gray-100 disabled:text-gray-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">Affidavit Execution Date</label>
+                    <input
+                      type="date"
+                      value={affidavitDate}
+                      onChange={(e) => setAffidavitDate(e.target.value)}
+                      disabled={isAffidavitSigned}
+                      className="w-full px-3 py-2 border border-gray-250 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-amber-500 bg-white disabled:bg-gray-100 disabled:text-gray-500"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">Jurisdiction State</label>
+                      <input
+                        type="text"
+                        value={affidavitState}
+                        onChange={(e) => setAffidavitState(e.target.value)}
+                        placeholder="e.g. New York"
+                        disabled={isAffidavitSigned}
+                        className="w-full px-3 py-2 border border-gray-250 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-amber-500 bg-white disabled:bg-gray-100 disabled:text-gray-500"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">Jurisdiction County</label>
+                      <input
+                        type="text"
+                        value={affidavitCounty}
+                        onChange={(e) => setAffidavitCounty(e.target.value)}
+                        placeholder="e.g. Kings"
+                        disabled={isAffidavitSigned}
+                        className="w-full px-3 py-2 border border-gray-250 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-amber-500 bg-white disabled:bg-gray-100 disabled:text-gray-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Cryptographic Compliance Checkboxes */}
+                <div className="bg-white border border-gray-200 rounded-xl p-4 space-y-3.5 shadow-xs">
+                  <h4 className="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-wider">Zero-Trust Certification Checklist</h4>
+                  
+                  <label className="flex items-start gap-2.5 cursor-pointer text-xs select-none">
+                    <input
+                      type="checkbox"
+                      checked={approvedSovereignty}
+                      onChange={(e) => setApprovedSovereignty(e.target.checked)}
+                      disabled={isAffidavitSigned}
+                      className="mt-0.5 accent-amber-600 rounded cursor-pointer"
+                    />
+                    <span className="text-[11px] text-gray-600 leading-normal">
+                      I solemnly verify that this content is a human-compiled, sovereign representation holding authentic layout structures.
+                    </span>
+                  </label>
+
+                  <label className="flex items-start gap-2.5 cursor-pointer text-xs select-none">
+                    <input
+                      type="checkbox"
+                      checked={approvedZeroTrust}
+                      onChange={(e) => setApprovedZeroTrust(e.target.checked)}
+                      disabled={isAffidavitSigned}
+                      className="mt-0.5 accent-amber-600 rounded cursor-pointer"
+                    />
+                    <span className="text-[11px] text-gray-600 leading-normal">
+                      Affix the active rotating double-ring gold compliance stamp with visual pulse coordinates.
+                    </span>
+                  </label>
+                </div>
+
+                {/* Actions Block */}
+                <div className="space-y-3">
+                  {!isAffidavitSigned ? (
+                    <button
+                      onClick={() => {
+                        if (!signerName || !signerTitle || !signerOrg) {
+                          alert("Please fill out all identity credentials prior to notary signature.");
+                          return;
+                        }
+                        if (!approvedSovereignty || !approvedZeroTrust) {
+                          alert("Please certify the zero-trust compliance checklist.");
+                          return;
+                        }
+                        setIsAffidavitSigned(true);
+                      }}
+                      className="w-full py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md transition"
+                    >
+                      <Award className="w-4 h-4" /> Authenticate & Sign Affidavit
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setIsAffidavitSigned(false);
+                      }}
+                      className="w-full py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md transition"
+                    >
+                      <X className="w-4 h-4" /> Revoke Signature & Remove Seal
+                    </button>
+                  )}
+                </div>
+
+              </div>
+
+              {/* Drawer Footer */}
+              <div className="p-4 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
+                <span className="text-[10px] font-mono text-gray-400 select-none">Legal Compliance Framework v2.4</span>
+                <button
+                  onClick={() => setShowAffidavitDrawer(false)}
+                  className="px-4 py-1.5 bg-white hover:bg-gray-100 border border-gray-200 rounded-lg text-xs font-bold text-gray-700 transition"
+                >
+                  Done
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       <OfflineNotepad 
         isOpen={showNotepad} 
         onClose={() => setShowNotepad(false)} 
         editor={editor}
       />
+
+      {/* --- NOTION STYLE SLASH COMMANDS MENU OVERLAY --- */}
+      {showSlashMenu && (
+        <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-white border border-stone-200 shadow-2xl w-full max-w-lg rounded-2xl flex flex-col overflow-hidden text-left">
+            <div className="p-4 bg-stone-50 border-b border-stone-200 flex items-center gap-2">
+              <span className="text-stone-400 font-bold text-lg font-mono">/</span>
+              <input
+                autoFocus
+                placeholder="Type a command (e.g. divider, field, sign, table)..."
+                className="text-sm outline-none w-full bg-transparent font-medium text-stone-800"
+                value={slashMenuQuery}
+                onChange={(e) => setSlashMenuQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setShowSlashMenu(false);
+                  }
+                }}
+              />
+              <button 
+                onClick={() => setShowSlashMenu(false)}
+                className="text-stone-400 hover:text-stone-600 text-xs font-bold font-mono px-1.5 py-0.5 rounded border border-stone-200"
+              >
+                ESC
+              </button>
+            </div>
+            
+            <div className="max-h-[350px] overflow-y-auto p-2 space-y-1">
+              {(() => {
+                const filtered = slashCommands.filter(cmd => 
+                  cmd.label.toLowerCase().includes(slashMenuQuery.toLowerCase()) || 
+                  cmd.desc.toLowerCase().includes(slashMenuQuery.toLowerCase()) || 
+                  cmd.shortcut.toLowerCase().includes(slashMenuQuery.toLowerCase()) ||
+                  (cmd.aliases && cmd.aliases.some(alias => alias.toLowerCase().includes(slashMenuQuery.toLowerCase())))
+                );
+                
+                if (filtered.length === 0) {
+                  return <p className="p-4 text-xs text-center text-stone-400">No matching commands found...</p>;
+                }
+                
+                return filtered.map(cmd => {
+                  const IconComponent = getSlashIcon(cmd.icon);
+                  return (
+                    <button
+                      key={cmd.id}
+                      onClick={() => executeSlashCommand(cmd.id)}
+                      className="w-full text-left p-2.5 hover:bg-stone-50 rounded-xl transition-all flex items-start gap-3.5 group animate-in slide-in-from-bottom-1 duration-150"
+                    >
+                      <div className="p-2 bg-stone-100 rounded-lg group-hover:bg-[#D4AF37]/10 group-hover:text-[#AA7A00] transition-colors shrink-0">
+                        <IconComponent className="w-4 h-4 text-stone-600 group-hover:text-[#AA7A00]" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-bold text-stone-800 group-hover:text-stone-900">{cmd.label}</p>
+                          <span className="text-[10px] font-mono text-stone-400 bg-stone-100 px-1.5 py-0.5 rounded uppercase">{cmd.shortcut}</span>
+                        </div>
+                        <p className="text-[11px] text-stone-500 mt-0.5 truncate">{cmd.desc}</p>
+                      </div>
+                    </button>
+                  );
+                });
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- INTERACTIVE DIVIDER CUSTOMIZER POPUP OVERLAY --- */}
+      {showDividerPopup && (
+        <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-white border border-stone-200 shadow-2xl w-full max-w-md rounded-2xl flex flex-col overflow-hidden text-left">
+            <div className="p-4 border-b border-stone-100 flex items-center justify-between bg-stone-50">
+              <div className="flex items-center gap-2">
+                <Minus className="w-4 h-4 text-amber-500" />
+                <h3 className="font-bold text-stone-800 text-sm uppercase tracking-wider">
+                  {isCreatingDivider ? 'Insert New Divider Separator' : 'Customize Divider Separator'}
+                </h3>
+              </div>
+              <button 
+                onClick={() => setShowDividerPopup(false)}
+                className="text-stone-400 hover:text-stone-600 p-1 rounded-full transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              {/* Divider Live Sample Preview */}
+              <div className="p-4 border border-stone-150 rounded-xl bg-stone-50 flex items-center justify-center min-h-[50px] select-none">
+                <div 
+                  className="rounded-full transition-all" 
+                  style={{ 
+                    backgroundColor: clickedDividerColor, 
+                    height: `${clickedDividerThickness}px`, 
+                    width: `${clickedDividerLength}%`, 
+                    opacity: clickedDividerOpacity 
+                  }} 
+                />
+              </div>
+
+              {/* Color list (15-color palette) */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-stone-500 uppercase tracking-wider block">Divider Color Tone (15 Premium Shades)</label>
+                <div className="grid grid-cols-5 gap-1.5">
+                  {[
+                    '#D4AF37', '#AA7A00', '#4F46E5', '#1E1B4B', '#10B981',
+                    '#059669', '#EF4444', '#BE123C', '#F59E0B', '#EC4899',
+                    '#3B82F6', '#8B5CF6', '#334155', '#6B7280', '#000000'
+                  ].map(color => (
+                    <button
+                      key={color}
+                      onClick={() => setClickedDividerColor(color)}
+                      className={cn(
+                        "w-7 h-7 rounded-full border border-stone-200 transition hover:scale-110 flex items-center justify-center relative",
+                        clickedDividerColor === color ? "ring-2 ring-indigo-500 ring-offset-1" : ""
+                      )}
+                      style={{ backgroundColor: color }}
+                      title={color}
+                    >
+                      {clickedDividerColor === color && (
+                        <div className="w-1.5 h-1.5 rounded-full bg-white mix-blend-difference" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Thickness slider */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">Thickness</span>
+                  <span className="font-mono text-stone-600">{clickedDividerThickness}px</span>
+                </div>
+                <input 
+                  type="range" 
+                  min="1" 
+                  max="12" 
+                  value={clickedDividerThickness}
+                  onChange={(e) => setClickedDividerThickness(Number(e.target.value))}
+                  className="w-full h-1.5 bg-stone-150 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                />
+              </div>
+
+              {/* Length slider */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">Length (Percentage Width)</span>
+                  <span className="font-mono text-stone-600">{clickedDividerLength}%</span>
+                </div>
+                <input 
+                  type="range" 
+                  min="10" 
+                  max="100" 
+                  value={clickedDividerLength}
+                  onChange={(e) => setClickedDividerLength(Number(e.target.value))}
+                  className="w-full h-1.5 bg-stone-150 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                />
+              </div>
+
+              {/* Opacity slider */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">Transparency / Opacity (1% - 100%)</span>
+                  <span className="font-mono text-stone-600">{Math.round(clickedDividerOpacity * 100)}%</span>
+                </div>
+                <input 
+                  type="range" 
+                  min="1" 
+                  max="100" 
+                  value={Math.round(clickedDividerOpacity * 100)}
+                  onChange={(e) => setClickedDividerOpacity(Number(e.target.value) / 100)}
+                  className="w-full h-1.5 bg-stone-150 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                />
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-stone-100 bg-stone-50 flex items-center justify-end gap-3">
+              {!isCreatingDivider && clickedDividerId && (
+                <button
+                  onClick={() => {
+                    if (clickedDividerId && editor) {
+                      const doc = document.querySelector(`[data-id="${clickedDividerId}"]`) as HTMLElement;
+                      if (doc) {
+                        doc.remove();
+                      }
+                    }
+                    setShowDividerPopup(false);
+                  }}
+                  className="mr-auto text-red-500 hover:text-red-700 text-xs font-bold transition px-2 py-1.5 rounded-lg hover:bg-red-50"
+                >
+                  Delete Divider
+                </button>
+              )}
+              <button
+                onClick={() => setShowDividerPopup(false)}
+                className="px-4 py-2 hover:bg-stone-100 rounded-xl text-stone-600 text-xs font-bold border border-stone-200 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (isCreatingDivider) {
+                    if (editor) {
+                      const dividerId = `divider-${Date.now()}`;
+                      // We insert the divider and immediately append a typing area (paragraph) below it.
+                      const dividerHtml = `<div class="docscraft-divider-wrapper cursor-pointer py-4 flex justify-center group select-none" data-id="${dividerId}" contenteditable="false"><div class="docscraft-divider-line hover:ring-2 hover:ring-indigo-500 rounded-full transition-all" style="background-color: ${clickedDividerColor}; height: ${clickedDividerThickness}px; width: ${clickedDividerLength}%; opacity: ${clickedDividerOpacity};"></div></div><p><br></p>`;
+                      editor.chain().focus().insertContent(dividerHtml).run();
+                    }
+                  } else {
+                    if (clickedDividerId) {
+                      const lineEl = document.querySelector(`[data-id="${clickedDividerId}"] .docscraft-divider-line`) as HTMLElement;
+                      if (lineEl) {
+                        lineEl.style.backgroundColor = clickedDividerColor;
+                        lineEl.style.height = `${clickedDividerThickness}px`;
+                        lineEl.style.width = `${clickedDividerLength}%`;
+                        lineEl.style.opacity = String(clickedDividerOpacity);
+                      }
+                    }
+                  }
+                  setShowDividerPopup(false);
+                }}
+                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md transition"
+              >
+                {isCreatingDivider ? 'Insert Divider' : 'Apply Customizer'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- AFFIDAVIT TEMPLATES SELECTOR MODAL --- */}
+      {showAffidavitTemplatesModal && (
+        <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-[#FAF9F6] border border-stone-200 shadow-2xl w-full max-w-4xl rounded-2xl flex flex-col overflow-hidden text-left h-[85vh] max-h-[700px] animate-in zoom-in-95 duration-150">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-stone-200 bg-white flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-stone-800 text-lg flex items-center gap-2 font-serif">
+                  <Scale className="w-5 h-5 text-amber-600" />
+                  Affidavit Template Library (A4 Compliant)
+                </h3>
+                <p className="text-xs text-stone-500 mt-0.5">
+                  Select a pre-formatted legal affidavit layout to insert structures, input fields, and notary spaces into your document canvas.
+                </p>
+              </div>
+              <button 
+                onClick={() => setShowAffidavitTemplatesModal(false)}
+                className="p-1.5 hover:bg-stone-100 rounded-full text-stone-400 hover:text-stone-700 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Grid body */}
+            <div className="flex-1 overflow-y-auto p-6 bg-stone-50/50">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {affidavitTemplates.map((tpl) => {
+                  let iconColor = 'bg-amber-100 text-amber-700';
+                  let IconComponent = Scale;
+                  if (tpl.id === 'truth') {
+                    iconColor = 'bg-amber-100 text-amber-700';
+                    IconComponent = Scale;
+                  } else if (tpl.id === 'translation') {
+                    iconColor = 'bg-indigo-100 text-indigo-700';
+                    IconComponent = Globe;
+                  } else if (tpl.id === 'marriage') {
+                    iconColor = 'bg-rose-100 text-rose-700';
+                    IconComponent = Award;
+                  } else if (tpl.id === 'heirship') {
+                    iconColor = 'bg-purple-100 text-purple-700';
+                    IconComponent = Layers;
+                  } else if (tpl.id === 'residency') {
+                    iconColor = 'bg-emerald-100 text-emerald-700';
+                    IconComponent = Briefcase;
+                  } else if (tpl.id === 'apostille') {
+                    iconColor = 'bg-blue-100 text-blue-700';
+                    IconComponent = FileText;
+                  }
+
+                  return (
+                    <div 
+                      key={tpl.id} 
+                      className="bg-white border border-stone-200 rounded-xl p-5 shadow-xs flex flex-col justify-between hover:border-amber-500 hover:shadow-md transition duration-250 group cursor-default"
+                    >
+                      <div>
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className={cn("p-2 rounded-lg shrink-0", iconColor)}>
+                            <IconComponent className="w-5 h-5" />
+                          </div>
+                          <span className="text-[9px] uppercase tracking-wider font-bold text-stone-400 bg-stone-100 px-2 py-0.5 rounded">
+                            {tpl.id}
+                          </span>
+                        </div>
+                        <h4 className="font-bold text-stone-800 text-sm group-hover:text-amber-700 transition font-serif">
+                          {tpl.name}
+                        </h4>
+                        <p className="text-xs text-stone-500 mt-1.5 leading-relaxed">
+                          {tpl.desc}
+                        </p>
+                        
+                        {/* Highlights */}
+                        <div className="mt-4 pt-3 border-t border-stone-100 space-y-1 text-[11px] text-stone-500">
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-1 h-1 rounded-full bg-stone-400" />
+                            <span>Fully responsive inline inputs</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-1 h-1 rounded-full bg-stone-400" />
+                            <span>Authorized Notary Block</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-1 h-1 rounded-full bg-stone-400" />
+                            <span>Solemn Sworn Perjury clause</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-6">
+                        <button
+                          onClick={() => {
+                            if (editor) {
+                              editor.chain().focus().insertContent(tpl.html).run();
+                              setShowAffidavitTemplatesModal(false);
+                            }
+                          }}
+                          className="w-full bg-stone-900 hover:bg-amber-600 text-white font-bold py-2 rounded-lg text-xs transition duration-200 shadow-sm hover:shadow"
+                        >
+                          Insert Template
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-stone-200 bg-white flex items-center justify-between text-xs text-stone-400">
+              <span>* Placeholders in bracket blocks <b>[like this]</b> can be edited immediately after insertion.</span>
+              <button
+                onClick={() => setShowAffidavitTemplatesModal(false)}
+                className="px-4 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold rounded-lg transition"
+              >
+                Close Window
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- HAND-DRAWN DIGITAL SIGNATURE MODAL --- */}
+      {showSignModal && (
+        <div className="fixed inset-0 z-[100000] flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl border border-stone-200 shadow-2xl w-full max-w-xl overflow-hidden text-left flex flex-col">
+            <div className="p-4 border-b border-stone-100 flex items-center justify-between bg-stone-50">
+              <div className="flex items-center gap-2">
+                <PenTool className="w-4 h-4 text-indigo-600" />
+                <h3 className="font-bold text-stone-800 text-sm uppercase tracking-wider">Draw Digital Signature</h3>
+              </div>
+              <button 
+                onClick={() => setShowSignModal(false)}
+                className="text-stone-400 hover:text-stone-600 p-1.5 hover:bg-stone-100 rounded-full transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <p className="text-[11px] text-stone-500">Sign your legal signature below using your mouse or touch screen. Drag to draw lines.</p>
+              
+              <div className="relative border-2 border-dashed border-stone-250 bg-stone-50/60 rounded-xl overflow-hidden h-48 cursor-crosshair">
+                <canvas
+                  id="digital-signature-canvas"
+                  className="absolute inset-0 w-full h-full"
+                  onMouseDown={(e) => {
+                    const canvas = e.currentTarget;
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) return;
+                    
+                    const rect = canvas.getBoundingClientRect();
+                    if (canvas.width !== rect.width || canvas.height !== rect.height) {
+                      canvas.width = rect.width;
+                      canvas.height = rect.height;
+                    }
+                    
+                    ctx.strokeStyle = clickedDividerColor || '#1E1B4B';
+                    ctx.lineWidth = 3.5;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+                    
+                    const handleMouseMove = (mvEvt: MouseEvent) => {
+                      ctx.lineTo(mvEvt.clientX - rect.left, mvEvt.clientY - rect.top);
+                      ctx.stroke();
+                    };
+                    
+                    const handleMouseUp = () => {
+                      window.removeEventListener('mousemove', handleMouseMove);
+                      window.removeEventListener('mouseup', handleMouseUp);
+                    };
+                    
+                    window.addEventListener('mousemove', handleMouseMove);
+                    window.addEventListener('mouseup', handleMouseUp);
+                  }}
+                  onTouchStart={(e) => {
+                    const canvas = e.currentTarget;
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) return;
+                    
+                    const rect = canvas.getBoundingClientRect();
+                    if (canvas.width !== rect.width || canvas.height !== rect.height) {
+                      canvas.width = rect.width;
+                      canvas.height = rect.height;
+                    }
+                    
+                    ctx.strokeStyle = clickedDividerColor || '#1E1B4B';
+                    ctx.lineWidth = 3.5;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    
+                    const touch = e.touches[0];
+                    ctx.beginPath();
+                    ctx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
+                    
+                    const handleTouchMove = (tmEvt: TouchEvent) => {
+                      const t = tmEvt.touches[0];
+                      ctx.lineTo(t.clientX - rect.left, t.clientY - rect.top);
+                      ctx.stroke();
+                    };
+                    
+                    const handleTouchEnd = () => {
+                      window.removeEventListener('touchmove', handleTouchMove);
+                      window.removeEventListener('touchend', handleTouchEnd);
+                    };
+                    
+                    window.addEventListener('touchmove', handleTouchMove);
+                    window.addEventListener('touchend', handleTouchEnd);
+                  }}
+                />
+                
+                <button
+                  onClick={() => {
+                    const canvas = document.getElementById('digital-signature-canvas') as HTMLCanvasElement;
+                    if (canvas) {
+                      const ctx = canvas.getContext('2d');
+                      if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    }
+                  }}
+                  className="absolute bottom-3 right-3 px-3 py-1 bg-white hover:bg-stone-50 border border-stone-200 text-stone-600 rounded-lg text-xs font-bold shadow-xs transition"
+                >
+                  Clear Canvas
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-bold text-stone-700">Select Ink Pigment</h4>
+                  <p className="text-[9px] text-stone-400 mt-0.5">Choose your legal document signature color.</p>
+                </div>
+                <div className="flex gap-2">
+                  {[
+                    { hex: '#1E1B4B', name: 'Royal Indigo' },
+                    { hex: '#000000', name: 'Formal Black' },
+                    { hex: '#991B1B', name: 'Notary Crimson' },
+                    { hex: '#065F46', name: 'Executive Green' }
+                  ].map(ink => (
+                    <button
+                      key={ink.hex}
+                      onClick={() => setClickedDividerColor(ink.hex)}
+                      className={cn(
+                        "w-6 h-6 rounded-full border border-stone-200 relative transition hover:scale-105",
+                        clickedDividerColor === ink.hex ? "ring-2 ring-indigo-500 ring-offset-1" : ""
+                      )}
+                      style={{ backgroundColor: ink.hex }}
+                      title={ink.name}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-stone-100 bg-stone-50 flex items-center justify-end gap-3">
+              <button
+                onClick={() => setShowSignModal(false)}
+                className="px-4 py-2 hover:bg-stone-100 rounded-xl text-stone-600 text-xs font-bold border border-stone-200 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  const canvas = document.getElementById('digital-signature-canvas') as HTMLCanvasElement;
+                  if (canvas) {
+                    const dataUrl = canvas.toDataURL('image/png');
+                    if (editor) {
+                      editor.chain().focus().insertContent(`<img src="${dataUrl}" alt="Digital Signature" class="max-w-[180px] h-auto my-2 border-b border-stone-300 pb-1.5 inline-block" />`).run();
+                    }
+                    setShowSignModal(false);
+                  }
+                }}
+                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md transition"
+              >
+                Apply Signature
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

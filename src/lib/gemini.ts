@@ -120,7 +120,7 @@ export async function directLlmCall(params: {
   } 
 
   // 4. Gemini Direct REST
-  const modelName = customModel || (isComplex ? 'gemini-2.5-pro' : 'gemini-2.5-flash');
+  const modelName = customModel || (isComplex ? 'gemini-3.1-pro-preview' : 'gemini-3.5-flash');
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
   const body: any = {
     contents: [{ parts: [{ text: prompt }] }]

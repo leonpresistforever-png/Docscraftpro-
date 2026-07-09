@@ -21,20 +21,38 @@ export default defineConfig(({ mode }) => {
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
         manifest: {
-          name: 'Docscraft',
-          short_name: 'Docscraft',
-          description: 'The creative document writing journey',
-          theme_color: '#ffffff',
+          name: 'Docscraft Pro Workspace',
+          short_name: 'Docscraft Pro',
+          description: 'High-Performance Sovereign Agent workspace with local sandbox compiler',
+          theme_color: '#FDFBF7',
+          background_color: '#FDFBF7',
+          display: 'standalone',
+          start_url: '/',
+          orientation: 'any',
           icons: [
             {
               src: 'pwa-192x192.png',
               sizes: '192x192',
-              type: 'image/png'
+              type: 'image/png',
+              purpose: 'any'
+            },
+            {
+              src: 'pwa-192x192.png',
+              sizes: '192x192',
+              type: 'image/png',
+              purpose: 'maskable'
             },
             {
               src: 'pwa-512x512.png',
               sizes: '512x512',
-              type: 'image/png'
+              type: 'image/png',
+              purpose: 'any'
+            },
+            {
+              src: 'pwa-512x512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'maskable'
             }
           ]
         }

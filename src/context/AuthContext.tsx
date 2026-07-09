@@ -74,6 +74,7 @@ interface UserData {
   avatarUrl?: string;
   bio?: string;
   occupation?: string;
+  calendarPermissionApproved?: boolean;
 }
 
 interface AuthContextType {
@@ -175,6 +176,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     provider.addScope('https://www.googleapis.com/auth/presentations');
     provider.addScope('https://www.googleapis.com/auth/drive.file');
     provider.addScope('https://www.googleapis.com/auth/drive.readonly');
+    provider.addScope('https://www.googleapis.com/auth/calendar.readonly');
+    provider.addScope('https://www.googleapis.com/auth/calendar.events');
     provider.addScope('https://www.googleapis.com/auth/userinfo.email');
     provider.addScope('https://www.googleapis.com/auth/userinfo.profile');
 

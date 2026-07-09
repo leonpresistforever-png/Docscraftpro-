@@ -46,6 +46,58 @@ export function LandingPage() {
   const [currentTime, setCurrentTime] = useState<string>('9:41');
   const [isCharging, setIsCharging] = useState<boolean>(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [consoleLogs, setConsoleLogs] = useState<string[]>([
+    "⚙ Booting AgentStudio Autonomous Backend Core...",
+    "✔ Firebase blueprint loaded successfully.",
+    "● Awaiting external workspace webhook trigger..."
+  ]);
+  const [consoleStep, setConsoleStep] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setConsoleStep((prev) => {
+        const next = (prev + 1) % 6;
+        if (next === 0) {
+          setConsoleLogs([
+            "⚙ Booting AgentStudio Autonomous Backend Core...",
+            "✔ Firebase blueprint loaded successfully.",
+            "● Awaiting external workspace webhook trigger..."
+          ]);
+        } else if (next === 1) {
+          setConsoleLogs(prevLogs => [
+            ...prevLogs,
+            "🚀 Webhook: 'user.request.provision'",
+            "⚡ Calling provision_project({ name: \"epic-chat-app\", template: \"vite-react-typescript\" })..."
+          ]);
+        } else if (next === 2) {
+          setConsoleLogs(prevLogs => [
+            ...prevLogs,
+            "✔ API Success: lov-project-81829 provisioned on Lovable.",
+            "✔ Firestore database ID: 'ai-studio-712a6155-4f77-45cd-9752' loaded."
+          ]);
+        } else if (next === 3) {
+          setConsoleLogs(prevLogs => [
+            ...prevLogs,
+            "⚡ Calling mutate_files({ commit: \"Initial layout & components\", files: [\"src/App.tsx\", \"src/types.ts\", \"firestore.rules\"] })..."
+          ]);
+        } else if (next === 4) {
+          setConsoleLogs(prevLogs => [
+            ...prevLogs,
+            "✔ 3 files mutated successfully. Running compiler checks...",
+            "⚙ Running: npm run build & npx tsc --noEmit"
+          ]);
+        } else if (next === 5) {
+          setConsoleLogs(prevLogs => [
+            ...prevLogs,
+            "✔ Compilation result: build.success!",
+            "● Autonomous Self-Healing Loop: Online. (Ready for next webhook) ● IDLE"
+          ]);
+        }
+        return next;
+      });
+    }, 4500);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -202,23 +254,11 @@ export function LandingPage() {
         >
           {/* Custom 3D Logo Section */}
           <div className="flex-shrink-0 flex flex-col items-center ml-8 hidden lg:flex">
-             <div className="relative w-32 h-32 mb-4 drop-shadow-[0_15px_15px_rgba(212,175,55,0.4)]">
-               <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-                 <path d="M20 20 L50 10 L80 20 L90 50 L80 80 L50 90 L20 80 L10 50 Z" fill="url(#metalGold)" stroke="#FFF" strokeWidth="2" />
-                 <path d="M20 20 L80 80 M80 20 L20 80" stroke="#FFF" strokeWidth="4" />
-                 <path d="M30 30 L50 50 L70 30" fill="none" stroke="#D4AF37" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
-                 <path d="M30 70 L50 50 L70 70" fill="none" stroke="#D4AF37" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
-                 <defs>
-                   <linearGradient id="metalGold" x1="0" y1="0" x2="100" y2="100">
-                     <stop offset="0%" stopColor="#FFF2B2" />
-                     <stop offset="50%" stopColor="#D4AF37" />
-                     <stop offset="100%" stopColor="#AA7A00" />
-                   </linearGradient>
-                 </defs>
-               </svg>
+             <div className="relative w-32 h-32 mb-4 drop-shadow-[0_15px_15px_rgba(239,68,68,0.45)]">
+               <img src="/logo.svg" alt="DocsCraft Pro Logo" className="w-full h-full object-contain" />
              </div>
              <h2 className="font-serif font-bold text-3xl tracking-tight leading-none text-[#1A1A1A]">Docscraft Pro</h2>
-             <span className="text-sm font-sans tracking-widest text-[#555] uppercase mt-2">Workspace</span>
+             <span className="text-sm font-sans tracking-widest text-red-600 font-bold uppercase mt-2">Workspace</span>
           </div>
 
           {/* Huge Main Text */}
@@ -230,6 +270,34 @@ export function LandingPage() {
               Integrated. Limitless. <br/>
               <span className="text-gray-500 transform inline-block">The Ultimate Ecosystem <br/>for Intelligent Work.</span>
             </h1>
+
+            {/* CTA Actions and PWA Download Button */}
+            <div className="mt-10 flex flex-wrap items-center gap-6">
+              {/* Shimmering Rim Lit Launch Workspace Component */}
+              <div className="relative group/btn overflow-visible rounded-full p-[2px] transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] shadow-lg hover:shadow-xl">
+                {/* Outer rotating/shimmering border halo */}
+                <div className="absolute inset-0 bg-gradient-to-r from-red-500 via-orange-500 via-amber-400 via-yellow-300 via-orange-500 to-red-500 rounded-full blur-[2px] opacity-90 group-hover/btn:opacity-100 transition-opacity duration-300 animate-shimmer-border" />
+                {/* Back glow */}
+                <div className="absolute inset-0 bg-gradient-to-r from-red-500 via-orange-500 via-yellow-400 to-red-500 rounded-full blur-md opacity-50 group-hover/btn:opacity-75 transition-opacity duration-300 animate-shimmer-border" />
+                
+                <button 
+                  onClick={() => navigate('/dashboard')}
+                  className="relative flex items-center gap-2.5 bg-stone-950 text-white font-sans font-black px-9 py-4.5 rounded-full transition-all duration-200 w-full justify-center cursor-pointer"
+                >
+                  <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
+                  <span>Launch Workspace</span>
+                  <ArrowRight className="w-5 h-5 group-hover/btn:translate-x-1.5 transition-transform text-amber-400" />
+                </button>
+              </div>
+              
+              <button 
+                onClick={handleInstallClick}
+                className="inline-flex items-center gap-2 bg-white text-stone-900 border-2 border-stone-200 hover:border-red-500 font-sans font-bold px-8 py-4 rounded-full shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 group cursor-pointer"
+              >
+                <Download className="w-5 h-5 text-red-500 animate-bounce" style={{ animationDuration: '2s' }} />
+                Download Docscraft Pro
+              </button>
+            </div>
           </div>
         </motion.div>
 
@@ -417,100 +485,154 @@ export function LandingPage() {
               <div className="absolute -bottom-40 left-1/2 -translate-x-1/2 w-[120%] h-64 bg-blue-500/20 blur-[120px] rounded-[100%] transform -rotate-x-[60deg]"></div>
 
               {/* Front Screen */}
-              <div className="w-full h-[400px] md:h-[650px] border-[12px] md:border-[20px] border-[#0a0a0a] rounded-t-[1.5rem] md:rounded-t-[2.5rem] bg-[#fbfbfb] overflow-hidden shadow-2xl relative block ring-2 ring-gray-800/80" style={{ transform: "translateZ(1px)", backfaceVisibility: "hidden" }}>
-               <div className="absolute inset-0 opacity-[0.03] mix-blend-multiply" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/cubes.png")' }}></div>
+              <div className="w-full h-[400px] md:h-[650px] border-[12px] md:border-[20px] border-[#0a0a0a] rounded-t-[1.5rem] md:rounded-t-[2.5rem] bg-[#fdfdfc] overflow-hidden shadow-2xl relative block ring-2 ring-gray-900 z-20" style={{ transform: "translateZ(1px)", backfaceVisibility: "hidden" }}>
+                <div className="absolute inset-0 opacity-[0.03] mix-blend-multiply" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/cubes.png")' }}></div>
 
-               {/* Laptop Camera */}
-               <div className="absolute top-1 md:top-2 inset-x-0 mx-auto w-3 h-3 md:w-4 md:h-4 rounded-full bg-[#050505] border border-gray-900 z-30 flex items-center justify-center shadow-inner">
-                 <div className="w-1 h-1 md:w-1.5 md:h-1.5 bg-blue-500/30 rounded-full"></div>
-               </div>
+                {/* Laptop Camera */}
+                <div className="absolute top-1 md:top-2 inset-x-0 mx-auto w-3 h-3 md:w-4 md:h-4 rounded-full bg-[#050505] border border-gray-900 z-30 flex items-center justify-center shadow-inner">
+                  <div className="w-1 h-1 md:w-1.5 md:h-1.5 bg-blue-500/30 rounded-full"></div>
+                </div>
 
-               <div className="absolute top-3 right-4 flex items-center gap-3 opacity-90 z-20 text-gray-800 text-xs font-medium bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm border border-gray-200">
-                   <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" />{currentTime}</span>
-                   <span className="w-px h-3 bg-gray-300"></span>
-                   <span className="flex items-center gap-1"><CheckCircle className="w-3.5 h-3.5 text-green-600"/> <span className="font-bold tracking-tight">{batteryLevel}%</span></span>
-               </div>
-               
-               <div className="w-full h-12 border-b border-gray-200 flex items-center px-4 bg-gray-50/80 backdrop-blur-md relative z-10 transition-colors pt-2">
-                   <div className="flex gap-2">
-                       <div className="w-3 h-3 rounded-full bg-red-400 border border-red-500/20 shadow-sm"></div>
-                       <div className="w-3 h-3 rounded-full bg-yellow-400 border border-yellow-500/20 shadow-sm"></div>
-                       <div className="w-3 h-3 rounded-full bg-green-400 border border-green-500/20 shadow-sm"></div>
-                   </div>
-                   <div className="mx-auto bg-white border border-gray-200 text-[11px] px-3 md:px-6 py-1.5 rounded-md shadow-sm text-gray-600 font-medium flex items-center gap-2">
-                       <Shield className="w-3 h-3 text-emerald-500" /> docscraft.pro/workspace/launch
-                   </div>
-               </div>
+                {/* Translucent Time & Battery Bar */}
+                <div className="absolute top-3 right-4 flex items-center gap-3 opacity-95 z-20 text-stone-600 text-[10px] font-mono bg-stone-100/80 backdrop-blur-md px-3 py-1 rounded-full shadow-sm border border-stone-200/60">
+                    <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" />{currentTime}</span>
+                    <span className="w-px h-3 bg-stone-300"></span>
+                    <span className="flex items-center gap-1"><CheckCircle className="w-3.5 h-3.5 text-emerald-600"/> <span className="font-bold tracking-tight">{batteryLevel}%</span></span>
+                </div>
+                
+                {/* Elegant Docscraft Window Chrome */}
+                <div className="w-full h-11 border-b border-stone-200 bg-[#FAF9F5] flex items-center px-4 relative z-10 pt-1">
+                    <div className="flex gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-full bg-rose-400 border border-rose-500/10 shadow-xs"></div>
+                        <div className="w-2.5 h-2.5 rounded-full bg-amber-400 border border-amber-500/10 shadow-xs"></div>
+                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 border border-emerald-500/10 shadow-xs"></div>
+                    </div>
+                    <div className="mx-auto bg-white border border-stone-200 text-[10px] px-3 md:px-5 py-1 rounded-md shadow-xs text-stone-600 font-sans flex items-center gap-1.5">
+                        <Shield className="w-3 h-3 text-emerald-600 animate-pulse" /> docscraft.pro / secure-journal / local-storage
+                    </div>
+                    {/* Active Saved status */}
+                    <div className="hidden sm:flex items-center gap-1.5 text-[10px] text-emerald-700 font-sans pr-16 font-medium">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                      <span>Sovereign Local Mode</span>
+                    </div>
+                </div>
 
-               <div className="flex h-full bg-white relative">
-                   {/* Mockup Sidebar */}
-                   <div className="w-64 border-r border-gray-100 bg-[#FAFAFA] p-5 hidden md:flex flex-col">
-                       <div className="font-bold text-gray-900 mb-8 flex items-center gap-2 text-lg">
-                           <div className="w-7 h-7 bg-gradient-to-br from-yellow-300 to-yellow-500 rounded-lg shadow-sm flex items-center justify-center">
-                             <Sparkles className="w-4 h-4 text-white"/>
-                           </div> 
-                           Docscraft Pro
-                       </div>
-                       <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Workspace</div>
-                       <div className="space-y-1 flex-1">
-                           <div className="px-3 py-2.5 bg-blue-50 text-blue-700 font-medium rounded-xl text-sm flex items-center gap-2 shadow-sm border border-blue-100 transition-all">
-                               <FileText className="w-4 h-4"/> Product Launch
-                           </div>
-                           <div className="px-3 py-2 text-gray-600 font-medium rounded-xl text-sm flex items-center gap-2">
-                               <FileText className="w-4 h-4 opacity-70"/> Design Specs
-                           </div>
-                           <div className="px-3 py-2 text-gray-600 font-medium rounded-xl text-sm flex items-center gap-2">
-                               <Database className="w-4 h-4 opacity-70"/> Q3 Roadmap
-                           </div>
-                       </div>
-                   </div>
-                   {/* Mockup Editor */}
-                   <div className="flex-1 p-8 md:p-14 overflow-y-auto pb-32">
-                        <div className="max-w-2xl mx-auto">
-                            <div className="w-16 h-16 bg-gradient-to-tr from-blue-100 to-indigo-50 rounded-2xl flex items-center justify-center mb-6 text-blue-500 shadow-sm border border-blue-200">
-                                <Sparkles className="w-8 h-8" strokeWidth={1.5}/>
+                <div className="flex h-full bg-[#FAF9F6] text-stone-800 font-sans relative overflow-hidden select-none">
+                    {/* Sidebar Pane (Width: 24%) */}
+                    <div className="w-[24%] border-r border-stone-200 bg-[#F4F2EB] flex flex-col h-full overflow-hidden shrink-0">
+                        {/* Sidebar Header */}
+                        <div className="p-3 border-b border-stone-200/80 bg-[#FAF9F5]/70 flex items-center gap-2">
+                            <div className="w-5.5 h-5.5 bg-amber-800/10 rounded-lg flex items-center justify-center text-amber-900">
+                                <Sparkles className="w-3.5 h-3.5" />
                             </div>
-                            <h1 className="text-4xl md:text-5xl font-serif font-black text-gray-900 mb-6 tracking-tight leading-[1.1]">Product Launch Strategy</h1>
-                            <p className="text-lg md:text-xl text-gray-600 mb-10 font-serif leading-relaxed">
-                                This document outlines our final go-to-market plan. As we combine Firebase Auth, Firestore real-time collaboration, and deeply integrated AI, the focus remains fiercely aligned on user experience.
-                            </p>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-                                <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border border-yellow-200/60 p-6 rounded-3xl shadow-sm hover:shadow-md transition-all group cursor-pointer">
-                                    <h3 className="font-bold text-xl mb-2 text-gray-900 group-hover:text-yellow-700 transition-colors">Phase 1: Alpha</h3>
-                                    <p className="text-sm text-gray-600 leading-relaxed font-medium">Internal testing & Quality Assurance across all device sizes.</p>
-                                </div>
-                                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200/60 p-6 rounded-3xl relative overflow-hidden shadow-sm hover:shadow-md transition-all group cursor-pointer">
-                                    <div className="absolute top-0 right-0 p-3 opacity-50 transition-transform group-hover:scale-110"><Sparkles className="w-6 h-6 text-blue-400"/></div>
-                                    <h3 className="font-bold text-xl mb-2 text-gray-900 group-hover:text-blue-700 transition-colors">Phase 2: Beta</h3>
-                                    <p className="text-sm text-gray-600 leading-relaxed font-medium">Invite-only access to selected workspace communities.</p>
+                            <span className="font-serif font-black tracking-tight text-xs text-stone-900">Docscraft Studio</span>
+                        </div>
+
+                        {/* Sidebar Sections */}
+                        <div className="flex-1 p-2.5 overflow-y-auto space-y-3.5">
+                            <div>
+                                <span className="text-[8px] font-bold text-stone-400 uppercase tracking-widest pl-1.5 block mb-1">Local Notebooks</span>
+                                <div className="space-y-0.5">
+                                    <div className="px-2 py-1 bg-amber-100/60 text-stone-900 font-bold rounded-lg text-[11px] flex items-center gap-1.5 border border-amber-200/40 shadow-xs">
+                                        <FileText className="w-3.5 h-3.5 text-amber-800" /> Daily Reflections
+                                    </div>
+                                    <div className="px-2 py-1 text-stone-500 font-medium rounded-lg text-[11px] flex items-center gap-1.5 hover:bg-stone-200/30 transition-colors">
+                                        <FileText className="w-3.5 h-3.5 opacity-60" /> Creative Essays
+                                    </div>
+                                    <div className="px-2 py-1 text-stone-500 font-medium rounded-lg text-[11px] flex items-center gap-1.5 hover:bg-stone-200/30 transition-colors">
+                                        <FileText className="w-3.5 h-3.5 opacity-60" /> Travel Notes 2026
+                                    </div>
                                 </div>
                             </div>
 
-                            <div className="bg-white border border-gray-200 p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-shadow">
-                                <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
-                                    <h3 className="font-bold text-xl text-gray-900 flex items-center gap-2">
-                                      <CheckCircle className="w-5 h-5 text-gray-400"/> Team Tasks
-                                    </h3>
-                                    <div className="flex -space-x-3">
-                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 border-2 border-white shadow-sm flex items-center justify-center text-white text-xs font-black font-sans">TM</div>
-                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-400 to-rose-600 border-2 border-white shadow-sm flex items-center justify-center text-white text-xs font-black font-sans relative z-10">AL</div>
+                            <div>
+                                <span className="text-[8px] font-bold text-stone-400 uppercase tracking-widest pl-1.5 block mb-1">Offline Backups</span>
+                                <div className="space-y-0.5">
+                                    <div className="px-2 py-1 text-stone-500 font-medium rounded-lg text-[11px] flex items-center gap-1.5 hover:bg-stone-200/30 transition-colors">
+                                        <Database className="w-3.5 h-3.5 text-stone-400" /> local_vault.db
                                     </div>
                                 </div>
-                                <div className="space-y-4">
-                                    <div className="flex items-start gap-4 p-2 hover:bg-gray-50 rounded-xl transition-colors">
-                                        <input type="checkbox" defaultChecked className="w-5 h-5 mt-0.5 text-blue-600 rounded-md border-gray-300 focus:ring-blue-500 shadow-sm cursor-pointer"/> 
-                                        <span className="line-through text-gray-400 font-medium text-lg">Finalize Landing Page layouts</span>
-                                    </div>
-                                    <div className="flex items-start gap-4 p-2 hover:bg-gray-50 rounded-xl transition-colors">
-                                        <input type="checkbox" className="w-5 h-5 mt-0.5 rounded-md border-gray-300 text-blue-600 focus:ring-blue-500 shadow-sm cursor-pointer"/> 
-                                        <span className="text-gray-800 font-bold text-lg">Integrate Google Keep API support</span>
-                                    </div>
-                                    <div className="flex items-start gap-4 p-2 hover:bg-gray-50 rounded-xl transition-colors">
-                                        <input type="checkbox" defaultChecked className="w-5 h-5 mt-0.5 rounded-md border-gray-300 text-blue-600 focus:ring-blue-500 shadow-sm cursor-pointer"/> 
-                                        <span className="text-gray-400 line-through font-medium text-lg">Verify animated device battery states</span>
-                                    </div>
+                            </div>
+                        </div>
+
+                        {/* User / Storage bottom section */}
+                        <div className="p-2.5 border-t border-stone-200 bg-[#EBE9E2] flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-amber-800/10 flex items-center justify-center text-[10px] text-amber-800 font-black">
+                                LP
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="text-[9px] font-bold text-stone-800 truncate">Leon Presist</div>
+                                <div className="text-[8px] text-stone-500 font-medium leading-none">Vault Active</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Main Writing Canvas (Width: 76%) */}
+                    <div className="flex-1 bg-white flex flex-col h-full overflow-hidden relative">
+                        {/* Editor Formatting / Action Bar */}
+                        <div className="h-8.5 border-b border-stone-200/60 bg-[#FAF9F6] flex items-center justify-between px-5 shrink-0 text-[11px] text-stone-500">
+                            <div className="flex items-center gap-2.5">
+                                <span className="font-serif font-black text-stone-700">Reflections</span>
+                                <span className="w-px h-3 bg-stone-200"></span>
+                                <div className="flex gap-1.5">
+                                    <span className="p-0.5 hover:bg-stone-100 rounded text-stone-600 font-bold font-serif px-1">B</span>
+                                    <span className="p-0.5 hover:bg-stone-100 rounded text-stone-600 italic font-serif px-1">I</span>
+                                    <span className="p-0.5 hover:bg-stone-100 rounded text-stone-600 underline font-serif px-1">U</span>
                                 </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-[9px] bg-amber-100/50 text-amber-800 px-2 py-0.5 rounded-full font-bold flex items-center gap-1 border border-amber-200/40">
+                                    <Sparkles className="w-2.5 h-2.5 text-amber-700" /> Live Outline Companion
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Editor Paper Canvas Area */}
+                        <div className="flex-1 p-6 md:p-10 overflow-y-auto pb-32 bg-[#FAF9F5]/30 custom-scrollbar flex justify-center">
+                            <div className="max-w-lg w-full text-left">
+                                <div className="flex items-center gap-1 text-[9px] text-amber-800 font-semibold uppercase tracking-wider mb-1.5">
+                                    <PenTool className="w-3 h-3" /> Entry #14 • Journal
+                                </div>
+                                <h1 className="text-2xl md:text-3xl font-serif font-black text-stone-900 mb-3.5 tracking-tight leading-[1.1]">
+                                    A Quiet Morning's Reflection
+                                </h1>
+                                <p className="text-[10px] text-stone-400 mb-5 font-serif italic border-l-2 border-stone-300 pl-2.5">
+                                    Drafted on July 8, 2026 at 6:45 AM • Local sovereign offline workspace is online.
+                                </p>
+
+                                <div className="space-y-3.5 font-serif text-[11px] md:text-xs text-stone-700 leading-relaxed">
+                                    <p>
+                                        The quiet hours of early morning always bring the deepest clarity. As the light filters softly through the pines, I open my digital notebook to jot down these thoughts. Having a dedicated space to write, think, and outline without the noise of the modern web is essential for creative focus. It allows ideas to develop naturally, free from the pressure of instant sharing or algorithms.
+                                    </p>
+                                    <p>
+                                        Every sentence we draft, whether a personal journal entry, a technical manual, or a shared team document, is a building block for something larger. Keeping these records secure, fast, and easily accessible is why we created this environment. It is more than just an editor; it is a safe haven for thoughts and drafts.
+                                    </p>
+                                    <p>
+                                        There is a profound beauty in personal, offline digital sovereignty. Today, I began documenting my creative journey completely client-side. The idea that everything you write, track, and design can reside locally without third-party exposure is refreshing.
+                                    </p>
+                                    <p>
+                                        We are configuring <strong className="text-amber-900 font-black">Docscraft</strong> to ensure every note, sketch, and code repository has automatic secure syncing capabilities and absolute encryption.
+                                    </p>
+                                    <p className="bg-[#FAF8F2] border border-amber-200/30 p-3.5 rounded-xl relative overflow-hidden text-[10px] md:text-[11px]">
+                                        <span className="font-sans font-bold text-amber-800 text-[9px] uppercase block mb-0.5">AI Document Assistant Suggestion</span>
+                                        "Focus on local WebCrypto vaults to encrypt entry texts before syncing them to cloud backup storage."
+                                    </p>
+                                    <p>
+                                        When we pair this offline-first architecture with custom AI models, we get the best of both worlds—sovereignty and smart capabilities.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Writing Status footer */}
+                        <div className="h-7 border-t border-stone-200 bg-[#FAF9F5] px-5 flex items-center justify-between text-[8px] text-stone-400 shrink-0">
+                            <div className="flex items-center gap-3">
+                                <span>Words: <strong className="text-stone-600">386</strong></span>
+                                <span>Characters: <strong className="text-stone-600">2,384</strong></span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                <span>100% Encrypted & Sovereign</span>
                             </div>
                         </div>
                     </div>
@@ -566,7 +688,9 @@ export function LandingPage() {
                         </div>
                         <div className="flex justify-center w-full h-[15%] gap-2">
                           <div className="w-[15%] bg-gradient-to-b from-[#333] to-[#151515] rounded-sm ring-1 ring-black border-t border-white/10"></div>
-                          <div className="w-[50%] bg-gradient-to-b from-[#333] to-[#151515] rounded-sm ring-1 ring-black border-t border-white/10 cursor-pointer hover:brightness-110 active:brightness-90 transition-all"></div>
+                          <div className="w-[50%] bg-gradient-to-b from-[#333] to-[#151515] rounded-sm ring-1 ring-black border-t border-white/10 cursor-pointer hover:brightness-110 active:brightness-90 transition-all flex items-center justify-center">
+                            <span className="text-[5px] md:text-[7px] text-amber-400 font-bold uppercase tracking-widest font-mono">Welcome to Docscraft</span>
+                          </div>
                           <div className="w-[15%] bg-gradient-to-b from-[#333] to-[#151515] rounded-sm ring-1 ring-black border-t border-white/10"></div>
                           <div className="flex gap-0.5">
                             <div className="w-5 bg-[#151515] rounded-sm ring-1 ring-black border-t border-white/10"></div>

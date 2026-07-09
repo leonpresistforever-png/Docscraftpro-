@@ -183,15 +183,15 @@ export function LandingModernSpaces() {
               ENDLESS <br/> POSSIBILITIES.
             </h2>
             <p className="text-xl md:text-2xl text-gray-600 font-medium mb-12 leading-relaxed">
-              Crafting immersive architectural visualizations that tell compelling stories.
+              You can merge your multiple PDFs context into one.
             </p>
             <motion.button
-              whileHover={{ scale: 1.05, rotateX: 10 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => navigate('/portfolio')}
-              className="bg-[#F4F2EE] text-gray-800 px-12 py-5 rounded-full text-lg font-bold shadow-[inset_0_2px_5px_rgba(255,255,255,0.8),0_5px_15px_rgba(0,0,0,0.08)] border border-white/60 hover:bg-white hover:shadow-[0_15px_35px_rgba(0,0,0,0.12)] transition-all transform-style-3d"
+              whileHover={{ scale: 1.04, y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => navigate('/merge-pdfs')}
+              className="bg-stone-900 text-white hover:bg-stone-800 px-10 py-4.5 rounded-full text-sm font-bold uppercase tracking-widest transition-all shadow-xl shadow-stone-900/10 border border-stone-800"
             >
-              EXPLORE PORTFOLIO
+              Merge PDFs with AI
             </motion.button>
           </motion.div>
         </div>
@@ -201,11 +201,11 @@ export function LandingModernSpaces() {
           style={{ y: cardsY, rotateX: cardsRotateX, opacity: cardsOpacity }}
           className="grid grid-cols-1 md:grid-cols-3 gap-10 relative z-30 perspective-[1500px]"
         >
-           {[
-             { title: "Residential Design", desc: "Elevating living spaces with clarity.", icon: Home, delay: 0.1 },
-             { title: "Commercial Space", desc: "Dynamic visualizations for modern businesses.", icon: Building2, delay: 0.2 },
-             { title: "Interior Architecture", desc: "Detailing light, texture, and atmosphere.", icon: Layers, delay: 0.3 }
-           ].map((card, idx) => (
+            {[
+              { title: "Multi-Document Parsing", desc: "Extract rich textual structure, raw data, tables, and sections from high-density PDF files automatically.", icon: Layers, delay: 0.1 },
+              { title: "Intelligent Synthesis", desc: "Deeply integrate and merge redundant statements, clinical/business facts, or custom schemas into a single output.", icon: Building2, delay: 0.2 },
+              { title: "Layout & Styling Studio", desc: "Fine-tune typography, choose custom accent/highlight colors, set title headings, and generate beautiful, print-ready PDFs.", icon: Home, delay: 0.3 }
+            ].map((card, idx) => (
              <motion.div 
                key={idx}
                initial={{ opacity: 0, y: 50, rotateX: 20 }}

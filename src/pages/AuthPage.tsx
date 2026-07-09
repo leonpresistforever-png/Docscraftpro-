@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
-import { Turnstile } from '@marsidev/react-turnstile';
 import { VisualCaptcha } from '../components/VisualCaptcha';
 import { getMultiFactorResolver, PhoneAuthProvider, PhoneMultiFactorGenerator, RecaptchaVerifier, sendPasswordResetEmail, MultiFactorResolver } from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { auth, db } from '../lib/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
 
 import { Footer } from '../components/layout/Footer';
 
@@ -38,16 +38,18 @@ export function AuthPage() {
   const [successMsg, setSuccessMsg] = useState('');
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [isCustomCaptchaVerified, setIsCustomCaptchaVerified] = useState(false);
-  const turnstileRef = React.useRef<any>(null);
-  const turnstileSignUpRef = React.useRef<any>(null);
 
-  // If user is already logged in, redirect to welcome-setup if profile is incomplete, otherwise to landing page
+  // If user is already logged in, redirect to welcome-setup if profile is incomplete, otherwise to landing page or original destination
   useEffect(() => {
     if (user) {
-      if (userData && !userData.profileSetupComplete) {
-        navigate('/welcome-setup');
-      } else {
-        navigate('/');
+      if (userData) {
+        if (!userData.profileSetupComplete) {
+          navigate('/welcome-setup');
+        } else {
+          const redirectTo = sessionStorage.getItem('redirect_after_auth') || '/';
+          sessionStorage.removeItem('redirect_after_auth');
+          navigate(redirectTo);
+        }
       }
     }
   }, [user, userData, navigate]);
@@ -82,9 +84,7 @@ export function AuthPage() {
     e.preventDefault();
     if (!signInEmail || !signInPassword) return;
     
-    const cfVerified = true;
-    const cvVerified = true;
-    if (!cfVerified && !cvVerified) {
+    if (!isCustomCaptchaVerified) {
       setError('Please verify the Captcha to proceed.');
       return;
     }
@@ -150,9 +150,7 @@ export function AuthPage() {
       return;
     }
     
-    const cfVerified = true;
-    const cvVerified = true;
-    if (!cfVerified && !cvVerified) {
+    if (!isCustomCaptchaVerified) {
       setError('Please verify the Captcha to proceed.');
       return;
     }
@@ -213,9 +211,7 @@ export function AuthPage() {
   };
 
   const handleGoogleAuth = async () => {
-    const cfVerified = true;
-    const cvVerified = true;
-    if (!cfVerified && !cvVerified) {
+    if (!isCustomCaptchaVerified) {
       setError('Please verify the Captcha to log in with Google.');
       return;
     }
@@ -322,26 +318,9 @@ export function AuthPage() {
                      <button type="button" onClick={handleForgotPassword} className="text-xs text-[#D4AF37] hover:underline font-bold">Forgot Password?</button>
                   </div>
                   
-                  {TURNSTILE_SITE_KEY && (
-                    <div className="flex justify-center my-0.5">
-                      <Turnstile 
-                        ref={turnstileRef}
-                        siteKey={TURNSTILE_SITE_KEY} 
-                        onSuccess={(token) => {
-                          setCaptchaToken(token);
-                          setError('');
-                        }}
-                        onError={() => {
-                          console.warn("Turnstile failed to load or verify. Using visual fallback instead.");
-                          turnstileRef.current?.reset();
-                        }}
-                        onExpire={() => {
-                          setCaptchaToken(null);
-                          turnstileRef.current?.reset();
-                        }}
-                      />
-                    </div>
-                  )}
+                  <div className="my-2.5">
+                    <VisualCaptcha onVerify={setIsCustomCaptchaVerified} theme="light" />
+                  </div>
 
                   {/* Recaptcha container for MFA */}
                   <div id="mfa-recaptcha-container"></div>
@@ -462,27 +441,9 @@ export function AuthPage() {
                   required
                 />
                 
-                {TURNSTILE_SITE_KEY && (
-                  <div className="flex justify-center my-0.5">
-                    <Turnstile 
-                      ref={turnstileSignUpRef}
-                      siteKey={TURNSTILE_SITE_KEY} 
-                      onSuccess={(token) => {
-                        setCaptchaToken(token);
-                        setError('');
-                      }}
-                      onError={() => {
-                        setError('Captcha verification failed.')
-                        turnstileSignUpRef.current?.reset();
-                      }}
-                      onExpire={() => {
-                        setCaptchaToken(null)
-                        turnstileSignUpRef.current?.reset();
-                      }}
-                      options={{ theme: 'dark' }}
-                    />
-                  </div>
-                )}
+                <div className="my-2.5">
+                  <VisualCaptcha onVerify={setIsCustomCaptchaVerified} theme="dark" />
+                </div>
                 
                 <button 
                   type="submit"

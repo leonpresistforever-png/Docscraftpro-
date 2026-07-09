@@ -1,6 +1,6 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, User, Menu, X, MessageSquare } from 'lucide-react';
+import { ChevronDown, User, Menu, X, MessageSquare, Download } from 'lucide-react';
 import { Button } from '@/src/components/ui/Button';
 import { useAuth } from '@/src/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -13,8 +13,45 @@ export function Navbar() {
   const [showProfile, setShowProfile] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
+
+  useEffect(() => {
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsInstalled(true);
+    }
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    const handleAppInstalled = () => {
+      setIsInstalled(true);
+      setDeferredPrompt(null);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const handleInstallPWA = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setIsInstalled(true);
+        setDeferredPrompt(null);
+      }
+    } else {
+      alert("Docscraft Pro PWA Ready! 🚀\n\nTo install native app, click the install/download icon in your browser URL bar or select 'Add to Home screen' / 'Install' in your browser options menu.");
+    }
+  };
+
   return (
-    <nav className="flex items-center justify-between px-8 py-4 bg-[#FDFBF7]/85 backdrop-blur-md border-b border-stone-200/20 fixed top-0 left-0 right-0 z-50 transition-all duration-300">
+    <>
+      <nav className="flex items-center justify-between px-8 py-4 bg-[#FDFBF7]/85 backdrop-blur-md border-b border-stone-200/20 fixed top-0 left-0 right-0 z-50 transition-all duration-300">
       <div 
         onClick={() => {
           if (user) {
@@ -25,32 +62,12 @@ export function Navbar() {
         }}
         className="flex items-center gap-3 group cursor-pointer"
       >
-        <div className="relative w-10 h-10 flex items-center justify-center transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110">
-           {/* Geometric SVG Hexagon Base */}
-           <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full drop-shadow-[0_4px_8px_rgba(212,175,55,0.4)]">
-             <defs>
-                <linearGradient id="gold-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                   <stop offset="0%" stopColor="#FFF1B8" />
-                   <stop offset="50%" stopColor="#D4AF37" />
-                   <stop offset="100%" stopColor="#AA7A00" />
-                </linearGradient>
-                <linearGradient id="gold-grad-inner" x1="100%" y1="100%" x2="0%" y2="0%">
-                   <stop offset="0%" stopColor="#FFF1B8" />
-                   <stop offset="50%" stopColor="#D4AF37" />
-                   <stop offset="100%" stopColor="#AA7A00" />
-                </linearGradient>
-             </defs>
-             <polygon points="50,5 90,25 90,75 50,95 10,75 10,25" fill="url(#gold-grad)" className="opacity-90" />
-             <polygon points="50,15 80,32 80,68 50,85 20,68 20,32" fill="#1a1a1a" />
-             <path d="M 50,25 L 70,38 L 70,62 L 50,75 L 30,62 L 30,38 Z" fill="url(#gold-grad-inner)" />
-             <path d="M 50,15 L 50,85 M 20,32 L 80,68 M 20,68 L 80,32" stroke="#1a1a1a" strokeWidth="2" strokeOpacity="0.5" />
-             <circle cx="50" cy="50" r="10" fill="#1a1a1a" />
-             <circle cx="50" cy="50" r="3" fill="#D4AF37" />
-           </svg>
+        <div className="relative w-10 h-10 flex items-center justify-center transition-transform duration-500 group-hover:scale-110">
+           <img src="/logo.svg" alt="DocsCraft Pro Logo" className="w-full h-full object-contain" />
         </div>
         <div className="flex flex-col">
           <span className="font-bold text-xl leading-none font-serif tracking-tight">Docscraft Pro</span>
-          <span className="text-xs font-bold uppercase tracking-widest text-dc-gold mt-1 drop-shadow-sm">Workspace</span>
+          <span className="text-xs font-bold uppercase tracking-widest text-red-600 mt-1 drop-shadow-sm">Workspace</span>
         </div>
       </div>
       
@@ -92,11 +109,7 @@ export function Navbar() {
                  )}
                </button>
                
-               <AnimatePresence>
-                 {showProfile && (
-                   <ProfileMenu onClose={() => setShowProfile(false)} />
-                 )}
-               </AnimatePresence>
+               
              </div>
            </div>
         ) : (
@@ -167,6 +180,13 @@ export function Navbar() {
         )}
       </AnimatePresence>
     </nav>
+
+    <AnimatePresence>
+      {showProfile && (
+        <ProfileMenu onClose={() => setShowProfile(false)} />
+      )}
+    </AnimatePresence>
+    </>
   )
 }
 

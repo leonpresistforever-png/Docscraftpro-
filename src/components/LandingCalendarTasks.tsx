@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Calendar, Clock, Plus, Check, Play, Pause, RotateCcw, AlertCircle, Sparkles } from 'lucide-react';
+import { Calendar, Clock, Plus, Check, Play, Pause, RotateCcw, AlertCircle, Sparkles, RefreshCw, Bell, BellOff, Volume2 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { db } from '../lib/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
 
 interface Task {
   id: string;
@@ -11,31 +14,216 @@ interface Task {
 }
 
 export function LandingCalendarTasks() {
+  const { user, userData, signInWithGoogle } = useAuth();
   const [selectedDay, setSelectedDay] = useState(22); // June 22, 2026
   const [taskText, setTaskText] = useState('');
   const [taskTime, setTaskTime] = useState('09:00');
+  
+  // Tracker States
+  const [trackerMode, setTrackerMode] = useState<'stopwatch' | 'countdown'>('stopwatch');
   const [trackingActive, setTrackingActive] = useState(false);
   const [secondsTracked, setSecondsTracked] = useState(0); 
+  const [countdownMinutes, setCountdownMinutes] = useState(5);
+  const [customMinsInput, setCustomMinsInput] = useState('');
   const [activeTask, setActiveTask] = useState<string | null>(null);
   const [notification, setNotification] = useState<{show: boolean, msg: string}>({show: false, msg: ''});
-
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [alarmActive, setAlarmActive] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
+  
+  const alarmIntervalRef = useRef<any>(null);
+  const [isGoogleConnected, setIsGoogleConnected] = useState(false);
+
+  useEffect(() => {
+    setIsGoogleConnected(!!sessionStorage.getItem('google_access_token'));
+  }, [user]);
 
   const showNotification = (msg: string) => {
     setNotification({ show: true, msg });
-    setTimeout(() => setNotification({ show: false, msg: '' }), 3000);
+    setTimeout(() => setNotification({ show: false, msg: '' }), 4000);
   };
+
+  // Web Audio API alarm sound synthesizer
+  const playAlarmSound = () => {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const now = ctx.currentTime;
+      
+      const playTone = (freq: number, start: number, duration: number) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, start);
+        gain.gain.setValueAtTime(0.3, start);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(start);
+        osc.stop(start + duration);
+      };
+      
+      // Beautiful chime melody
+      playTone(523.25, now, 0.3);       // C5
+      playTone(659.25, now + 0.15, 0.3); // E5
+      playTone(783.99, now + 0.3, 0.4);  // G5
+      playTone(1046.50, now + 0.45, 0.6); // C6
+    } catch (e) {
+      console.warn("Web Audio Context blocked or uninitialized:", e);
+    }
+  };
+
+  // Trigger alarm loops when timer finishes
+  const triggerAlarm = () => {
+    setAlarmActive(true);
+    playAlarmSound();
+    
+    // Repeat chime every 3 seconds until stopped
+    if (alarmIntervalRef.current) clearInterval(alarmIntervalRef.current);
+    alarmIntervalRef.current = setInterval(() => {
+      playAlarmSound();
+    }, 3000);
+  };
+
+  const stopAlarm = () => {
+    setAlarmActive(false);
+    if (alarmIntervalRef.current) {
+      clearInterval(alarmIntervalRef.current);
+      alarmIntervalRef.current = null;
+    }
+  };
+
+  // Clean up alarm interval on unmount
+  useEffect(() => {
+    return () => {
+      if (alarmIntervalRef.current) clearInterval(alarmIntervalRef.current);
+    };
+  }, []);
 
   // Real-time tracking tick
   useEffect(() => {
     let interval: any = null;
     if (trackingActive) {
       interval = setInterval(() => {
-        setSecondsTracked(prev => prev + 1);
+        if (trackerMode === 'stopwatch') {
+          setSecondsTracked(prev => prev + 1);
+        } else {
+          setSecondsTracked(prev => {
+            if (prev <= 1) {
+              setTrackingActive(false);
+              triggerAlarm();
+              return 0;
+            }
+            return prev - 1;
+          });
+        }
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [trackingActive]);
+  }, [trackingActive, trackerMode]);
+
+  // Handle mode switches
+  const handleModeChange = (mode: 'stopwatch' | 'countdown') => {
+    setTrackingActive(false);
+    stopAlarm();
+    setTrackerMode(mode);
+    if (mode === 'stopwatch') {
+      setSecondsTracked(0);
+    } else {
+      setSecondsTracked(countdownMinutes * 60);
+    }
+  };
+
+  // Handle countdown minutes change
+  const handleCountdownMinutesChange = (mins: number) => {
+    setCountdownMinutes(mins);
+    if (!trackingActive && trackerMode === 'countdown') {
+      setSecondsTracked(mins * 60);
+    }
+  };
+
+  // Google Calendar Integration API Call
+  const fetchGoogleCalendarEvents = async () => {
+    const token = sessionStorage.getItem('google_access_token');
+    if (!token) {
+      showNotification("Please use 'Sync' and sign in with Google to fetch calendar events.");
+      // Trigger login popup
+      try {
+        await signInWithGoogle();
+        const newToken = sessionStorage.getItem('google_access_token');
+        if (!newToken) return;
+        setIsGoogleConnected(true);
+      } catch (err) {
+        console.error("Auth failed:", err);
+        return;
+      }
+    }
+    
+    setIsSyncing(true);
+    const activeToken = sessionStorage.getItem('google_access_token');
+    
+    try {
+      // Fetch user's primary calendar events (filtering for June 2026 month or general events)
+      const response = await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=2026-06-01T00:00:00Z&timeMax=2026-06-30T23:59:59Z&maxResults=50&singleEvents=true&orderBy=startTime`,
+        {
+          headers: {
+            Authorization: `Bearer ${activeToken}`
+          }
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error('Google Calendar response was not successful.');
+      }
+      
+      const data = await response.json();
+      const fetchedEvents = data.items || [];
+      
+      if (fetchedEvents.length === 0) {
+        showNotification("Synced successfully, but found no events in Google Calendar for June 2026.");
+        return;
+      }
+
+      const newTasks: Task[] = fetchedEvents.map((item: any) => {
+        const startStr = item.start?.dateTime || item.start?.date || '';
+        const startDate = new Date(startStr);
+        const dayVal = startDate.getMonth() === 5 ? startDate.getDate() : selectedDay;
+        
+        // Format to readable 12H time
+        let displayTime = '12:00 PM';
+        if (item.start?.dateTime) {
+          const hours = startDate.getHours();
+          const minutes = startDate.getMinutes().toString().padStart(2, '0');
+          const ampm = hours >= 12 ? 'PM' : 'AM';
+          const h = hours % 12 || 12;
+          displayTime = `${h.toString().padStart(2, '0')}:${minutes} ${ampm}`;
+        }
+
+        return {
+          id: `gcal-${item.id}`,
+          text: item.summary || 'Google Calendar Event',
+          time: displayTime,
+          done: false,
+          date: dayVal
+        };
+      });
+
+      // Filter duplicates and merge
+      setTasks(prev => {
+        const localTasks = prev.filter(t => !t.id.startsWith('gcal-'));
+        return [...newTasks, ...localTasks];
+      });
+
+      setIsGoogleConnected(true);
+
+      showNotification(`Successfully synchronized ${newTasks.length} events from your Google Calendar!`);
+    } catch (error: any) {
+      console.error("Google Calendar Sync Error:", error);
+      showNotification("Failed to sync actual calendar. Grant authorization and try again.");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const handleToggleTask = (id: string) => {
     setTasks(prev => prev.map(t => {
@@ -57,7 +245,6 @@ export function LandingCalendarTasks() {
     e.preventDefault();
     if (!taskText.trim()) return;
     
-    // Convert 24h to 12h am/pm format for display
     const [hours, minutes] = taskTime.split(':');
     const h = parseInt(hours, 10);
     const ampm = h >= 12 ? 'PM' : 'AM';
@@ -77,7 +264,6 @@ export function LandingCalendarTasks() {
     showNotification(`New task assigned for June ${selectedDay} at ${formattedTime}`);
   };
 
-  // Human readable time formatter
   const formatTime = (secs: number) => {
     const mins = Math.floor(secs / 60);
     const s = secs % 60;
@@ -105,6 +291,27 @@ export function LandingCalendarTasks() {
         )}
       </AnimatePresence>
 
+      {/* Alarm Warning Flashing Banner */}
+      <AnimatePresence>
+        {alarmActive && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="fixed inset-x-0 top-0 z-[99] bg-red-600 text-white text-center py-4 font-mono text-sm font-bold flex items-center justify-center gap-4 shadow-2xl animate-pulse"
+          >
+            <Bell className="w-5 h-5 animate-bounce" />
+            <span>ALARM TRIGGERED: TRACKER WORK TIME FINISHED!</span>
+            <button 
+              onClick={stopAlarm}
+              className="px-4 py-1 bg-white text-red-600 hover:bg-stone-100 rounded-lg text-xs uppercase font-bold tracking-wider"
+            >
+              Stop Alarm
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Editorial Decorative Gold Border Separator */}
       <div className="w-full h-px bg-gradient-to-r from-transparent via-amber-300 to-transparent mb-16"></div>
 
@@ -114,29 +321,113 @@ export function LandingCalendarTasks() {
         <div className="lg:col-span-5 flex flex-col justify-between py-2 space-y-8">
           <div className="space-y-6">
             <span className="text-xs uppercase tracking-widest font-black text-amber-700 font-sans flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping"></span> Live Real-Time Tracking
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping"></span> Live Real-Time Tracker
             </span>
             <h3 className="text-3xl md:text-4xl font-serif font-black text-gray-900 leading-tight">
-              Stately Calendar <br /> &amp; Time Capsule.
+              Stately Calendar <br /> &amp; Tracking.
             </h3>
             <p className="text-sm md:text-base text-gray-600 leading-relaxed font-serif">
-              Plan your creative outputs and track milestones natively. When you assign tasks to calendar days, track them in real-time with our physical style chronometer. Keep tabs on high-end focus hours.
+              Plan your creative outputs and track milestones natively. Connect your actual Google Calendar account with permission to download live timelines. Use the physical styled alarm tracker below.
             </p>
+            
+            {/* Sync Live Button */}
+            {isGoogleConnected ? (
+              <div className="flex flex-col gap-2.5">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-xs font-mono font-bold uppercase tracking-wider w-fit">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Status: Connected
+                </div>
+                <button
+                  onClick={fetchGoogleCalendarEvents}
+                  disabled={isSyncing}
+                  className="flex items-center gap-2 px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 border border-stone-200 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all disabled:opacity-50 w-fit"
+                >
+                  <RefreshCw className={`w-3 h-3 ${isSyncing ? 'animate-spin' : ''}`} />
+                  {isSyncing ? 'Syncing...' : 'Sync Calendar'}
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={fetchGoogleCalendarEvents}
+                disabled={isSyncing}
+                className="flex items-center gap-2 px-5 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-xl text-xs font-bold uppercase tracking-wider transition-all disabled:opacity-50"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                {isSyncing ? 'Synchronizing...' : 'Sync Actual Calendar'}
+              </button>
+            )}
           </div>
 
           {/* Luxury Class stopwatch widget UI */}
-          <div className="p-6 bg-gradient-to-br from-[#1C1B19] to-[#0F0E0D] border border-amber-500/20 rounded-[2rem] shadow-xl text-white relative overflow-hidden flex flex-col justify-between h-[210px]">
+          <div className="p-6 bg-gradient-to-br from-[#1C1B19] to-[#0F0E0D] border border-amber-500/20 rounded-[2rem] shadow-xl text-white relative overflow-hidden flex flex-col justify-between min-h-[310px] pb-4">
             <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-xl pointer-events-none"></div>
             
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-amber-400 animate-pulse" />
-                <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest">Aesthetic Focus Timer</span>
+                <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest">Tracker</span>
               </div>
-              <span className={`text-[9px] px-2 py-0.5 rounded-full font-mono uppercase tracking-wide font-bold ${trackingActive ? 'bg-amber-500 text-black animate-pulse' : 'bg-white/10 text-gray-400'}`}>
-                {trackingActive ? 'ACTIVE_TICK' : 'PAUSED'}
-              </span>
+              <div className="flex bg-white/5 p-0.5 rounded-lg border border-white/10">
+                <button 
+                  onClick={() => handleModeChange('stopwatch')}
+                  className={`px-2 py-0.5 text-[9px] font-mono font-bold rounded uppercase ${trackerMode === 'stopwatch' ? 'bg-amber-500 text-black' : 'text-gray-400 hover:text-white'}`}
+                >
+                  Stopwatch
+                </button>
+                <button 
+                  onClick={() => handleModeChange('countdown')}
+                  className={`px-2 py-0.5 text-[9px] font-mono font-bold rounded uppercase ${trackerMode === 'countdown' ? 'bg-amber-500 text-black' : 'text-gray-400 hover:text-white'}`}
+                >
+                  Countdown
+                </button>
+              </div>
             </div>
+
+            {/* Countdown Minutes Setter (Only visible in countdown mode) */}
+            {trackerMode === 'countdown' && (
+              <div className="flex flex-col gap-2 items-center mt-1">
+                <div className="flex justify-center items-center gap-3">
+                  <span className="text-[10px] font-mono text-gray-400 uppercase">Timer Target:</span>
+                  <div className="flex gap-1.5">
+                    {[1, 5, 15, 25].map(mins => (
+                      <button
+                        key={mins}
+                        onClick={() => {
+                          setCustomMinsInput('');
+                          handleCountdownMinutesChange(mins);
+                        }}
+                        className={`w-7 h-5 text-[10px] font-mono font-bold rounded transition-colors ${countdownMinutes === mins && !customMinsInput ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-white/5 text-gray-400 hover:text-white border border-transparent'}`}
+                      >
+                        {mins}m
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] font-mono text-gray-500 uppercase">Or Custom:</span>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min="1"
+                      max="1440"
+                      placeholder="Mins"
+                      value={customMinsInput}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setCustomMinsInput(val);
+                        const mins = parseInt(val, 10);
+                        if (!isNaN(mins) && mins > 0) {
+                          handleCountdownMinutesChange(mins);
+                        }
+                      }}
+                      className="w-24 h-7 px-2.5 bg-white/5 text-white text-xs font-mono rounded border border-white/10 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/50 text-left pr-8"
+                    />
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] font-mono text-gray-500 pointer-events-none">min</span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Stopwatch Large Output */}
             <div className="text-center my-2">
@@ -152,18 +443,35 @@ export function LandingCalendarTasks() {
             <div className="flex justify-center gap-3">
               <button 
                 onClick={() => setTrackingActive(!trackingActive)}
-                className="px-4 py-1.5 bg-white/10 hover:bg-amber-500 hover:text-black rounded-full text-xs font-bold uppercase tracking-wider font-mono transition-all flex items-center gap-1.5"
+                className="px-5 py-2 bg-white/10 hover:bg-amber-500 hover:text-black rounded-full text-xs font-bold uppercase tracking-wider font-mono transition-all flex items-center gap-1.5"
               >
                 {trackingActive ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-current" />}
                 {trackingActive ? 'Pause' : 'Start'}
               </button>
               <button 
-                onClick={() => { setSecondsTracked(0); setTrackingActive(false); }}
-                className="p-2 bg-white/5 hover:bg-white/10 active:scale-95 rounded-full font-mono transition-all"
+                onClick={() => {
+                  setTrackingActive(false);
+                  stopAlarm();
+                  if (trackerMode === 'stopwatch') {
+                    setSecondsTracked(0);
+                  } else {
+                    setSecondsTracked(countdownMinutes * 60);
+                  }
+                }}
+                className="p-2.5 bg-white/5 hover:bg-white/10 active:scale-95 rounded-full font-mono transition-all"
                 title="Reset stopwatch clock"
               >
                 <RotateCcw className="w-3.5 h-3.5 text-gray-400 hover:text-white" />
               </button>
+              {alarmActive && (
+                <button
+                  onClick={stopAlarm}
+                  className="p-2.5 bg-red-600 hover:bg-red-500 active:scale-95 rounded-full transition-all"
+                  title="Stop active alarm"
+                >
+                  <BellOff className="w-3.5 h-3.5 text-white" />
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -309,6 +617,11 @@ export function LandingCalendarTasks() {
                             onClick={() => {
                               if (!task.done) {
                                 setActiveTask(task.text);
+                                if (trackerMode === 'stopwatch') {
+                                  setSecondsTracked(0);
+                                } else {
+                                  setSecondsTracked(countdownMinutes * 60);
+                                }
                                 setTrackingActive(true);
                               }
                             }}
@@ -326,6 +639,11 @@ export function LandingCalendarTasks() {
                               type="button"
                               onClick={() => {
                                 setActiveTask(task.text);
+                                if (trackerMode === 'stopwatch') {
+                                  setSecondsTracked(0);
+                                } else {
+                                  setSecondsTracked(countdownMinutes * 60);
+                                }
                                 setTrackingActive(true);
                               }}
                               className="text-[10px] font-mono text-amber-700 font-bold hover:underline"

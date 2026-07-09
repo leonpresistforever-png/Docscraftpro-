@@ -44,6 +44,7 @@ import { IntegrationsPage } from './pages/IntegrationsPage';
 import { RepositoriesPage } from './pages/RepositoriesPage';
 import { ChangelogPage } from './pages/ChangelogPage';
 import { FeaturesPage } from './pages/FeaturesPage';
+import { MergePdfsPage } from './pages/MergePdfsPage';
 
 import { BlogPage } from './pages/BlogPage';
 import { ProductivityPage } from './pages/ProductivityPage';
@@ -71,7 +72,10 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const location = useLocation();
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
-  if (!user) return <Navigate to="/auth" />;
+  if (!user) {
+    sessionStorage.setItem('redirect_after_auth', location.pathname);
+    return <Navigate to="/auth" />;
+  }
   
   if (user && userData && !userData.profileSetupComplete && location.pathname !== '/welcome-setup') {
     return <Navigate to="/welcome-setup" replace />;
@@ -110,6 +114,7 @@ function AnimatedRoutes() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/agent-studio" element={<AgentStudioPage />} />
         <Route path="/modern-spaces" element={<ModernSpacesPage />} />
+        <Route path="/merge-pdfs" element={<PageTransition><MergePdfsPage /></PageTransition>} />
         <Route path="/orbital" element={<OrbitalPage />} />
         <Route path="/nexus" element={<NexusPage />} />
         <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />

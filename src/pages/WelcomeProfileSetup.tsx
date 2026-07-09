@@ -107,31 +107,30 @@ export function WelcomeProfileSetup() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF5FF] flex flex-col items-center justify-center p-4 md:p-8 selection:bg-purple-600 selection:text-white relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-[#FAF9F6] flex flex-col items-center justify-center p-4 md:p-8 selection:bg-[#D4AF37] selection:text-white relative overflow-hidden font-sans">
       
-      {/* Abstract Pinkish Red and Deep Purple Background Accents */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-pink-400/10 rounded-full blur-3xl pointer-events-none"></div>
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      {/* Abstract Golden and Off-white Background Accents */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-[#D4AF37]/5 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none"></div>
 
       <motion.div 
         initial={{ opacity: 0, scale: 0.98, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="w-full max-w-2xl bg-white rounded-[2.5rem] border border-purple-100 shadow-2xl overflow-hidden relative z-10 my-8"
+        className="w-full max-w-2xl bg-white rounded-[2.5rem] border-2 border-[#D4AF37] shadow-2xl overflow-hidden relative z-10 my-8"
       >
-        {/* Creative Narrative Header Cover with Pinkish Red and Purple Theme  */}
-        <div className="bg-gradient-to-br from-purple-900 via-[#D11E73] to-[#7E22CE] p-8 md:p-10 text-white relative overflow-hidden">
-          {/* Private Vault tag removed as requested */}
-          <div className="flex items-center gap-3 mb-4 text-pink-200">
-            <BookOpen className="w-5 h-5 animate-pulse" />
-            <span className="text-xs uppercase tracking-widest font-extrabold text-pink-100">Docscraft Creative Workspace</span>
+        {/* Creative Narrative Header Cover with White and Gold Theme */}
+        <div className="bg-gradient-to-br from-stone-900 via-stone-850 to-[#AA7A00] p-8 md:p-10 text-white relative overflow-hidden border-b border-[#D4AF37]/30">
+          <div className="flex items-center gap-3 mb-4 text-amber-200">
+            <BookOpen className="w-5 h-5 animate-pulse text-[#D4AF37]" />
+            <span className="text-xs uppercase tracking-widest font-extrabold text-amber-100">Docscraft Creative Workspace</span>
           </div>
 
-          <h2 className="text-2xl md:text-3.5xl font-serif font-black tracking-tight leading-tight">
+          <h2 className="text-2xl md:text-3.5xl font-serif font-black tracking-tight leading-tight text-white">
             Complete Your Vault Identity
           </h2>
           
-          <p className="text-xs md:text-sm leading-relaxed mt-4 font-serif text-pink-50/90 border-l-2 border-pink-400/50 pl-4">
+          <p className="text-xs md:text-sm leading-relaxed mt-4 font-serif text-stone-200 border-l-2 border-[#D4AF37] pl-4">
             "Welcome to creative writing of documents and PDFs. This is your personal private vault, always here for you and for your thoughts. Express your thoughts, goals, and anything securely and safely in your private vault of thoughts in Docscraft. Creativity should be expressed to be remembered, otherwise it would be forgotten. Write your thoughts to stay on track..."
           </p>
         </div>
@@ -139,17 +138,17 @@ export function WelcomeProfileSetup() {
         <form onSubmit={handleSaveProfile} className="p-8 md:p-10 space-y-6">
           
           {/* Avatar Picker - Custom Select Circle only, Browse text button removed */}
-          <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-gray-100">
+          <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-stone-100">
             <div 
               onClick={handleAvatarClick}
-              className="w-24 h-24 rounded-full bg-purple-50 border-2 border-dashed border-purple-300/60 flex items-center justify-center relative cursor-pointer hover:bg-purple-100/40 transition-all flex-shrink-0 group overflow-hidden shadow-sm"
+              className="w-24 h-24 rounded-full bg-amber-50/50 border-2 border-dashed border-[#D4AF37]/40 flex items-center justify-center relative cursor-pointer hover:bg-amber-100/20 transition-all flex-shrink-0 group overflow-hidden shadow-sm"
               title="Click to select image file from your device"
             >
               {formData.avatarUrl ? (
                 <img src={formData.avatarUrl} alt="Avatar" className="w-full h-full rounded-full object-cover" />
               ) : (
-                <div className="flex flex-col items-center justify-center text-purple-700/60 font-medium">
-                  <User className="w-8 h-8 text-purple-500/80 mb-1" />
+                <div className="flex flex-col items-center justify-center text-amber-800/60 font-medium">
+                  <User className="w-8 h-8 text-[#D4AF37]/80 mb-1" />
                   <span className="text-[10px] uppercase tracking-widest font-bold">Select</span>
                 </div>
               )}
@@ -161,14 +160,14 @@ export function WelcomeProfileSetup() {
 
               {uploadProgress && (
                 <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
-                  <Loader2 className="w-5 h-5 text-purple-600 animate-spin" />
+                  <Loader2 className="w-5 h-5 text-[#D4AF37] animate-spin" />
                 </div>
               )}
             </div>
 
             <div className="text-center sm:text-left space-y-1 flex-1">
-              <h4 className="font-bold text-gray-800 text-base">Select Your Workspace Avatar</h4>
-              <p className="text-xs text-gray-500">
+              <h4 className="font-bold text-stone-800 text-base">Select Your Workspace Avatar</h4>
+              <p className="text-xs text-stone-500">
                 Click the circle to pick a picture from your device gallery. We store it securely right inside your personal profile account.
               </p>
             </div>
@@ -187,25 +186,25 @@ export function WelcomeProfileSetup() {
           {/* First name and Last name, username field removed as requested */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-widest text-[#7E22CE]">First Name</label>
+              <label className="text-xs font-bold uppercase tracking-widest text-[#AA7A00]">First Name</label>
               <input 
                 type="text"
                 required
                 value={formData.firstName}
                 onChange={e => setFormData({...formData, firstName: e.target.value})}
-                className="w-full px-4 py-3 rounded-xl border border-purple-100 focus:outline-none focus:border-[#D11E73] focus:ring-1 focus:ring-[#D11E73] transition-all bg-[#FAF5FF]/10 font-medium text-gray-800 placeholder-purple-200"
+                className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all bg-[#FAF9F6] font-medium text-stone-850 placeholder-stone-300"
                 placeholder="First Name"
               />
             </div>
             
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-widest text-[#7E22CE]">Last Name</label>
+              <label className="text-xs font-bold uppercase tracking-widest text-[#AA7A00]">Last Name</label>
               <input 
                 type="text"
                 required
                 value={formData.lastName}
                 onChange={e => setFormData({...formData, lastName: e.target.value})}
-                className="w-full px-4 py-3 rounded-xl border border-purple-100 focus:outline-none focus:border-[#D11E73] focus:ring-1 focus:ring-[#D11E73] transition-all bg-[#FAF5FF]/10 font-medium text-gray-800 placeholder-purple-200"
+                className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all bg-[#FAF9F6] font-medium text-stone-850 placeholder-stone-300"
                 placeholder="Last Name"
               />
             </div>
@@ -214,32 +213,32 @@ export function WelcomeProfileSetup() {
           {/* Bio Form Field - poet, story writer, professional writing comments & placeholders */}
           <div className="space-y-1.5">
             <div className="flex justify-between items-center">
-              <label className="text-xs font-bold uppercase tracking-widest text-[#7E22CE]">Your Bio / Background</label>
-              <span className="text-[10px] text-gray-400">Poet, story writer, professional writing</span>
+              <label className="text-xs font-bold uppercase tracking-widest text-[#AA7A00]">Your Bio / Background</label>
+              <span className="text-[10px] text-stone-400">Poet, story writer, professional writing</span>
             </div>
             <textarea 
               value={formData.bio}
               onChange={e => setFormData({...formData, bio: e.target.value})}
               rows={3}
-              className="w-full px-4 py-3 rounded-xl border border-purple-100 focus:outline-none focus:border-[#D11E73] focus:ring-1 focus:ring-[#D11E73] transition-all bg-[#FAF5FF]/10 text-sm text-gray-800 font-serif leading-relaxed"
+              className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all bg-[#FAF9F6] text-sm text-stone-800 font-serif leading-relaxed"
               placeholder="E.g., Poet, story writer, professional writing..."
             />
           </div>
 
           {/* Goals Form Field */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold uppercase tracking-widest text-[#7E22CE]">What are your creative writing goals?</label>
+            <label className="text-xs font-bold uppercase tracking-widest text-[#AA7A00]">What are your creative writing goals?</label>
             <input 
               type="text"
               value={formData.goals}
               onChange={e => setFormData({...formData, goals: e.target.value})}
-              className="w-full px-4 py-3 rounded-xl border border-purple-100 focus:outline-none focus:border-[#D11E73] focus:ring-1 focus:ring-[#D11E73] transition-all bg-[#FAF5FF]/10 text-sm text-gray-800 font-serif"
+              className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all bg-[#FAF9F6] text-sm text-stone-800 font-serif"
               placeholder="E.g., Map creative thoughts, story drafts, or write every single day..."
             />
           </div>
 
           {/* Stay on track check bar toggle - opens native window browser push notifications */}
-          <div className="bg-purple-50/50 border border-purple-100/80 rounded-2xl p-4 md:p-5 flex items-start gap-4 hover:bg-purple-50 transition-colors">
+          <div className="bg-amber-50/30 border border-amber-200/50 rounded-2xl p-4 md:p-5 flex items-start gap-4 hover:bg-amber-50/50 transition-colors">
             <input 
               type="checkbox" 
               id="stayInTrack"
@@ -251,13 +250,13 @@ export function WelcomeProfileSetup() {
                   await requestNotificationPermission();
                 }
               }}
-              className="w-5 h-5 text-purple-600 focus:ring-purple-500 border-purple-300 rounded cursor-pointer mt-0.5 accent-purple-600"
+              className="w-5 h-5 text-[#D4AF37] focus:ring-[#D4AF37] border-stone-300 rounded cursor-pointer mt-0.5 accent-[#D4AF37]"
             />
             <div className="space-y-1 flex-1">
-              <label htmlFor="stayInTrack" className="text-xs font-bold uppercase tracking-wide text-purple-950 cursor-pointer select-none flex items-center gap-1.5">
-                Stay on Track with Docscraft Goal Reminder <Heart className="w-3.5 h-3.5 text-pink-500 fill-current animate-bounce" />
+              <label htmlFor="stayInTrack" className="text-xs font-bold uppercase tracking-wide text-stone-900 cursor-pointer select-none flex items-center gap-1.5">
+                Stay on Track with Docscraft Goal Reminder <Heart className="w-3.5 h-3.5 text-[#D4AF37] fill-current animate-bounce" />
               </label>
-              <p className="text-[11px] text-[#7E22CE] leading-relaxed">
+              <p className="text-[11px] text-[#AA7A00] leading-relaxed">
                 Check this box to grant direct device-level browser permissions for sending creative notifications, streaks tracking, and motivational reminders right on your personal device.
               </p>
             </div>
@@ -267,7 +266,7 @@ export function WelcomeProfileSetup() {
           <button 
             type="submit" 
             disabled={loading}
-            className="w-full mt-4 bg-gradient-to-r from-pink-600 via-purple-700 to-indigo-800 hover:from-pink-500 hover:via-purple-600 hover:to-indigo-700 text-white py-4 rounded-xl font-bold uppercase tracking-widest text-sm shadow-[0_4px_15px_rgba(210,30,120,0.3)] hover:shadow-[0_6px_22px_rgba(210,30,120,0.5)] transform hover:-translate-y-0.5 transition-all outline-none flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed"
+            className="w-full mt-4 bg-[#D4AF37] hover:bg-[#AA7A00] text-white py-4 rounded-xl font-bold uppercase tracking-widest text-sm shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all outline-none flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
           >
             {loading ? (
               <Loader2 className="w-5 h-5 animate-spin" />

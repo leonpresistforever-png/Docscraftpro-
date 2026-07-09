@@ -40,6 +40,7 @@ import { useAuth } from '../context/AuthContext';
 import { db } from '../lib/firebase';
 import { collection, query, where, getDocs, doc, setDoc } from 'firebase/firestore';
 import { sendPasswordResetEmail } from 'firebase/auth';
+import { PWAInstallButton } from '../components/PWAInstallButton';
 
 // Simple atob/btoa helper for credential visualization
 const encrypt = (text: string) => btoa(text);
@@ -777,6 +778,11 @@ export function SettingsPage() {
                               Test Device Alert
                             </Button>
                           </div>
+                        </div>
+
+                        {/* Native PWA client setup */}
+                        <div className="flex justify-center my-4 w-full">
+                          <PWAInstallButton />
                         </div>
 
                         {/* Native Device Voice / Microphone Permission Setup */}

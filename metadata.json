@@ -1,6 +1,6 @@
 {
   "name": "DocCraft Pro",
-  "description": "Establish a professional document engineering workspace. Process visual sheets, clinical OCR, web clipping, cryptographic signatures, and conceptual logic mappings with total control.",
+  "description": "An advanced document engineering and collaboration workspace for processing technical documents, visual sheet parsing, cryptographic signing, and intelligent AI-powered multi-PDF context synthesis.",
   "requestFramePermissions": [
     "microphone"
   ],

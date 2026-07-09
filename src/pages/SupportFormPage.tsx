@@ -257,7 +257,7 @@ export function SupportFormPage({
     <div className={isEmbedded ? "w-full" : "min-h-screen bg-[#FDFBF7] font-sans text-[#2D2D2D] selection:bg-[#D4AF37] selection:text-white flex flex-col pt-16"}>
       {!isEmbedded && <Navbar />}
       
-      <div className={isEmbedded ? "max-w-3xl mx-auto w-full p-4" : "flex-1 flex flex-col items-center justify-center p-6 md:p-8 max-w-3xl mx-auto w-full"}>
+      <div className={isEmbedded ? "max-w-3xl mx-auto w-full p-0" : "flex-1 flex flex-col items-center justify-center p-6 md:p-8 max-w-3xl mx-auto w-full"}>
         {!isEmbedded && (
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 border border-amber-100 rounded-full text-[10px] text-amber-800 font-bold uppercase tracking-widest mb-3 select-none">
@@ -326,7 +326,7 @@ export function SupportFormPage({
           </div>
         )}
 
-        <div className="bg-white p-6 md:p-8 rounded-2xl border border-[#EAE6DF] shadow-xs w-full">
+        <div className={isEmbedded ? "w-full" : "bg-white p-6 md:p-8 rounded-2xl border border-[#EAE6DF] shadow-xs w-full"}>
           {status === 'success' && ticketDetails ? (
             <div className="space-y-6 animate-fade-in">
               <div className="text-center space-y-2">

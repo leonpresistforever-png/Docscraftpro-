@@ -88,7 +88,7 @@ export function ProfileMenu({ onClose }: { onClose: () => void }) {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 15 }}
         transition={{ duration: 0.25 }}
-        className="bg-white rounded-[2rem] border border-stone-200/60 shadow-[0_20px_50px_rgba(0,0,0,0.15)] p-6 md:p-8 max-w-sm w-full font-sans relative z-10"
+        className="bg-white rounded-[2rem] border-2 border-[#D4AF37] shadow-[0_20px_50px_rgba(0,0,0,0.15)] p-6 md:p-8 max-w-sm w-full font-sans relative z-10"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header Title and Close Button */}
@@ -107,7 +107,7 @@ export function ProfileMenu({ onClose }: { onClose: () => void }) {
         <div className="flex flex-col items-center mb-6">
           <div 
             onClick={handleAvatarClick}
-            className="w-28 h-28 rounded-full border-4 border-[#b08d2c] bg-stone-100 overflow-hidden relative group cursor-pointer shadow-sm flex items-center justify-center"
+            className="w-28 h-28 rounded-full border-4 border-[#D4AF37] bg-stone-100 overflow-hidden relative group cursor-pointer shadow-sm flex items-center justify-center"
             title="Click to select or change profile photo"
           >
             {photoURL ? (
@@ -129,7 +129,7 @@ export function ProfileMenu({ onClose }: { onClose: () => void }) {
             {/* Spinner when loading */}
             {(uploading) && (
               <div className="absolute inset-0 bg-white/85 flex items-center justify-center z-20">
-                <Loader2 className="w-6 h-6 text-[#b08d2c] animate-spin" />
+                <Loader2 className="w-6 h-6 text-[#D4AF37] animate-spin" />
               </div>
             )}
           </div>
@@ -151,7 +151,7 @@ export function ProfileMenu({ onClose }: { onClose: () => void }) {
             type="text"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            className="w-full px-4 py-3 bg-[#FCFBFA] border border-stone-200 rounded-xl outline-none focus:border-[#b08d2c] focus:ring-1 focus:ring-[#b08d2c] text-stone-850 font-semibold transition-all text-sm"
+            className="w-full px-4 py-3 bg-[#FCFBFA] border border-stone-200 rounded-xl outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] text-stone-850 font-semibold transition-all text-sm"
             placeholder="E.g., Foxer Dude"
           />
         </div>
@@ -169,7 +169,7 @@ export function ProfileMenu({ onClose }: { onClose: () => void }) {
             id="save-profile-btn"
             onClick={handleSave}
             disabled={saving || uploading}
-            className="flex-1 bg-[#b08d2c] hover:bg-[#9a7b26] disabled:opacity-60 text-white rounded-xl py-3 font-bold transition-all text-sm flex items-center justify-center gap-1.5 shadow-sm"
+            className="flex-1 bg-[#D4AF37] hover:bg-[#AA7A00] disabled:opacity-60 text-white rounded-xl py-3 font-bold transition-all text-sm flex items-center justify-center gap-1.5 shadow-sm"
           >
             {saving ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -189,9 +189,9 @@ export function ProfileMenu({ onClose }: { onClose: () => void }) {
             onClose();
             navigate('/settings');
           }}
-          className="w-full flex items-center justify-center gap-2 py-3 mb-3 border-2 border-stone-200/65 rounded-xl font-bold text-xs uppercase tracking-wider text-amber-900 bg-amber-50/40 hover:bg-amber-50 hover:border-amber-400 transition-all focus:outline-none"
+          className="w-full flex items-center justify-center gap-2 py-3 mb-3 border-2 border-stone-200/65 rounded-xl font-bold text-xs uppercase tracking-wider text-amber-950 bg-amber-50/40 hover:bg-amber-50 hover:border-amber-400 transition-all focus:outline-none"
         >
-          <Settings className="w-4 h-4 text-[#b08d2c] animate-spin" style={{ animationDuration: '8s' }} />
+          <Settings className="w-4 h-4 text-[#D4AF37] animate-spin" style={{ animationDuration: '8s' }} />
           <span>Detailed profile settings</span>
         </button>
 

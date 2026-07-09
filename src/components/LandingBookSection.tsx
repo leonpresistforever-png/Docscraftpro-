@@ -7,11 +7,44 @@ import type * as THREE from 'three';
 
 function DiaryModel({ scrollYProgress }: { scrollYProgress: any }) {
   const group = useRef<any>(null);
+  const textRef = useRef<HTMLParagraphElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
   
+  const fullTitle = "you're most welcome to docscraftpro,";
+  const fullText = "explore our service's ⬇️";
+
   useFrame((state) => {
     if (group.current) {
       // Keep it straight and subtle float
       group.current.position.y = Math.sin(state.clock.elapsedTime * 1) * 0.05;
+    }
+
+    const currentScroll = scrollYProgress ? scrollYProgress.get() : 0;
+    // Hybrid: timeProgress goes 0 to 1 over 6.0 seconds. 
+    // progressVal combines both scroll and time so that the document is NEVER blank.
+    const timeProgress = Math.min(1, state.clock.elapsedTime / 6.0);
+    const progressVal = Math.max(currentScroll, timeProgress);
+    
+    // Animate title first (from 0.05 to 0.25)
+    if (titleRef.current) {
+      if (progressVal < 0.05) {
+        titleRef.current.innerText = "";
+      } else {
+        const progress = Math.min(1, (progressVal - 0.05) / 0.20);
+        const charCount = Math.floor(progress * fullTitle.length);
+        titleRef.current.innerText = fullTitle.slice(0, charCount);
+      }
+    }
+
+    // Animate body text (from 0.25 to 0.9)
+    if (textRef.current) {
+      if (progressVal < 0.25) {
+        textRef.current.innerText = "";
+      } else {
+        const progress = Math.min(1, (progressVal - 0.25) / 0.65);
+        const charCount = Math.floor(progress * fullText.length);
+        textRef.current.innerText = fullText.slice(0, charCount);
+      }
     }
   });
 
@@ -36,20 +69,11 @@ function DiaryModel({ scrollYProgress }: { scrollYProgress: any }) {
       </mesh>
 
       {/* HTML Text Overlay that gets revealed */}
-      <Html position={[-1.8, 0.23, -1.2]} rotation={[-Math.PI / 2, 0, 0]} transform scale={0.012}>
-        <div className="w-[320px] h-[240px] overflow-hidden">
-          <motion.div 
-            style={{ 
-              clipPath: useTransform(scrollYProgress, [0.2, 0.6], ["polygon(0 0, 0% 0, 0% 100%, 0 100%)", "polygon(0 0, 100% 0, 100% 100%, 0 100%)"]) 
-            }} 
-            className="w-full h-full"
-          >
-            <p className="font-serif text-[1rem] text-gray-800 opacity-80 leading-relaxed" style={{ fontFamily: 'Playfair Display, serif' }}>
-              Welcome to Docscraft, the creative document writing journey. Write naturally, and watch as your ideas seamlessly organize themselves on the page. Enjoy the freedom of infinite drafting.
-Every keystroke feels intentional, every paragraph perfectly aligned. We believe that a pristine workspace leads to brilliant ideas.
-Say goodbye to formatting struggles and hello to pure, unadulterated creativity. Your words deserve a beautiful home.
-            </p>
-          </motion.div>
+      <Html center style={{ pointerEvents: 'none', zIndex: 10 }}>
+        <div className="w-[280px] text-center select-none bg-transparent font-serif">
+          <h4 ref={titleRef} className="text-2xl font-extrabold text-amber-950 mb-1.5 drop-shadow-sm leading-snug"></h4>
+          <p ref={textRef} className="text-[1.05rem] leading-relaxed text-stone-900 font-bold min-h-[70px] drop-shadow-sm whitespace-pre-wrap italic"></p>
+          <div className="w-12 h-[1.5px] bg-amber-800/40 mx-auto mt-2"></div>
         </div>
       </Html>
       
@@ -64,21 +88,21 @@ function PenModel({ scrollYProgress }: { scrollYProgress: any }) {
   
   useFrame((state) => {
     if (penRef.current) {
+      const currentScroll = scrollYProgress ? scrollYProgress.get() : 0;
+      const timeProgress = Math.min(1, state.clock.elapsedTime / 6.0);
+      const progressVal = Math.max(currentScroll, timeProgress);
+
       // Simulate writing motion
-      const currentScroll = scrollYProgress.get();
-      if (currentScroll > 0.2 && currentScroll < 0.6) {
+      if (progressVal > 0.05 && progressVal < 0.95) {
         // Writing active
-        const progress = (currentScroll - 0.2) / 0.4; // 0 to 1
-        const xPos = -1.5 + (progress * 3); // Move across page
-        // Paper is at Z=-1.0, width 280px * 0.012 = 3.3 units. It spans from Z=-1.0 to Z=-1.0 + height?
-        // HTML is rotated -90 on X, so Z corresponds to Y in 2D.
-        const zPos = -0.5 + Math.sin(progress * 40) * 0.1; // Scribble up and down
-        // Pen center Y should be high enough so tip (at -1.2 relative) is at Y=0.25
+        const writePercent = (progressVal - 0.05) / 0.90; // 0 to 1
+        const xPos = -1.5 + (writePercent * 3.0); // Move across page
+        const zPos = -0.5 + Math.sin(writePercent * 40) * 0.1; // Scribble up and down
         penRef.current.position.set(xPos, 1.45, zPos);
         
         penRef.current.rotation.x = -0.5 + Math.sin(state.clock.elapsedTime * 15) * 0.1;
         penRef.current.rotation.z = -0.3 + Math.sin(state.clock.elapsedTime * 20) * 0.1;
-      } else if (currentScroll <= 0.2) {
+      } else if (progressVal <= 0.05) {
         // Idle before writing
         penRef.current.position.set(-1.8, 2, 1);
         penRef.current.rotation.set(-0.5, 0.5, -0.5);
@@ -131,18 +155,13 @@ export function LandingBookSection() {
         
         {/* Left Side: Editorial Typography with tracing text hooks */}
         <div className="lg:w-2/5 space-y-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-100/50 rounded-full text-xs font-bold uppercase tracking-widest text-amber-800 border border-amber-200">
-            <Sparkles className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: '6s' }} /> Cohesive Workspace
-          </div>
 
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-black font-serif text-gray-900 leading-tight">
-            A blank canvas <br /> <span className="italic font-light text-amber-600">for your thoughts.</span>
+            you're most welcome to <br /> <span className="italic font-light text-amber-600">docscraftpro,</span>
           </h2>
           
           <p className="text-lg text-gray-600 leading-relaxed font-serif">
-            Welcome to Docscraft, the creative document writing journey. Write naturally, and watch as your ideas seamlessly organize themselves on the page. Enjoy the freedom of infinite drafting.
-Every keystroke feels intentional, every paragraph perfectly aligned. We believe that a pristine workspace leads to brilliant ideas.
-Say goodbye to formatting struggles and hello to pure, unadulterated creativity. Your words deserve a beautiful home.
+            explore our service's ⬇️
           </p>
         </div>
 

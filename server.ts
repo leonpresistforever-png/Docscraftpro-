@@ -75,6 +75,34 @@ async function startServer() {
     }
   });
 
+  app.get("/api/video-proxy", async (req, res) => {
+    try {
+      const fileId = "1ZukrOqNACYHCrq8euKUTayf1u5jvyXvw";
+      const driveUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+      const response = await fetch(driveUrl);
+      if (!response.ok) {
+        throw new Error(`Google Drive fetch failed: ${response.statusText}`);
+      }
+      res.setHeader('Content-Type', 'video/mp4');
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      
+      const reader = response.body?.getReader();
+      if (!reader) {
+        return res.status(500).send("Failed to get stream reader from Google Drive.");
+      }
+      
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        res.write(Buffer.from(value));
+      }
+      res.end();
+    } catch (err: any) {
+      console.error("[Video Proxy] error:", err);
+      res.status(500).send(`Server error: ${err.message}`);
+    }
+  });
+
   app.post("/api/support", async (req, res) => {
     try {
       const { username, email, issue } = req.body;

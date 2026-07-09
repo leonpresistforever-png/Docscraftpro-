@@ -259,9 +259,9 @@ export function LandingAICapabilities() {
                <div className="w-14 h-14 bg-purple-500/20 rounded-2xl flex items-center justify-center mb-6 border border-purple-400/30 group-hover:bg-purple-500/40 transition-colors duration-300 relative z-10 backdrop-blur-md shadow-[0_0_15px_rgba(168,85,247,0.3)]">
                   <BrainCircuit className="w-7 h-7 text-purple-300 group-hover:text-white transition-colors" />
                </div>
-               <h3 className="text-2xl font-bold text-white mb-3 relative z-10">Deep Reasoning Engine</h3>
+               <h3 className="text-2xl font-bold text-white mb-3 relative z-10">PDF Merger</h3>
                <p className="text-gray-400 flex-1 leading-relaxed relative z-10 font-medium">
-                 Tackle your most complex queries with gemini-3.1-pro-preview. Enable Deep Reasoning to process intricate logic, system design, or deep strategic planning with high accuracy.
+                 Merge multiple PDFs side-by-side. The AI will extract, rewrite, and format the combined context of all documents into a single, cohesive PDF file.
                </p>
             </motion.div>
 
@@ -290,9 +290,9 @@ export function LandingAICapabilities() {
                <div className="w-14 h-14 bg-amber-500/20 rounded-2xl flex items-center justify-center mb-6 border border-amber-400/30 group-hover:bg-amber-500/40 transition-colors duration-300 relative z-10 backdrop-blur-md shadow-[0_0_15px_rgba(251,191,36,0.3)]">
                   <ImageIcon className="w-7 h-7 text-amber-300 group-hover:text-white transition-colors" />
                </div>
-               <h3 className="text-2xl font-bold text-white mb-3 relative z-10">Photorealistic Asset Generation</h3>
+               <h3 className="text-2xl font-bold text-white mb-3 relative z-10">Agent Studio</h3>
                <p className="text-gray-400 flex-1 leading-relaxed relative z-10 font-medium">
-                 Describe it. See it. Use gemini-3-pro-image-preview for high-quality assets, specifying any aspect ratio for your precise project needs.
+                 An autonomous resource provisioning engine that dynamically configures files, builds custom packages, and deploys high-fidelity web integrations.
                </p>
             </motion.div>
 

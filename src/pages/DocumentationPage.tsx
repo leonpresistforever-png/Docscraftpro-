@@ -1,98 +1,96 @@
 import React, { useState } from 'react';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
-import { Library, Edit3, Smartphone, Laptop, HelpCircle, Code } from 'lucide-react';
+import { Library, Edit3, Smartphone, Laptop, HelpCircle, Code, Award } from 'lucide-react';
 
 export function DocumentationPage() {
   const [activeGuide, setActiveGuide] = useState('getting-started');
 
   const guides = {
     'getting-started': {
-      title: "Docscraft Core Workspace Overview",
+      title: "Docscraft Workspace Overview",
       content: (
         <div className="space-y-6">
           <p className="text-sm text-gray-600 leading-relaxed">
-            Welcome to Docscraft Pro, the ultimate local text design and canvas tool. Our system operates client-first, leveraging advanced local browser caches, localized databases, and WebAssembly packages to compile and design documents securely.
+            Welcome to Docscraft Pro, the premier document writing and drafting assistant designed specifically for authors, professionals, and teams. Our workspace offers a clean, distraction-free atmosphere where you can focus entirely on your words. It saves drafts directly to your local browser storage instantly, meaning you never lose a single keystroke.
           </p>
-          <h3 className="font-bold text-gray-900 text-lg mt-6 mb-2">Creating Your First Document</h3>
+          <h3 className="font-bold text-gray-900 text-lg mt-6 mb-2">Creating and Organizing Drafts</h3>
           <p className="text-sm text-gray-600 leading-relaxed">
-            Navigate to the primary user Dashboard, then press the <strong className="text-dc-gold">+ Create</strong> button. This instantiates a blank template in the browser and loads our minimalist text sandbox. Write freely, format instantly via the floating markup bar, and copy markdown styles smoothly.
+            To create a draft, head to your central Dashboard and click the <strong className="text-dc-gold">+ Create Document</strong> button. This instantly initializes a clean canvas. From the dashboard, you can also view your active writing stats, use our physical-style writing stopwatch to complete timed sprints, and organize files into folders or send old drafts to the trash.
           </p>
           <div className="bg-[#FAF9F6] border border-dc-border rounded-xl p-5 space-y-2 text-xs">
-            <h4 className="font-bold text-gray-900 uppercase tracking-widest text-[10px]">💡 WORKSPACE DESIGN TIP</h4>
+            <h4 className="font-bold text-gray-900 uppercase tracking-widest text-[10px]">💡 WRITING TIP</h4>
             <p className="text-gray-600 leading-relaxed">
-              If you require a fully decoupled and private experience, register a local Demo Account. All pages created will save directly to your physical browser's local cache without transmitting document content to external servers.
+              Use our built-in focus countdown timer with real audio alerts! Setting a 25-minute timer encourages consistent writing sessions. When the timer finishes, a pleasant audio chime plays to let you know it is time to rest.
             </p>
           </div>
         </div>
       )
     },
     'writing-formatting': {
-      title: "Formatting & Inline Logic",
+      title: "Formatting & Layout Elements",
       content: (
         <div className="space-y-6">
           <p className="text-sm text-gray-600 leading-relaxed">
-            Docscraft supports standard Markdown formatting and inline blocks out of the box, letting you structure drafts cleanly using rapid triggers.
+            Docscraft makes styling your pages fast and intuitive. As you write, a floating formatting toolbar appears when you select text, enabling you to apply bold, italic, underline, or highlight states instantly.
           </p>
           <div className="space-y-4">
             <div className="bg-[#FAF9F6] p-5 rounded-xl border border-dc-border">
-              <h4 className="font-bold text-gray-900 text-sm mb-3">Core Keyboard Triggers</h4>
+              <h4 className="font-bold text-gray-900 text-sm mb-3">Convenient Editor Triggers</h4>
               <ul className="space-y-2.5 text-xs text-gray-600 pl-4 list-disc">
-                <li>Type <code className="bg-white border border-gray-300 font-mono text-[10px] px-1.5 py-0.5 rounded font-black"># </code> to write standard display headings.</li>
-                <li>Type <code className="bg-white border border-gray-300 font-mono text-[10px] px-1.5 py-0.5 rounded font-black">- [ ] </code> to spawn a dynamic checkbox checklist directly on any line.</li>
-                <li>Type <code className="bg-white border border-gray-300 font-mono text-[10px] px-1.5 py-0.5 rounded font-black">[[ </code> inside the active document text to open the inline document link finder.</li>
+                <li>Type <code className="bg-white border border-gray-300 font-mono text-[10px] px-1.5 py-0.5 rounded font-bold"># </code> to quickly insert a prominent heading.</li>
+                <li>Type <code className="bg-white border border-gray-300 font-mono text-[10px] px-1.5 py-0.5 rounded font-bold">- [ ] </code> to spawn an interactive task checkbox list directly inside your editor.</li>
+                <li>Type <code className="bg-white border border-gray-300 font-mono text-[10px] px-1.5 py-0.5 rounded font-bold">[[ </code> to open the document link popup to connect different drafts together.</li>
               </ul>
             </div>
             
-            <h3 className="font-bold text-gray-900 text-lg mt-6">KaTeX & Mathematical Equating</h3>
+            <h3 className="font-bold text-gray-900 text-lg mt-6">Professional Dividers & Spacers</h3>
             <p className="text-sm text-gray-600 leading-relaxed">
-              To write professional math equations and matrix formulas inline, wrap your variables inside double dollar signs <code className="font-mono bg-gray-100 px-1 py-0.5 rounded text-gray-800">$$</code>. The engine compiles and renders math symbols in real-time.
+              When drafting comprehensive manuals or multi-chapter narratives, organizing sections with visual boundaries is crucial. Our custom divider tool lets you split your canvas perfectly. You can customize dividers dynamically with 15 beautiful colors, and fine-tune their thickness and width to suit your design. Once applied, the cursor automatically shifts to a new typing block below the divider, keeping your creative flow going.
             </p>
           </div>
         </div>
       )
     },
-    'on-device-ai': {
-      title: "Offline AI & WebGPU Models",
+    'affidavit-notary': {
+      title: "Affidavit Writing & Hand-Signed Certifications",
       content: (
         <div className="space-y-6">
           <p className="text-sm text-gray-600 leading-relaxed">
-            Docscraft ships with integration for offline localized intelligence. Run on-device micro-models (such as SmolLM or Llama) directly inside your GPU without sending data to any cloud service.
+            For users requiring authenticated document structures, Docscraft includes a professional Affidavit generator. This tool inserts a fully formatted, legally minded affidavit template directly into your editing canvas, allowing you to fill out identity details, certify statements, and provide hand-drawn digital signatures.
           </p>
-          <h3 className="font-bold text-gray-900 text-lg mt-4 mb-2">WebGPU Checklist</h3>
+          <h3 className="font-bold text-gray-900 text-lg mt-4 mb-2">How to Draft and Sign an Affidavit</h3>
           <p className="text-sm text-gray-600 leading-relaxed">
-            To execute local models, confirm that your current web browser and device hardware support native WebGPU access (recommended browsers are Google Chrome, Microsoft Edge, or Opera Desktop).
+            Creating a certified affidavit statement is simple, direct, and completely secure:
           </p>
-          <ul className="list-decimal pl-5 text-xs text-gray-600 space-y-2 leading-relaxed">
-            <li>Navigate to the <strong>Model Library</strong> from your sidebar dashboard.</li>
-            <li>Select an appropriate model configuration (e.g. <strong>SmolLM (135M) - MICRO</strong> for fast prototypes on limited RAM).</li>
-            <li>Press <strong>Init Model</strong>. The browser will retrieve shard segments to local storage, initialize WebGPU kernels, and set up your secure on-device AI terminal.</li>
+          <ul className="list-decimal pl-5 text-xs text-gray-600 space-y-3 leading-relaxed">
+            <li>
+              <strong>Insert Affidavit Template:</strong> Click on the Affidavit tool inside the canvas settings panel. This loads a professional layout containing standard headings (such as Affiant Identity, Statements of Truth, and Notary Certification).
+            </li>
+            <li>
+              <strong>Fill Out Credentials:</strong> Enter the full legal name, address, and official identity details in the designated input fields.
+            </li>
+            <li>
+              <strong>Statement Checklists:</strong> Certify the zero-trust compliance checkmark list to verify that the statement is compiled by a verified human author.
+            </li>
+            <li>
+              <strong>Digital Signature Pad:</strong> Use your mouse, stylus, or touch screen to draw your authentic hand-written signature on our responsive signature pad. This embeds your signature permanently and securely on the document before exporting.
+            </li>
           </ul>
         </div>
       )
     },
-    'mermaid-diagrams': {
-      title: "Mermaid Diagrams & Flowcharts",
+    'on-device-ai': {
+      title: "Google Gemini Writing Assistant",
       content: (
         <div className="space-y-6">
           <p className="text-sm text-gray-600 leading-relaxed">
-            Docscraft Pro supports natively rendering code-driven diagrams and flowcharts directly inside your document canvas using <strong>Mermaid.js</strong>.
+            Docscraft is fully integrated with Google Gemini to act as your real-time co-author. Leverage intelligent models to translate paragraphs into multiple languages, fix grammatical errors, summarize chapters, or generate fresh content ideas.
           </p>
-          <h3 className="font-bold text-gray-900 text-lg mt-4 mb-2">How to Render Diagrams</h3>
+          <h3 className="font-bold text-gray-900 text-lg mt-4 mb-2">Leveraging the LLM Assistant</h3>
           <p className="text-sm text-gray-600 leading-relaxed">
-            You can insert beautiful schema blueprints and logic flowcharts without leaving your keyboard or drawing manually.
+            Our assistant operates entirely server-side, protecting your draft details. Simply click the AI Assistant panel on the editor, choose your desired task (such as "Summarize" or "Enhance Style"), or ask a direct question, and watch the model draft responses in real-time.
           </p>
-          <ul className="list-decimal pl-5 text-xs text-gray-600 space-y-3 leading-relaxed">
-            <li>
-              <strong>Direct Button Insert:</strong> Click on the <strong className="text-purple-600">Share/Network icon</strong> inside the floating rich-text toolbar at the top of the editor. This instantly embeds a new Mermaid Box.
-            </li>
-            <li>
-              <strong>Toggling Code:</strong> Inside the rendered diagram block, click the <strong>"Edit Script"</strong> button. The box flips to an embedded code terminal where you can write Mermaid syntax (e.g., <code className="bg-gray-100 px-1 py-0.5 rounded text-gray-800">graph TD</code>).
-            </li>
-            <li>
-              <strong>Render & Verify:</strong> Click <strong>"View Diagram"</strong> on the box header to compile the syntax into a beautifully scaled, interactive SVG flowchart right within the page. If there is a typo, the syntax error will be highlighted gracefully.
-            </li>
-          </ul>
         </div>
       )
     }
@@ -127,16 +125,16 @@ export function DocumentationPage() {
                 <Edit3 className="w-4 h-4" /> Formatting Tricks
               </button>
               <button 
+                onClick={() => setActiveGuide('affidavit-notary')}
+                className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2.5 transition-colors cursor-pointer ${activeGuide === 'affidavit-notary' ? 'bg-[#1a1a1a] text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+              >
+                <Award className="w-4 h-4" /> Affidavit Drafting
+              </button>
+              <button 
                 onClick={() => setActiveGuide('on-device-ai')}
                 className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2.5 transition-colors cursor-pointer ${activeGuide === 'on-device-ai' ? 'bg-[#1a1a1a] text-white' : 'text-gray-600 hover:bg-gray-50'}`}
               >
-                <Code className="w-4 h-4" /> Local GPU Models
-              </button>
-              <button 
-                onClick={() => setActiveGuide('mermaid-diagrams')}
-                className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2.5 transition-colors cursor-pointer ${activeGuide === 'mermaid-diagrams' ? 'bg-[#1a1a1a] text-white' : 'text-gray-600 hover:bg-gray-50'}`}
-              >
-                <Code className="w-4 h-4" /> Mermaid Diagrams
+                <Code className="w-4 h-4" /> Gemini AI Writing
               </button>
             </nav>
           </aside>

@@ -17,10 +17,9 @@ function FloatingShapes({ scrollProgress }: { scrollProgress: any }) {
       group.current.position.y = (scrollValue * -15);
     }
     
-    // Silky smooth RGB shifting for the glass cube
+    // Elegant solid color for the glass cube (no rainbow shift)
     if (cubeMaterialRef.current) {
-      const t = state.clock.elapsedTime * 0.5;
-      cubeMaterialRef.current.color.setHSL((t % 1), 0.6, 0.7);
+      cubeMaterialRef.current.color.set('#3b82f6');
     }
   });
 
@@ -229,7 +228,7 @@ export function LandingRevolutionizeWorkflow() {
           </p>
           <div className="flex flex-wrap items-center gap-4 mt-4">
             <button
-              onClick={() => navigate('/auth')}
+              onClick={() => navigate('/pdf/convert')}
               className="bg-[#2563EB] hover:bg-blue-700 text-white px-8 py-4 rounded-full font-bold shadow-[0_10px_30px_rgba(37,99,235,0.4)] transition-all hover:scale-105"
             >
               Get Started Free

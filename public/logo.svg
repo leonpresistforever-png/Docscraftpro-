@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+  <defs>
+    <!-- Enhanced, premium red gradients -->
+    <linearGradient id="red-light" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E52D27" />
+      <stop offset="100%" stop-color="#B31117" />
+    </linearGradient>
+    <linearGradient id="red-dark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#B31117" />
+      <stop offset="100%" stop-color="#730508" />
+    </linearGradient>
+    <linearGradient id="red-mid" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D31D24" />
+      <stop offset="100%" stop-color="#940D12" />
+    </linearGradient>
+    <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="5" dy="15" stdDeviation="12" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+  
+  <g filter="url(#soft-shadow)">
+    <!-- Right wing / top surface -->
+    <path d="M333.3 113.3 L166.7 183.3 L273.3 250 L333.3 113.3 Z" fill="url(#red-light)" />
+    <!-- Left wing fold -->
+    <path d="M166.7 183.3 L273.3 250 L208.3 213.3 Z" fill="url(#red-dark)" />
+    <!-- Center crease fold underneath -->
+    <path d="M208.3 213.3 L273.3 250 L203.3 246.7 Z" fill="url(#red-mid)" />
+  </g>
+</svg>

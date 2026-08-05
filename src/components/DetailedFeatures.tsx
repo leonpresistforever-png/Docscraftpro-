@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldAlert, HardDrive, RefreshCcw, DatabaseZap, Clock, WifiOff } from 'lucide-react';
+import { ShieldAlert, HardDrive, RefreshCcw, DatabaseZap, WifiOff } from 'lucide-react';
 
 export function DetailedFeatures() {
   return (

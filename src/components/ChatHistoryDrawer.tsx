@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { db } from '../lib/firebase';
-import { collection, query, where, orderBy, onSnapshot, Timestamp, deleteDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, Timestamp, deleteDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { X, Clock, MessageSquare, Search, Edit, Trash2, Pin } from 'lucide-react';
 
 interface ChatSession {

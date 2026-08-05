@@ -164,8 +164,10 @@ export function MergePdfsPage() {
       setIsParsingFiles(true);
       addLog(`Initiating raw parser engine for ${pending.length} documents...`);
 
-      for (const pdfFile of pending) {
-        setFiles(prev => prev.map(f => f.id === pdfFile.id ? { ...f, status: 'parsing' } : f));
+      // First set all pending files to parsing status
+      setFiles(prev => prev.map(f => pending.some(p => p.id === f.id) ? { ...f, status: 'parsing' } : f));
+
+      await Promise.all(pending.map(async (pdfFile) => {
         addLog(`Accessing file array buffer: ${pdfFile.name}`);
 
         try {
@@ -182,7 +184,8 @@ export function MergePdfsPage() {
           setFiles(prev => prev.map(f => f.id === pdfFile.id ? { ...f, status: 'error' } : f));
           addLog(`Parser failure: ${pdfFile.name}. Verify document accessibility.`);
         }
-      }
+      }));
+
       setIsParsingFiles(false);
     };
 

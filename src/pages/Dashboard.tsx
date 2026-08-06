@@ -181,7 +181,7 @@ export function Dashboard() {
         for (let i = 1; i <= pdf.numPages; i++) {
           const page = await pdf.getPage(i);
           const content = await page.getTextContent();
-          text += content.items.map((item: any) => item.str).join(' ') + '\n\n';
+          text += content.items.map((item: any) => item.hasEOL ? item.str + '\n' : item.str).join('') + '\n\n';
         }
         extractedText = text;
       } else if (file.name.endsWith('.docx')) {
@@ -249,7 +249,7 @@ export function Dashboard() {
         for (let i = 1; i <= pdf.numPages; i++) {
           const page = await pdf.getPage(i);
           const content = await page.getTextContent();
-          text += content.items.map((item: any) => item.str).join(' ') + '\n\n';
+          text += content.items.map((item: any) => item.hasEOL ? item.str + '\n' : item.str).join('') + '\n\n';
         }
         const newDocRef = doc(collection(db, 'documents'));
         await setDoc(newDocRef, {

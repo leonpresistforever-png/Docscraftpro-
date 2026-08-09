@@ -331,10 +331,14 @@ export function ProductivityPage() {
       });
 
       // Synchronize to active Firestore/LocalStorage database
+      const existingTaskSet = new Set(tasks.map(t => `${t.title}|${t.dueDate}`));
+
       if (user) {
         for (const item of newTasks) {
-          const exists = tasks.some(t => t.title === item.title && t.dueDate === item.dueDate);
+          const taskKey = `${item.title}|${item.dueDate}`;
+          const exists = existingTaskSet.has(taskKey);
           if (!exists) {
+            existingTaskSet.add(taskKey);
             await addDoc(collection(db, 'tasks'), {
               title: item.title,
               notes: item.notes,
@@ -351,8 +355,10 @@ export function ProductivityPage() {
       } else {
         const updated = [...tasks];
         for (const item of newTasks) {
-          const exists = updated.some(t => t.title === item.title && t.dueDate === item.dueDate);
+          const taskKey = `${item.title}|${item.dueDate}`;
+          const exists = existingTaskSet.has(taskKey);
           if (!exists) {
+            existingTaskSet.add(taskKey);
             updated.unshift(item);
           }
         }

@@ -191,7 +191,7 @@ export function PDFConverter() {
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const content = await page.getTextContent();
-        extractedText += content.items.map((item: any) => item.str).join(' ') + '\n\n';
+        extractedText += content.items.map((item: any) => item.hasEOL ? item.str + '\n' : item.str).join('') + '\n\n';
       }
       return extractedText;
     } else if (file.name.endsWith('.png') || file.name.endsWith('.jpg') || file.name.endsWith('.jpeg')) {

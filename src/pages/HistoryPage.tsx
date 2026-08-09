@@ -12,6 +12,7 @@ import { db } from '../lib/firebase';
 import { Button } from '../components/ui/Button';
 import { motion, AnimatePresence } from 'motion/react';
 import { format } from 'date-fns';
+import DOMPurify from 'dompurify';
 
 interface Snapshot {
   id: string;
@@ -173,7 +174,7 @@ export function HistoryPage() {
 
                     <div 
                        className="prose prose-dc max-w-none text-gray-800 leading-relaxed opacity-80"
-                       dangerouslySetInnerHTML={{ __html: selectedSnapshot.content }}
+                       dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedSnapshot.content) }}
                     />
                   </motion.div>
                 ) : !isLoading && (

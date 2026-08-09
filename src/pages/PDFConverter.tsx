@@ -239,8 +239,10 @@ export function PDFConverter() {
       setIsParsingFiles(true);
       addLog(`Initiated multi-format decoder cores for ${pending.length} incoming streams...`);
 
-      for (const fileObj of pending) {
-        setUploadedFiles(prev => prev.map(f => f.id === fileObj.id ? { ...f, status: 'parsing' } : f));
+      const pendingIds = new Set(pending.map(f => f.id));
+      setUploadedFiles(prev => prev.map(f => pendingIds.has(f.id) ? { ...f, status: 'parsing' } : f));
+
+      await Promise.all(pending.map(async (fileObj) => {
         addLog(`Analyzing file schema: ${fileObj.name}`);
         try {
           const text = await parseSingleFile(fileObj);
@@ -255,7 +257,8 @@ export function PDFConverter() {
           setUploadedFiles(prev => prev.map(f => f.id === fileObj.id ? { ...f, status: 'error' } : f));
           addLog(`Parsing failed for ${fileObj.name}: ${err.message || err}`);
         }
-      }
+      }));
+
       setIsParsingFiles(false);
     };
 

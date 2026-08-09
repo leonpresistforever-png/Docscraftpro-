@@ -106,7 +106,7 @@ export function IntegrationsPage() {
           return;
         }
         addLog('gdrive', `🚀 Initiating batch backup sequence for ${localDrafts.length} documents...`);
-        await Promise.all(localDrafts.map(async (draft) => {
+        const uploadPromises = localDrafts.map(async (draft) => {
           addLog('gdrive', `Syncing document "${draft.title}"...`);
           const fileName = `${draft.title.replace(/[\/\\?%*:|"<>]/g, '-')}.md`;
           const contentPayload = draft.content || `# ${draft.title}\n\nEmpty offline draft.`;
@@ -117,7 +117,8 @@ export function IntegrationsPage() {
             contentPayload
           );
           addLog('gdrive', `✓ Successfully synced "${draft.title}"! (File ID: ${result.id})`);
-        }));
+        });
+        await Promise.all(uploadPromises);
         addLog('gdrive', '🎉 All documents backed up to your Google Drive folder successfully!');
       } else {
         const draft = localDrafts.find(d => d.id === selectedBackupDraftId);

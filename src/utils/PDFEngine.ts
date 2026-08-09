@@ -1,4 +1,4 @@
-import { PDFDocument, rgb, degrees, StandardFonts } from 'pdf-lib';
+import { PDFDocument, rgb, degrees, radians, StandardFonts } from 'pdf-lib';
 
 export async function rotatePDF(file: File, rotationDegrees: number = 90): Promise<Blob> {
   const arrayBuffer = await file.arrayBuffer();
@@ -37,7 +37,7 @@ export async function addWatermark(file: File, text: string = "CONFIDENTIAL"): P
       font: helveticaFont,
       color: rgb(0.8, 0.2, 0.2), // Light red watermark
       opacity: 0.3,
-      rotate: degrees(45), // standard diagonal
+      rotate: radians(angle),
     });
   }
   

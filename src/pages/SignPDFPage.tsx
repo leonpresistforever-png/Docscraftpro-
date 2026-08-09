@@ -5,20 +5,13 @@ import { db } from '../lib/firebase';
 import { ArrowLeft, Upload, Loader2, PenTool, Type, FileImage, Download, X, Save, Share2 } from 'lucide-react';
 import { Sidebar } from '../components/layout/Sidebar';
 import * as pdfjsLib from 'pdfjs-dist';
+import { setupPdfjsWorker } from '../utils/pdfjsSetup';
 import { PDFDocument } from 'pdf-lib';
 import SignatureCanvas from 'react-signature-canvas';
 import Draggable from 'react-draggable';
 
-// Configure PDF.js worker using Vite-compatible asset URL constructor, with a fallback to unpkg .mjs url
-const getWorkerSrc = () => {
-  try {
-    return new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString();
-  } catch (e) {
-    const version = pdfjsLib.version || '4.10.38';
-    return `https://unpkg.com/pdfjs-dist@${version}/build/pdf.worker.min.mjs`;
-  }
-};
-pdfjsLib.GlobalWorkerOptions.workerSrc = getWorkerSrc();
+// Configure PDF.js worker using shared setup
+setupPdfjsWorker().catch(console.error);
 
 export function SignPDFPage() {
   const navigate = useNavigate();
@@ -51,7 +44,7 @@ export function SignPDFPage() {
   const [stampSize, setStampSize] = useState({ width: 120, height: 120 });
 
   const [isProcessing, setIsProcessing] = useState(false);
-  const [pdfDimensions, setPdfDimensions] = useState({ width: 0, height: 0 });
+  const [pdfDimensions, setPdfDimensions] = useState({ width: 0, height: 0, displayWidth: 0, displayHeight: 0 });
 
   // Handle PDF Upload
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -104,7 +97,13 @@ export function SignPDFPage() {
 
       canvas.width = viewport.width;
       canvas.height = viewport.height;
-      setPdfDimensions({ width: viewport.width, height: viewport.height });
+      const rect = canvas.getBoundingClientRect();
+      setPdfDimensions({
+        width: viewport.width,
+        height: viewport.height,
+        displayWidth: rect.width || viewport.width,
+        displayHeight: rect.height || viewport.height,
+      });
 
       const renderTask = page.render({ canvasContext: context, viewport } as any);
       renderTaskRef.current = renderTask;
@@ -214,8 +213,8 @@ export function SignPDFPage() {
 
       const { width: pdfPageWidth, height: pdfPageHeight } = pageToEdit.getSize();
       const canvasEl = pdfCanvasRef.current;
-      const renderedWidth = (canvasEl && canvasEl.clientWidth) || pdfDimensions.width || 1;
-      const renderedHeight = (canvasEl && canvasEl.clientHeight) || pdfDimensions.height || 1;
+      const renderedWidth = canvasEl?.getBoundingClientRect().width || pdfDimensions.displayWidth || pdfDimensions.width || 1;
+      const renderedHeight = canvasEl?.getBoundingClientRect().height || pdfDimensions.displayHeight || pdfDimensions.height || 1;
 
       const scaleX = pdfPageWidth / renderedWidth;
       const scaleY = pdfPageHeight / renderedHeight;
@@ -470,8 +469,8 @@ export function SignPDFPage() {
                  <input type="file" ref={fileInputRef} className="hidden" accept="application/pdf" onChange={handleFileUpload} />
               </div>
             ) : (
-              <div className="relative shadow-xl bg-white border border-gray-200 inline-block max-w-[100%] max-h-[100%]">
-                 <canvas ref={pdfCanvasRef} className="block max-w-full h-auto" />
+              <div className="relative shadow-xl bg-white border border-gray-200 inline-block max-w-full">
+                 <canvas ref={pdfCanvasRef} className="block w-full h-auto" style={{ maxHeight: 'calc(100vh - 200px)' }} />
                  
                  {signatureDataUrl && (
                    <Draggable 

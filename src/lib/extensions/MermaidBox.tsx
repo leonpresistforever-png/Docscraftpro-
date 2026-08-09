@@ -1,3 +1,4 @@
+import DOMPurify from "dompurify";
 import { Node, mergeAttributes } from '@tiptap/core';
 import { ReactNodeViewRenderer, NodeViewWrapper } from '@tiptap/react';
 import React, { useState, useEffect } from 'react';
@@ -72,7 +73,7 @@ const MermaidComponent = ({ node, updateAttributes }: any) => {
         ) : (
           <div 
             className="min-h-[150px] flex items-center justify-center p-6 overflow-auto bg-white flowchart-display"
-            dangerouslySetInnerHTML={{ __html: svgContent || '<span class="text-xs text-gray-400 font-bold">Empty Diagram</span>' }}
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(svgContent || '<span class="text-xs text-gray-400 font-bold">Empty Diagram</span>') }}
           />
         )}
       </div>

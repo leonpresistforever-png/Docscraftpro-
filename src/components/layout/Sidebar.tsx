@@ -3,7 +3,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Home, Search, Settings, Plus, FileText, Pin, 
   LogOut, ChevronLeft, ChevronRight, LayoutDashboard,
-  CheckSquare, MoreHorizontal, Edit2, Trash2, ArrowLeft, Brain, Clock, BarChart3, ShieldCheck, Box, Network, Archive, Crown, PenTool
+  CheckSquare, MoreHorizontal, Edit2, Trash2, ArrowLeft, Brain, Clock, BarChart3, ShieldCheck, Box, Network, Archive, Crown, PenTool,
+  FileImage, Layers, Sparkles
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { useAuth } from '@/src/context/AuthContext';
@@ -415,6 +416,30 @@ export function Sidebar({ defaultCollapsed = false }: { defaultCollapsed?: boole
           >
             <div className="shrink-0 flex justify-center w-5"><Archive size={16} /></div>
             {!isCollapsed && <span className="truncate flex-1">Saved Docs Archive</span>}
+          </Link>
+          <Link
+            to="/pdf/convert"
+            title="PDF Converter"
+            className="flex items-center gap-3 px-2 py-1.5 rounded text-[13px] text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+          >
+            <div className="shrink-0 flex justify-center w-5"><FileImage size={16} /></div>
+            {!isCollapsed && <span className="truncate flex-1">PDF Converter</span>}
+          </Link>
+          <Link
+            to="/merge-pdfs"
+            title="Merge PDFs"
+            className="flex items-center gap-3 px-2 py-1.5 rounded text-[13px] text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+          >
+            <div className="shrink-0 flex justify-center w-5"><Layers size={16} /></div>
+            {!isCollapsed && <span className="truncate flex-1">Merge PDFs</span>}
+          </Link>
+          <Link
+            to="/media-lab"
+            title="AI Media Lab"
+            className="flex items-center gap-3 px-2 py-1.5 rounded text-[13px] text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+          >
+            <div className="shrink-0 flex justify-center w-5"><Sparkles size={16} /></div>
+            {!isCollapsed && <span className="truncate flex-1">Media Lab</span>}
           </Link>
           <Link
             to="/tools/sign-pdf"

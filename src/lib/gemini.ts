@@ -300,6 +300,43 @@ export async function generateVideo(prompt: string, aspectRatio: '16:9' | '9:16'
   }
 }
 
+/** Poll a Veo video generation operation until complete. */
+export async function pollVideoOperation(
+  operation: Record<string, unknown>,
+  onProgress?: (message: string) => void,
+  maxAttempts = 60,
+  intervalMs = 5000,
+): Promise<string | null> {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    onProgress?.(`Generating video... (${attempt + 1}/${maxAttempts})`);
+
+    const response = await fetch('/api/ai/poll-video', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ operation }),
+    });
+
+    if (!response.ok) {
+      throw new Error(await response.text());
+    }
+
+    const data = await response.json();
+
+    if (data.done && data.videoUrl) {
+      return data.videoUrl;
+    }
+
+    if (data.done && data.error) {
+      throw new Error(data.error);
+    }
+
+    operation = data.operation ?? operation;
+    await new Promise((r) => setTimeout(r, intervalMs));
+  }
+
+  throw new Error('Video generation timed out. Try again later.');
+}
+
 export async function generateMusic(prompt: string) {
   try {
     const response = await fetch('/api/ai/generate-music', {

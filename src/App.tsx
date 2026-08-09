@@ -1,14 +1,11 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import { runSEOAudit } from './utils/seoAudit';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { PremiumProvider } from './context/PremiumContext';
 import { LandingPage } from './pages/LandingPage';
-import { AgentStudioPage } from './pages/AgentStudioPage';
-import ModernSpacesPage from './pages/ModernSpacesPage';
-import OrbitalPage from './pages/OrbitalPage';
-import NexusPage from './pages/NexusPage';
 import { AdModal } from './components/AdModal';
 import { Dashboard } from './pages/Dashboard';
 import { AiChat } from './pages/AiChat';
@@ -18,8 +15,6 @@ import { ElementStudio } from './pages/ElementStudio';
 import { ChartsLibrary } from './pages/ChartsLibrary';
 import { AuthPage } from './pages/AuthPage';
 import { PreferencesPage } from './pages/PreferencesPage';
-import { AgentStudioContactPage } from './pages/AgentStudioContactPage';
-import { WorkPage } from './pages/WorkPage';
 import { TrashPage } from './pages/TrashPage';
 import { HistoryPage } from './pages/HistoryPage';
 import { SettingsPage } from './pages/SettingsPage';
@@ -41,22 +36,12 @@ import { AiDocumentAutomationPage } from './pages/AiDocumentAutomationPage';
 import { SecurityAndInfrastructurePage } from './pages/SecurityAndInfrastructurePage';
 import { AboutPage } from './pages/AboutPage';
 import { IntegrationsPage } from './pages/IntegrationsPage';
-import { RepositoriesPage } from './pages/RepositoriesPage';
 import { ChangelogPage } from './pages/ChangelogPage';
 import { FeaturesPage } from './pages/FeaturesPage';
-import { MergePdfsPage } from './pages/MergePdfsPage';
 
-import { BlogPage } from './pages/BlogPage';
-import { ProductivityPage } from './pages/ProductivityPage';
 import { ContactPage } from './pages/ContactPage';
 import { SupportFormPage } from './pages/SupportFormPage';
-import { DocsOverviewPage } from './pages/docs/DocsOverviewPage';
-import { DocsGettingStartedPage } from './pages/docs/DocsGettingStartedPage';
-import { DocsKeyboardShortcutsPage } from './pages/docs/DocsKeyboardShortcutsPage';
-import { DocsDocumentsAndSearchPage } from './pages/docs/DocsDocumentsAndSearchPage';
-import { DocsBlocksPage } from './pages/docs/DocsBlocksPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
-import { KeepNotesPage } from './pages/KeepNotesPage';
 import { ServicesPage } from './pages/ServicesPage';
 import { DisclaimerPage } from './pages/DisclaimerPage';
 import { FAQPage } from './pages/FAQPage';
@@ -65,22 +50,10 @@ import { DocumentationPage } from './pages/DocumentationPage';
 import { AnimatePresence, motion } from 'motion/react';
 import { InternalSecurityGate } from './components/InternalSecurityGate';
 
-import { WelcomeProfileSetup } from './pages/WelcomeProfileSetup';
-
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, userData, loading } = useAuth();
-  const location = useLocation();
-
+  const { user, loading } = useAuth();
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
-  if (!user) {
-    sessionStorage.setItem('redirect_after_auth', location.pathname);
-    return <Navigate to="/auth" />;
-  }
-  
-  if (user && userData && !userData.profileSetupComplete && location.pathname !== '/welcome-setup') {
-    return <Navigate to="/welcome-setup" replace />;
-  }
-
+  if (!user) return <Navigate to="/auth" />;
   return <>{children}</>;
 }
 
@@ -112,20 +85,13 @@ function AnimatedRoutes() {
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/agent-studio" element={<AgentStudioPage />} />
-        <Route path="/modern-spaces" element={<ModernSpacesPage />} />
-        <Route path="/merge-pdfs" element={<PageTransition><MergePdfsPage /></PageTransition>} />
-        <Route path="/orbital" element={<OrbitalPage />} />
-        <Route path="/nexus" element={<NexusPage />} />
         <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
         <Route path="/compliance" element={<CompliancePage />} />
         <Route path="/terms-of-service" element={<TermsOfServicePage />} />
         <Route path="/terms" element={<TermsOfServicePage />} />
         <Route path="/cookies" element={<Navigate to="/privacy-policy" replace />} />
         <Route path="/about" element={<AboutPage />} />
-        <Route path="/blog" element={<PageTransition><BlogPage /></PageTransition>} />
         <Route path="/integrations" element={<PageTransition><ProtectedRoute><IntegrationsPage /></ProtectedRoute></PageTransition>} />
-        <Route path="/repositories" element={<PageTransition><ProtectedRoute><RepositoriesPage /></ProtectedRoute></PageTransition>} />
         <Route path="/changelog" element={<ChangelogPage />} />
         <Route path="/features" element={<FeaturesPage />} />
         <Route path="/enterprise-platform" element={<EnterprisePlatformPage />} />
@@ -133,29 +99,18 @@ function AnimatedRoutes() {
         <Route path="/security-infrastructure" element={<SecurityAndInfrastructurePage />} />
         <Route path="/careers" element={<Navigate to="/" replace />} />
         <Route path="/auth" element={<AuthPage />} />
-        <Route path="/welcome-setup" element={<WelcomeProfileSetup />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/contact" element={<PageTransition><ContactPage /></PageTransition>} />
-        <Route path="/support-form" element={<PageTransition><SupportFormPage /></PageTransition>} />
-        <Route path="/agent-studio-contact" element={<PageTransition><AgentStudioContactPage /></PageTransition>} />
+        <Route path="/contact" element={<PageTransition><ProtectedRoute><ContactPage /></ProtectedRoute></PageTransition>} />
+        <Route path="/support-form" element={<PageTransition><ProtectedRoute><SupportFormPage /></ProtectedRoute></PageTransition>} />
         <Route path="/services" element={<ServicesPage />} />
-        <Route path="/work" element={<WorkPage />} />
         <Route path="/disclaimer" element={<DisclaimerPage />} />
         <Route path="/faq" element={<FAQPage />} />
         <Route path="/api" element={<Navigate to="/" replace />} />
         <Route path="/api-reference" element={<Navigate to="/" replace />} />
-        <Route path="/docs" element={<Navigate to="/docs/overview" replace />} />
-        <Route path="/docs/overview" element={<DocsOverviewPage />} />
-        <Route path="/docs/getting-started" element={<DocsGettingStartedPage />} />
-        <Route path="/docs/keyboard-shortcuts" element={<DocsKeyboardShortcutsPage />} />
-        <Route path="/docs/documents-and-search" element={<DocsDocumentsAndSearchPage />} />
-        <Route path="/docs/blocks" element={<DocsBlocksPage />} />
+        <Route path="/docs" element={<DocumentationPage />} />
         <Route path="/documentation" element={<DocumentationPage />} />
         <Route path="/status" element={<Navigate to="/" replace />} />
         <Route path="/dashboard" element={<PageTransition><ProtectedRoute><Dashboard /></ProtectedRoute></PageTransition>} />
-        <Route path="/repositories" element={<PageTransition><ProtectedRoute><RepositoriesPage /></ProtectedRoute></PageTransition>} />
-        <Route path="/notes" element={<PageTransition><ProtectedRoute><KeepNotesPage /></ProtectedRoute></PageTransition>} />
-        <Route path="/productivity" element={<PageTransition><ProtectedRoute><ProductivityPage /></ProtectedRoute></PageTransition>} />
         <Route path="/chat" element={<PageTransition><ProtectedRoute><AiChat /></ProtectedRoute></PageTransition>} />
         <Route path="/pdf/convert" element={<PageTransition><ProtectedRoute><PDFConverter /></ProtectedRoute></PageTransition>} />
         <Route path="/doc/:id" element={<PageTransition><ProtectedRoute><EditorPage /></ProtectedRoute></PageTransition>} />
@@ -180,8 +135,6 @@ function AnimatedRoutes() {
   );
 }
 
-import { KeyboardShortcutsHelper } from './components/KeyboardShortcutsHelper';
-
 export default function App() {
   return (
     <ThemeProvider>
@@ -189,9 +142,9 @@ export default function App() {
         <PremiumProvider>
           <Router>
             <AnimatedRoutes />
-            <KeyboardShortcutsHelper />
             <AdModal />
           </Router>
+          <Analytics />
         </PremiumProvider>
       </AuthProvider>
     </ThemeProvider>

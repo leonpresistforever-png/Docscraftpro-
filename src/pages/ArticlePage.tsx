@@ -1,3 +1,4 @@
+import DOMPurify from "dompurify";
 import { Footer } from "../components/layout/Footer";
 import React, { useEffect } from 'react';
 import { motion } from 'motion/react';
@@ -120,7 +121,7 @@ export function ArticlePage({ article }: { article: Article }) {
         {/* Article Content Body */}
         <motion.div variants={item} className="bg-white p-6 md:p-10 rounded-2xl border border-gray-200 shadow-sm mb-12">
           <div className="prose prose-stone max-w-none text-gray-700 leading-relaxed prose-headings:font-serif prose-headings:font-bold prose-headings:text-gray-900 prose-a:text-red-500 hover:prose-a:text-red-600 prose-a:transition-colors prose-pre:bg-gray-50 prose-pre:text-gray-800 prose-pre:border prose-pre:border-gray-200 prose-pre:shadow-inner"
-            dangerouslySetInnerHTML={{ __html: article.content }}
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.content) }}
           />
         </motion.div>
 

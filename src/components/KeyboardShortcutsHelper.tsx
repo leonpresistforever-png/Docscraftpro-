@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Search, Keyboard, Sparkles, Command, Save, Plus, HelpCircle, HardDrive, Layout, Maximize, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, Search, Keyboard, Sparkles, Command, Save, Plus, HelpCircle, HardDrive, Maximize, ChevronDown, ChevronUp } from 'lucide-react';
 import Draggable from 'react-draggable';
 
 interface ShortcutItem {

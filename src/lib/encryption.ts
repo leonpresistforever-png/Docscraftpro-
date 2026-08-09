@@ -16,7 +16,11 @@ export const decryptData = (text: string): string => {
   const cipherText = text.substring(7); // Remove 'ENC_V1_'
   try {
     const bytes = CryptoJS.AES.decrypt(cipherText, ENCRYPTION_KEY);
-    return bytes.toString(CryptoJS.enc.Utf8);
+    const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+    if (!decrypted) {
+      throw new Error('Malformed data or incorrect key');
+    }
+    return decrypted;
   } catch (error) {
     console.error("Decryption failed:", error);
     return 'Decryption Error';

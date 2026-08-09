@@ -675,6 +675,60 @@ Requirements:
     }
   });
 
+  app.post("/api/ai/poll-video", async (req, res) => {
+    try {
+      const { operation, customApiKey } = req.body;
+      const systemKey = process.env.GEMINI_API_KEY;
+      const apiKey = customApiKey || systemKey;
+      if (!apiKey) {
+        throw new Error("API Key configuration is missing.");
+      }
+      if (!operation) {
+        throw new Error("Missing operation payload.");
+      }
+
+      const ai = new GoogleGenAI({ apiKey });
+      const updated = await ai.operations.getVideosOperation({ operation });
+
+      if (!updated.done) {
+        return res.json({ done: false, operation: updated });
+      }
+
+      const generated = updated.response?.generatedVideos?.[0];
+      const videoFile = generated?.video;
+      if (!videoFile) {
+        return res.json({ done: true, error: "Video generation completed but no file was returned." });
+      }
+
+      const mimeType = videoFile.mimeType || 'video/mp4';
+      let base64: string;
+
+      if (videoFile.videoBytes) {
+        base64 = videoFile.videoBytes;
+      } else if (videoFile.uri) {
+        const os = await import('os');
+        const fs = await import('fs/promises');
+        const path = await import('path');
+        const tmpPath = path.join(os.tmpdir(), `veo-${Date.now()}.mp4`);
+        await ai.files.download({ file: videoFile, downloadPath: tmpPath });
+        const bytes = await fs.readFile(tmpPath);
+        await fs.unlink(tmpPath).catch(() => {});
+        base64 = Buffer.from(bytes).toString('base64');
+      } else {
+        return res.json({ done: true, error: "Video file has no downloadable content." });
+      }
+
+      res.json({
+        done: true,
+        videoUrl: `data:${mimeType};base64,${base64}`,
+        operation: updated,
+      });
+    } catch (e: any) {
+      console.error("Video poll error:", e);
+      res.status(500).json({ error: e.message });
+    }
+  });
+
   app.post("/api/ai/generate-music", async (req, res) => {
     try {
       const { prompt, customApiKey } = req.body;

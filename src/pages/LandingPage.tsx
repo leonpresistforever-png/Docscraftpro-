@@ -22,6 +22,7 @@ import { LandingRevolutionizeWorkflow } from '../components/LandingRevolutionize
 import { LandingModernSpaces } from '../components/LandingModernSpaces';
 import { LandingImportExport } from '../components/LandingImportExport';
 import { LandingNexus } from '../components/LandingNexus';
+import { CodeShowcase, InlineCodeSnippet } from '../components/design';
 
 import { getLocalCurrencyInfo } from '../utils/currency';
 
@@ -354,11 +355,7 @@ export function LandingPage() {
                         <img loading="lazy" width="800" height="400" src="https://images.unsplash.com/photo-1581287053822-fd7bf4f4bfec?q=80&w=800&auto=format&fit=crop" className="absolute top-0 right-0 w-full h-32 object-cover opacity-30 mix-blend-overlay" alt="Abstract background overlay" />
                         <h3 className="font-bold mb-2">Beautiful Code Snippets</h3>
                         <p className="text-xs text-gray-500 mb-4">Paste your code and let our AI format it beautifully with syntax highlighting.</p>
-                        <div className="bg-gray-900 rounded-lg p-4 mt-auto shadow-inner text-blue-300 font-mono text-[10px]">
-                           <div><span className="text-purple-400">const</span> <span className="text-yellow-200">generate</span> = () =&gt; {'{'}</div>
-                           <div className="pl-4">return <span className="text-green-300">"Perfection"</span>;</div>
-                           <div>{'}'}</div>
-                        </div>
+                        <InlineCodeSnippet />
                       </div>
                       <div className="col-span-1 border border-gray-200/60 rounded-xl overflow-hidden shadow-sm flex items-center justify-center relative">
                          <img loading="lazy" width="800" height="400" src="https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=800&auto=format&fit=crop" className="w-full h-full object-cover" alt="Coding workspace" />
@@ -850,43 +847,22 @@ export function LandingPage() {
       </main>
 
       {/* Section 1: Dark Mode API / Code Showcase */}
-      <section className="bg-[#0a0a0a] text-white py-32 relative border-t-[6px] border-[#D4AF37] mt-32">
+      <section className="bg-[#FDFBF7] text-stone-800 py-32 relative border-t border-[#E4DBC5] mt-32">
         <div className="max-w-[1400px] mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div>
-            <span className="text-[#D4AF37] font-bold tracking-widest uppercase text-xs mb-4 block">Developer-First</span>
-            <h2 className="text-4xl md:text-5xl font-black mb-6 leading-tight uppercase font-sans tracking-tight">
-              Headless.<br /> Composable.<br /> Brilliant.
+            <span className="text-[#B8952D] font-bold tracking-widest uppercase text-xs mb-4 block">Developer-First</span>
+            <h2 className="text-4xl md:text-5xl font-serif font-bold mb-6 leading-tight tracking-tight text-stone-900">
+              Headless. Composable. Brilliant.
             </h2>
-            <p className="text-gray-400 text-lg mb-8 leading-relaxed font-sans max-w-md">
+            <p className="text-stone-600 text-lg mb-8 leading-relaxed max-w-md">
               Tap into Docscraft Pro's robust block-based architecture via our GraphQL and REST APIs. Everything is an object, letting you sculpt documentation exactly how you need it.
             </p>
             <div className="flex gap-4">
-              <Link to="/docs" className="bg-white text-black font-semibold px-6 py-3 rounded-full hover:bg-gray-200 transition-colors">Read Docs</Link>
+              <Link to="/docs" className="bg-stone-900 text-white font-semibold px-6 py-3 rounded-full hover:bg-stone-800 transition-colors shadow-sm">Read Docs</Link>
             </div>
           </div>
-          <div className="bg-[#111] rounded-2xl border border-gray-800 shadow-2xl p-6 relative overflow-hidden transform lg:rotate-2 hover:rotate-0 transition-transform duration-500">
-            <div className="flex gap-2 mb-6">
-              <div className="w-3 h-3 rounded-full bg-red-500"></div>
-              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-              <div className="w-3 h-3 rounded-full bg-green-500"></div>
-            </div>
-            <pre className="font-mono text-sm leading-relaxed overflow-x-auto text-gray-300">
-              <code>
-                <span className="text-purple-400">const</span> doc = <span className="text-purple-400">await</span> Nexus.<span className="text-blue-400">createDocument</span>({'{'}<br />
-                {'  '}title: <span className="text-green-400">'Project Orion Requirements'</span>,<br />
-                {'  '}workspaceId: <span className="text-green-400">'wksp_09xjf'</span>,<br />
-                {'  '}blocks: [<br />
-                {'    '}{'{'} type: <span className="text-green-400">'h1'</span>, content: <span className="text-green-400">'System Overview'</span> {'}'},<br />
-                {'    '}{'{'} type: <span className="text-green-400">'code'</span>, language: <span className="text-green-400">'typescript'</span>, content: <span className="text-green-400">'...'</span> {'}'}<br />
-                {'  '}]<br />
-                {'}'});<br /><br />
-                <span className="text-gray-500">// Real-time broadcast automatically handles CRDT sync</span><br />
-                <span className="text-purple-400">await</span> doc.<span className="text-blue-400">publish</span>();
-              </code>
-            </pre>
-            <div className="absolute top-0 right-0 p-4">
-              <span className="bg-white/10 text-white text-[10px] px-2 py-1 rounded-full border border-white/20 uppercase tracking-widest font-bold">API v2</span>
-            </div>
+          <div className="transform lg:rotate-1 hover:rotate-0 transition-transform duration-500">
+            <CodeShowcase />
           </div>
         </div>
       </section>
@@ -1154,10 +1130,10 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Dark Finale End Cap */}
-      <section className="bg-[#0a0a0a] text-white py-32 relative overflow-hidden">
-         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-[#D4AF37]/10 to-transparent rounded-full blur-[100px] pointer-events-none"></div>
-         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-blue-900/20 to-transparent rounded-full blur-[80px] pointer-events-none"></div>
+      {/* Warm finale CTA */}
+      <section className="bg-gradient-to-b from-[#FDFBF7] via-[#F8F4EC] to-[#F3EDE0] text-stone-800 py-32 relative overflow-hidden border-t border-[#E4DBC5]">
+         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-[#D4AF37]/15 to-transparent rounded-full blur-[100px] pointer-events-none"></div>
+         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-indigo-200/30 to-transparent rounded-full blur-[80px] pointer-events-none"></div>
          
          {/* String Waves Animation */}
          <div className="absolute inset-0 z-0 opacity-30 pointer-events-none overflow-hidden flex items-center justify-center">
@@ -1199,13 +1175,13 @@ export function LandingPage() {
 
          <div className="max-w-[1400px] mx-auto px-6 relative z-10 text-center flex flex-col items-center">
             <span className="text-[#D4AF37] font-bold tracking-widest uppercase text-xs mb-6 block border border-[#D4AF37]/30 px-4 py-1.5 rounded-full">The Next Chapter</span>
-            <h2 className="text-5xl md:text-7xl font-black mb-8 uppercase tracking-tight font-serif text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+            <h2 className="text-5xl md:text-7xl font-serif font-bold mb-8 tracking-tight text-stone-900">
               Design The Future.
             </h2>
-            <p className="text-gray-400 text-xl max-w-2xl leading-relaxed mb-12">
+            <p className="text-stone-600 text-xl max-w-2xl leading-relaxed mb-12">
               Transform your workflows with unparalleled reliability, offline privacy, and limitless integrations. Your best work awaits.
             </p>
-            <Link to="/agent-studio" className="bg-white text-black px-10 py-5 rounded-full text-xl font-bold hover:scale-105 transition-transform shadow-[0_0_30px_rgba(255,255,255,0.2)]">
+            <Link to="/agent-studio" className="bg-stone-900 text-white px-10 py-5 rounded-full text-xl font-bold hover:scale-105 transition-transform shadow-[0_12px_40px_-12px_rgba(26,26,26,0.35)]">
               Start Building Now
             </Link>
          </div>

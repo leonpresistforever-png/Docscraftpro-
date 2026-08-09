@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { VisualCaptcha } from './VisualCaptcha';
-import { Shield, CheckCircle2, ChevronDown, ChevronUp, Lock } from 'lucide-react';
+import { Shield, CheckCircle2, ChevronUp, Lock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface InternalSecurityGateProps {

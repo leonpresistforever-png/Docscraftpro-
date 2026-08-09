@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Bot, Check, Code, LayoutTemplate, Loader2, Sparkles, X, Layers } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import * as webllm from "@mlc-ai/web-llm";
 
 export function AIComponentMaker({ onInsert, onClose }: { onInsert: (html: string) => void, onClose: () => void }) {

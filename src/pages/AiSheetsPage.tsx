@@ -709,11 +709,12 @@ Remember: Output ONLY valid JSON containing the "headers" and "rows" arrays. No 
                                    className="border border-transparent focus:border-purple-500 hover:border-purple-300 focus:outline-none focus:bg-white p-1 rounded inline-block min-w-[50px] transition-all"
                                    onBlur={(e) => {
                                      const newHeaders = [...selectedSheet.headers];
-                                     newHeaders[i] = e.target.innerHTML;
+                                     newHeaders[i] = e.target.textContent || '';
                                      setSelectedSheet({ ...selectedSheet, headers: newHeaders });
                                    }}
-                                   dangerouslySetInnerHTML={{ __html: String(header) }}
-                                />
+                                >
+                                  {String(header)}
+                                </div>
                               ) : (
                                 header
                               )}
@@ -734,11 +735,12 @@ Remember: Output ONLY valid JSON containing the "headers" and "rows" arrays. No 
                                     onBlur={(e) => {
                                       const newRows = [...selectedSheet.rows];
                                       newRows[i] = [...newRows[i]];
-                                      newRows[i][j] = e.target.innerHTML;
+                                      newRows[i][j] = e.target.textContent || '';
                                       setSelectedSheet({ ...selectedSheet, rows: newRows });
                                     }}
-                                    dangerouslySetInnerHTML={{ __html: String(cell) }}
-                                  />
+                                  >
+                                    {String(cell)}
+                                  </div>
                                 ) : (
                                   <div 
                                     className="ai-cell-content text-sm max-w-none [&_a]:text-purple-600 [&_a:hover]:underline [&_img]:inline-block [&_img]:rounded-md [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4"

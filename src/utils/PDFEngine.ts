@@ -37,7 +37,7 @@ export async function addWatermark(file: File, text: string = "CONFIDENTIAL"): P
       font: helveticaFont,
       color: rgb(0.8, 0.2, 0.2), // Light red watermark
       opacity: 0.3,
-      rotate: radians(angle),
+      rotate: degrees(angle * (180 / Math.PI)),
     });
   }
   

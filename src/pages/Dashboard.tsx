@@ -17,6 +17,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { collection, query, where, onSnapshot, orderBy, doc, updateDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { encryptData, decryptData } from '../lib/encryption';
+import { setupPdfjsWorker } from '../utils/pdfjsSetup';
 
 export function Dashboard() {
   const navigate = useNavigate();
@@ -168,13 +169,7 @@ export function Dashboard() {
     try {
       let extractedText = '';
       if (file.name.endsWith('.pdf')) {
-        const pdfjsLib = await import('pdfjs-dist');
-        const pdfjsVersion = (pdfjsLib as any).version || '4.10.38';
-        try {
-          pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString();
-        } catch (e) {
-          pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsVersion}/build/pdf.worker.min.mjs`;
-        }
+        const pdfjsLib = await setupPdfjsWorker();
         const arrayBuffer = await file.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
         let text = '';
@@ -236,13 +231,7 @@ export function Dashboard() {
     setIsProcessingFile(true);
     try {
       if (workbenchTool === 'Upload to Doc') {
-        const pdfjsLib = await import('pdfjs-dist');
-        const pdfjsVersion = (pdfjsLib as any).version || '4.10.38';
-        try {
-          pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString();
-        } catch (e) {
-          pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsVersion}/build/pdf.worker.min.mjs`;
-        }
+        const pdfjsLib = await setupPdfjsWorker();
         const arrayBuffer = await workbenchFile.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
         let text = '';

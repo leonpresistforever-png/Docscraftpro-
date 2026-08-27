@@ -7,6 +7,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { jsPDF } from 'jspdf';
 import ReactMarkdown from 'react-markdown';
+import { setupPdfjsWorker } from '../utils/pdfjsSetup';
 
 interface PDFFile {
   id: string;
@@ -89,14 +90,7 @@ export function MergePdfsPage() {
 
   // Extract PDF Text
   const parsePdfFile = async (pdfFile: PDFFile): Promise<{ text: string; pages: number }> => {
-    const pdfjsLib = await import('pdfjs-dist');
-    const pdfjsVersion = (pdfjsLib as any).version || '4.10.38';
-    
-    try {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString();
-    } catch (e) {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsVersion}/build/pdf.worker.min.mjs`;
-    }
+    const pdfjsLib = await setupPdfjsWorker();
 
     const arrayBuffer = await pdfFile.file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;

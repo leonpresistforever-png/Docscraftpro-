@@ -155,11 +155,11 @@ export function MediaLab() {
             )}
 
             {resultImage && !loading && tab === 'image' && (
-              <img src={resultImage} alt="Generated" className="max-w-full max-h-full object-contain" style={{ aspectRatio: aspectRatio.replace(':', ' / ') }} />
+              <img src={resultImage} alt="Generated" className="max-w-full max-h-full object-contain" style={{ aspectRatio: aspectRatio.replace(/:/g, ' / ') }} />
             )}
 
             {resultVideo && !loading && tab === 'video' && (
-              <video src={resultVideo} controls autoPlay className="max-w-full max-h-full" style={{ aspectRatio: aspectRatio.replace(':', ' / ') }} />
+              <video src={resultVideo} controls autoPlay className="max-w-full max-h-full" style={{ aspectRatio: aspectRatio.replace(/:/g, ' / ') }} />
             )}
 
             {resultAudio && !loading && tab === 'audio' && (

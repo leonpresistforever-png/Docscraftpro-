@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { jsPDF } from 'jspdf';
 import { getSlidesToken, createGoogleSlidePresentation, signInForGoogleSlides } from '../utils/googleSlides';
 import { getSheetsToken, createGoogleSheet, signInForGoogleSheets } from '../utils/googleSheets';
+import { setupPdfjsWorker } from '../utils/pdfjsSetup';
 
 // Define the file format configuration
 interface FileFormat {
@@ -178,13 +179,7 @@ export function PDFConverter() {
     const file = uploaded.file;
     
     if (file.name.endsWith('.pdf')) {
-      const pdfjsLib = await import('pdfjs-dist');
-      const pdfjsVersion = (pdfjsLib as any).version || '4.10.38';
-      try {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString();
-      } catch (e) {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsVersion}/build/pdf.worker.min.mjs`;
-      }
+      const pdfjsLib = await setupPdfjsWorker();
       const arrayBuffer = await file.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
       let extractedText = '';

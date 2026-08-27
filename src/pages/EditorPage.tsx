@@ -10,6 +10,7 @@ import { collection, doc, getDoc, setDoc, updateDoc, serverTimestamp, query, whe
 import { db } from '../lib/firebase';
 import { encryptData, decryptData } from '../lib/encryption';
 import StarterKit from '@tiptap/starter-kit';
+import { setupPdfjsWorker } from '../utils/pdfjsSetup';
 import Color from '@tiptap/extension-color';
 import { TextStyle } from '@tiptap/extension-text-style';
 import Highlight from '@tiptap/extension-highlight';
@@ -1020,12 +1021,7 @@ Requirements:
         const doc = new DOMParser().parseFromString(text, 'text/html');
         extractedText = doc.body.innerText || doc.body.textContent || '';
       } else if (file.name.endsWith('.pdf')) {
-        const pdfjsLib = await import('pdfjs-dist');
-        try {
-          pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString();
-        } catch (e) {
-          pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
-        }
+        const pdfjsLib = await setupPdfjsWorker();
         const arrayBuffer = await file.arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
         let text = '';
